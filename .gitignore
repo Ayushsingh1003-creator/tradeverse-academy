@@ -33,6 +33,16 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# python / voice sidecar
+scripts/voice/.venv/
+scripts/voice/*.onnx
+__pycache__/
+*.pyc
+
+# local databases
+prisma/**/*.db
+prisma/**/*.db-journal
+
 # vercel
 .vercel
 

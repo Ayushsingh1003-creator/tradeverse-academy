@@ -1,0 +1,261 @@
+/* Course Design Cards — kristen17 / 21st.dev (scoped) */
+
+.course-design-cards {
+  --cdc-blue: #1890ff;
+  --cdc-green: #01c3a8;
+  --cdc-orange: #ffb741;
+  --cdc-red: #a63d2a;
+  font-family: "Nunito", var(--font-sans, sans-serif);
+}
+
+.course-design-cards__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: stretch;
+}
+
+.course-design-card {
+  position: relative;
+  z-index: 1;
+  width: 20rem;
+  max-width: 100%;
+  min-height: 20rem;
+  flex-shrink: 0;
+  display: grid;
+  place-content: center;
+  place-items: center;
+  text-align: center;
+  box-shadow: 0.063em 0.75em 1.563em rgb(0 0 0 / 78%);
+  border-radius: 2.25rem;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.course-design-card:hover {
+  transform: translateY(-4px);
+}
+
+.course-design-card::before {
+  position: absolute;
+  content: "";
+  inset: 0;
+  border-radius: 2.25rem;
+  z-index: -1;
+  border: 0.155rem solid transparent;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+}
+
+.course-design-card__header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8em 0.5em 0 1.5em;
+}
+
+.course-design-card__date {
+  color: #ddd;
+  font-size: 0.875rem;
+}
+
+.course-design-card__menu {
+  color: #fff;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.course-design-card__body {
+  position: absolute;
+  width: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0.7em 1.25em 0.5em 1.5em;
+}
+
+.course-design-card__title {
+  color: #fff;
+  font-size: 1.375rem;
+  margin-top: 0.625em;
+  margin-bottom: 0.188em;
+  text-transform: capitalize;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.course-design-card__subtitle {
+  color: #ddd;
+  font-size: 1rem;
+  letter-spacing: 0.031rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.course-design-card__progress {
+  margin-top: 0.938rem;
+}
+
+.course-design-card__progress-label {
+  color: #fff;
+  text-align: left;
+  font-weight: 600;
+  width: 100%;
+  display: block;
+  margin-bottom: 0.313rem;
+  font-size: 0.875rem;
+}
+
+.course-design-card__progress-value {
+  margin-top: 0.313rem;
+  text-align: right;
+  display: block;
+  color: #fff;
+  font-size: 0.875rem;
+}
+
+.course-design-card__progress-bar {
+  position: relative;
+  width: 100%;
+  background: #363636;
+  height: 0.313rem;
+  display: block;
+  border-radius: 3.125rem;
+}
+
+.course-design-card__progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  display: block;
+  border-radius: 3.125rem;
+  transition: width 0.8s ease;
+}
+
+.course-design-card__footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-top: 0.063rem solid #292929;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7em 1.25em 0.5em 1.5em;
+  background: #151419;
+  border-bottom-left-radius: 2.25rem;
+  border-bottom-right-radius: 2.25rem;
+}
+
+.course-design-card__avatars {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.course-design-card__avatar {
+  margin-right: -0.625rem;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  background: #2a2a30;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.course-design-card__add {
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 0.25rem;
+}
+
+.course-design-card__add svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.course-design-card__cta {
+  background: #222127;
+  color: #fff;
+  border-radius: 2em;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.course-design-card:hover .course-design-card__cta {
+  transition: background 0.2s ease;
+}
+
+.course-design-card--green {
+  background: radial-gradient(ellipse at right top, #107667ed 0%, #151419 47%, #151419 100%);
+}
+.course-design-card--green::before {
+  background: linear-gradient(45deg, #232228, #232228, #232228, #232228, var(--cdc-green)) border-box;
+}
+.course-design-card--green .course-design-card__add { background: var(--cdc-green); }
+.course-design-card--green .course-design-card__progress-fill { background: var(--cdc-green); }
+.course-design-card--green:hover .course-design-card__cta { background: var(--cdc-green); }
+
+.course-design-card--orange {
+  background: radial-gradient(ellipse at right top, #ffb74194 0%, #151419 47%, #151419 100%);
+}
+.course-design-card--orange::before {
+  background: linear-gradient(45deg, #232228, #232228, #232228, #232228, var(--cdc-orange)) border-box;
+}
+.course-design-card--orange .course-design-card__add { background: var(--cdc-orange); }
+.course-design-card--orange .course-design-card__progress-fill { background: var(--cdc-orange); }
+.course-design-card--orange:hover .course-design-card__cta { background: var(--cdc-orange); }
+
+.course-design-card--red {
+  background: radial-gradient(ellipse at right top, #a63d2a82 0%, #151419 47%, #151419 100%);
+}
+.course-design-card--red::before {
+  background: linear-gradient(45deg, #232228, #232228, #232228, #232228, var(--cdc-red)) border-box;
+}
+.course-design-card--red .course-design-card__add { background: var(--cdc-red); }
+.course-design-card--red .course-design-card__progress-fill { background: var(--cdc-red); }
+.course-design-card--red:hover .course-design-card__cta { background: var(--cdc-red); }
+
+.course-design-card--blue {
+  background: radial-gradient(ellipse at right top, #00458f8f 0%, #151419 45%, #151419 100%);
+}
+.course-design-card--blue::before {
+  background: linear-gradient(45deg, #232228, #232228, #232228, #232228, var(--cdc-blue)) border-box;
+}
+.course-design-card--blue .course-design-card__add { background: var(--cdc-blue); }
+.course-design-card--blue .course-design-card__progress-fill { background: var(--cdc-blue); }
+.course-design-card--blue:hover .course-design-card__cta { background: var(--cdc-blue); }
+
+.course-design-card__premium {
+  position: absolute;
+  top: 0.65rem;
+  right: 2.75rem;
+  z-index: 2;
+  border-radius: 999px;
+  border: 1px solid rgba(247, 195, 37, 0.35);
+  background: rgba(247, 195, 37, 0.12);
+  color: #f7c325;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.15rem 0.45rem;
+}

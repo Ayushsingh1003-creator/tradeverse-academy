@@ -1,0 +1,18 @@
+# Optional: run voice sidecar in Docker (mount models volume after setup)
+services:
+  voice:
+    build:
+      context: ../scripts/voice
+      dockerfile: Dockerfile
+    ports:
+      - "8765:8765"
+    environment:
+      WHISPER_MODEL: base
+      PIPER_VOICE: en_US-lessac-medium
+    volumes:
+      - piper-voices:/root/.local/share/piper
+      - whisper-cache:/root/.cache/huggingface
+
+volumes:
+  piper-voices:
+  whisper-cache:

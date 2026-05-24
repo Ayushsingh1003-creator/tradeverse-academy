@@ -1,0 +1,31 @@
+{
+  "name": "Tradeverse Academy",
+  "short_name": "Tradeverse",
+  "description": "Master trading — one concept at a time",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#D4A017",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icons/icon-72.png", "sizes": "72x72", "type": "image/png" },
+    { "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" },
+    { "src": "/icons/icon-128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Continue Learning",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icons/shortcut-learn.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Daily Challenge",
+      "url": "/dashboard#challenge",
+      "icons": [{ "src": "/icons/shortcut-challenge.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    { "name": "Simulator", "url": "/simulator" }
+  ],
+  "categories": ["education", "finance"]
+}
