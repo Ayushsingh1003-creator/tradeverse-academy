@@ -55,7 +55,6 @@ function HistoryList({ rows }: { rows: Array<LedgerRow | LocalRow> }) {
 function XpHistoryContent() {
   const { isSignedIn, isLoaded } = useAuth();
   const hydrate = useUserStore((s) => s.hydrate);
-  const hydrated = useUserStore((s) => s.hydrated);
   const lessonHistory = useUserStore((s) => s.lessonHistory);
 
   const [serverRows, setServerRows] = useState<LedgerRow[]>([]);

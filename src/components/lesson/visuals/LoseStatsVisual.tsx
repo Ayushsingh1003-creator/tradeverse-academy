@@ -40,7 +40,7 @@ export function LoseStatsVisual() {
       </div>
 
       <div className="rounded-2xl border border-border bg-surface p-4 text-sm text-text-muted">
-        <span className="font-semibold text-white">{current.label}</span> — one of the most common patterns we'll fix in this course.
+        <span className="font-semibold text-white">{current.label}</span> — one of the most common patterns we&apos;ll fix in this course.
       </div>
     </div>
   );

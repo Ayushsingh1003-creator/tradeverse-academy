@@ -57,6 +57,7 @@ export type CompleteLessonResult = {
 
 type UserState = {
   hydrated: boolean;
+  /** Active Clerk user id used for localStorage isolation (`null` = signed out / anonymous). */
   activeClerkUserId: string | null;
   xp: number;
   level: number;
@@ -76,8 +77,6 @@ type UserState = {
   /** Set only when the user levels up via earned XP (not hydrate / server sync). */
   pendingLevelUp: number | null;
   clearLevelUp: () => void;
-  /** Active Clerk user id used for localStorage isolation (`null` = signed out / anonymous). */
-  activeClerkUserId: string | null;
   hydrate: () => void;
   /** Load persisted progress for the signed-in Clerk account (or anonymous when signed out). */
   switchUserStore: (clerkUserId: string | null) => void;
@@ -208,11 +207,15 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
 
     const partial = applyParsedPersisted(parsed, clerkUserId);
-    if (!("lastActiveDate" in parsed) && typeof parsed.streak === "number" && parsed.streak > 0) {
+    const legacyParsed = parsed as Partial<PersistedUserStore>;
+    if (
+      legacyParsed.lastActiveDate === undefined &&
+      typeof legacyParsed.streak === "number" &&
+      legacyParsed.streak > 0
+    ) {
       partial.streak = 0;
     }
     const lastActive = partial.lastActiveDate ?? null;
-    const today = todayLocalISO();
 
     if (isStreakBroken(lastActive)) {
       const freezeCount = partial.streakFreezeCount ?? 0;

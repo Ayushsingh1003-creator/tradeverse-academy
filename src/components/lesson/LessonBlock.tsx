@@ -2,7 +2,6 @@
 
 import type { CandlestickData } from "lightweight-charts";
 import { CandlestickSvg } from "@/components/lesson/CandlestickSvg";
-import { CANDLE_BULL } from "@/lib/candleColors";
 import { TEACHING_CANDLES } from "@/lib/candleGeometry";
 import { useEffect, useMemo, useState } from "react";
 import { TradingChart } from "@/components/charts/TradingChart";

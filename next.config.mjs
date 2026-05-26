@@ -32,19 +32,19 @@ const withPWAConfig = withPWA({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Keep heavy server-only packages out of the dev/client graph when possible.
-  serverExternalPackages: [
-    "@prisma/client",
-    "prisma",
-    "bcryptjs",
-    "stripe",
-    "@mux/mux-node",
-    "socket.io",
-    "resend",
-    "openai",
-    "web-push",
-  ],
   experimental: {
+    // Keep heavy server-only packages out of the dev/client graph when possible.
+    serverComponentsExternalPackages: [
+      "@prisma/client",
+      "prisma",
+      "bcryptjs",
+      "stripe",
+      "@mux/mux-node",
+      "socket.io",
+      "resend",
+      "openai",
+      "web-push",
+    ],
     optimizePackageImports: [
       "framer-motion",
       "lucide-react",

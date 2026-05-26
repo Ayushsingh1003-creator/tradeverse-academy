@@ -18,7 +18,7 @@ export default async function LibraryPage() {
   for (const v of standaloneVideos) v.tags.forEach((t) => tagSet.add(t));
   const tags = Array.from(tagSet).sort((a, b) => a.localeCompare(b));
 
-  let resumeItems: LibraryResumeItem[] = [];
+  const resumeItems: LibraryResumeItem[] = [];
   if (isClerkConfigured()) {
     const { userId } = await auth();
     if (userId) {

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getLibraryCourseBySlug, getLibraryCourses, getStandaloneVideos } from "@/lib/data/library";
+import { getLibraryCourseBySlug, getLibraryCourses } from "@/lib/data/library";
 import { getLiveClassBySlug, getLiveClasses } from "@/lib/data/liveClasses";
 import { mapDbLibraryCourse } from "@/lib/libraryDbMapper";
 import { mapLiveCohortRow } from "@/lib/liveCohortMapper";

@@ -91,7 +91,7 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
   const [aiLoading, setAiLoading] = useState(false);
   const [aiLoadingPhase, setAiLoadingPhase] = useState<"thinking" | "voice" | null>(null);
   const [voiceOn, setVoiceOn] = useState(true);
-  const [coachSpeaking, setCoachSpeaking] = useState(false);
+  const [, setCoachSpeaking] = useState(false);
   const [practiceIx, setPracticeIx] = useState(0);
   const [practiceCorrect, setPracticeCorrect] = useState(0);
   const [lessonPersisted, setLessonPersisted] = useState(false);

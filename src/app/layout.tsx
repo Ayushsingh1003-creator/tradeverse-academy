@@ -62,7 +62,7 @@ export default function RootLayout({
               afterSignUpUrl={CLERK_AFTER_SIGN_UP_URL}
               signInFallbackRedirectUrl={CLERK_AFTER_SIGN_IN_URL}
               signUpFallbackRedirectUrl={CLERK_AFTER_SIGN_UP_URL}
-              signOutFallbackRedirectUrl={CLERK_AFTER_SIGN_OUT_URL}
+              afterSignOutUrl={CLERK_AFTER_SIGN_OUT_URL}
             >
               <ClerkUserHydration />
               {children}

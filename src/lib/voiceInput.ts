@@ -1,6 +1,27 @@
 "use client";
 
-type SpeechRecognitionCtor = new () => SpeechRecognition;
+// Minimal local declaration of the (non-standard) Web Speech API surface we use.
+// The browser exposes `SpeechRecognition` / `webkitSpeechRecognition` globals, but
+// TypeScript's default DOM lib does not include them.
+type SpeechRecognitionResult = { transcript?: string };
+type SpeechRecognitionResultRow = { [index: number]: SpeechRecognitionResult };
+type SpeechRecognitionEventLike = {
+  results: { [index: number]: SpeechRecognitionResultRow };
+};
+
+interface SpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  maxAlternatives: number;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+type SpeechRecognitionCtor = new () => SpeechRecognitionInstance;
 
 function getSpeechRecognition(): SpeechRecognitionCtor | null {
   if (typeof window === "undefined") return null;

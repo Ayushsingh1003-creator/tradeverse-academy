@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { clerkClient } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 import { getServerAdminAllowlist, isAdminEmail } from "@/lib/admin/adminAllowlist";
 import { isClerkConfigured } from "@/lib/clerkEnabled";
 import { CLERK_HOME_URL } from "@/lib/clerkUrls";
@@ -40,9 +40,7 @@ const isProtected = createRouteMatcher([
 
 const isAdmin = createRouteMatcher(["/admin(.*)"]);
 
-export default async function middleware(
-  ...args: Parameters<ReturnType<typeof clerkMiddleware>>
-) {
+export default async function middleware(request: NextRequest, event: NextFetchEvent) {
   if (!isClerkConfigured()) {
     return NextResponse.next();
   }
@@ -86,7 +84,7 @@ export default async function middleware(
     }
 
     return NextResponse.next({ request: { headers: requestHeaders } });
-  })(...args);
+  })(request, event);
 }
 
 /**

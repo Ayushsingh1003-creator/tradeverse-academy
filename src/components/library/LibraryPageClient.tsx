@@ -70,7 +70,7 @@ export function LibraryPageClient({
   }
 
   const swiperCommon = {
-    modules: [FreeMode] as const,
+    modules: [FreeMode],
     freeMode: true,
     slidesPerView: "auto" as const,
     spaceBetween: 16,
