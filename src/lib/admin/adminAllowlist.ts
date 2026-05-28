@@ -1,5 +1,5 @@
 /** Always allowed to access /admin (in addition to `ADMIN_EMAILS` on the server). */
-export const BUILT_IN_ADMIN_EMAILS = ["ayush.singh.finance@gmail.com"] as const;
+export const BUILT_IN_ADMIN_EMAILS = ["ayush.singh.finance@gmail.com", "shivamkumarpaswan59@gmail.com"] as const;
 
 function normalizeEmailList(raw: string | undefined): string[] {
   return (raw ?? "")

@@ -1,7 +1,18 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const from = process.env.FROM_EMAIL ?? "academy@tradeverse.io";
+
+let resendClient: Resend | null = null;
+
+/** Lazy init so `next build` does not require RESEND_API_KEY at import time. */
+function getResend(): Resend {
+  const key = process.env.RESEND_API_KEY?.trim();
+  if (!key) {
+    throw new Error("RESEND_API_KEY is not configured");
+  }
+  resendClient ??= new Resend(key);
+  return resendClient;
+}
 
 type WeeklyStats = { xpEarned: number; lessonsCompleted: number; leaguePosition: number; recommendations: string[] };
 
@@ -18,7 +29,7 @@ function template(title: string, body: string) {
 }
 
 export async function sendWelcomeEmail(to: string, name: string) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from,
     to,
     subject: "Welcome to Tradeverse Academy 🎓",
@@ -27,7 +38,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
 }
 
 export async function sendStreakReminderEmail(to: string, name: string, streak: number) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from,
     to,
     subject: `Don't break your ${streak}-day streak 🔥`,
@@ -36,7 +47,7 @@ export async function sendStreakReminderEmail(to: string, name: string, streak: 
 }
 
 export async function sendWeeklyDigestEmail(to: string, name: string, stats: WeeklyStats) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from,
     to,
     subject: "Your trading progress this week 📈",
@@ -45,7 +56,7 @@ export async function sendWeeklyDigestEmail(to: string, name: string, stats: Wee
 }
 
 export async function sendLevelUpEmail(to: string, name: string, newLevel: number, title: string) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from,
     to,
     subject: `You reached Level ${newLevel}: ${title}! ⭐`,

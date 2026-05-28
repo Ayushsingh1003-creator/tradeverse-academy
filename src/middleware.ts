@@ -7,6 +7,7 @@ import { CLERK_HOME_URL } from "@/lib/clerkUrls";
 
 const isPublicRoute = createRouteMatcher([
   "/",
+  "/dashboard(.*)",
   "/courses(.*)",
   "/pricing(.*)",
   "/about(.*)",
@@ -19,7 +20,6 @@ const isPublicRoute = createRouteMatcher([
 const isPublicAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
 
 const isProtected = createRouteMatcher([
-  "/dashboard(.*)",
   "/learn(.*)",
   "/practice(.*)",
   "/leaderboard(.*)",
@@ -89,7 +89,7 @@ export default async function middleware(request: NextRequest, event: NextFetchE
 
 /**
  * Clerk must run on every route that calls auth() / currentUser() (see Clerk docs).
- * Public marketing pages like /courses and /live-classes stay excluded for faster compiles.
+ * Public pages like /dashboard, /courses, and /live-classes stay excluded from auth redirects.
  */
 export const config = {
   matcher: [

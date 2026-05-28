@@ -15,7 +15,7 @@ export async function getLibraryCoursesFromDb(): Promise<ReturnType<typeof getLi
   } catch {
     /* DB unavailable */
   }
-  return getLibraryCourses();
+  return [];
 }
 
 export async function getLibraryCourseBySlugFromDb(slug: string) {
