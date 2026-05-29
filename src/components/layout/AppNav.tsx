@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NavLink } from "@/components/layout/NavLink";
 import { useEffect } from "react";
-import { authClient } from "@/lib/auth/client";
+import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { isAuthConfigured } from "@/lib/auth/enabled";
 import { useShowAdminNav } from "@/lib/admin/useShowAdminNav";
 import { LiveCohortNavButton } from "@/components/layout/LiveCohortNavButton";
@@ -20,8 +20,7 @@ export function AppNav() {
   const streak = useUserStore((state) => state.streak);
   const xp = useUserStore((state) => state.xp);
   const pathname = usePathname();
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
+  const { user } = useAuthSession();
   const isSignedIn = Boolean(user?.id);
   const showAdmin = useShowAdminNav();
   const adminActive = pathname === "/admin" || pathname.startsWith("/admin/");

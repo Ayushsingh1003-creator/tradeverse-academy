@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { isAuthConfigured } from "@/lib/auth/enabled";
+import { getSession } from "@/lib/auth/session";
 import { AuthSessionHydration } from "@/components/providers/AuthSessionHydration";
+import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
 import { AppBackground } from "@/components/layout/AppBackground";
 import { LiquidGlassFilter } from "@/components/ui/LiquidGlassFilter";
 import "./globals.css";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://academy.tradeverse.io"),
@@ -24,11 +28,22 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "Tradeverse Academy", description: "Master trading, one concept at a time." },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const authEnabled = isAuthConfigured();
+  const session = authEnabled ? await getSession() : null;
+  const initialUser = session?.user
+    ? {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email,
+        image: session.user.image,
+      }
+    : null;
+
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body className="min-h-full bg-background font-sans text-text-primary">
@@ -45,8 +60,14 @@ export default function RootLayout({
         `}</Script>
         <AppBackground />
         <div className="relative z-10">
-          {isAuthConfigured() ? <AuthSessionHydration /> : null}
-          {children}
+          {authEnabled ? (
+            <AuthSessionProvider initialUser={initialUser}>
+              <AuthSessionHydration />
+              {children}
+            </AuthSessionProvider>
+          ) : (
+            children
+          )}
         </div>
       </body>
     </html>

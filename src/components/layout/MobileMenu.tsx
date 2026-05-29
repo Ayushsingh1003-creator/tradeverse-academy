@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { authClient } from "@/lib/auth/client";
+import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { useShowAdminNav } from "@/lib/admin/useShowAdminNav";
 import { LiveCohortNavButton } from "@/components/layout/LiveCohortNavButton";
 import { isNavLinkActive } from "@/components/layout/NavLink";
@@ -14,8 +14,7 @@ export function MobileMenu({ streak, xp }: { streak: number; xp: number }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
+  const { user } = useAuthSession();
   const isSignedIn = Boolean(user?.id);
   const showAdmin = useShowAdminNav();
 

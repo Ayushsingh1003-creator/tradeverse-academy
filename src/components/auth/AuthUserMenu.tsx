@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useShowAdminNav } from "@/lib/admin/useShowAdminNav";
-import { authClient } from "@/lib/auth/client";
+import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { signOutAction } from "@/lib/auth/sign-out-action";
 
 function userInitials(name: string | null | undefined, email: string | null | undefined): string {
@@ -22,8 +22,7 @@ function userInitials(name: string | null | undefined, email: string | null | un
 export function AuthUserMenu() {
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const { data: session, isPending } = authClient.useSession();
-  const user = session?.user;
+  const { user, isLoading } = useAuthSession();
   const showAdmin = useShowAdminNav();
 
   useEffect(() => {
@@ -42,7 +41,7 @@ export function AuthUserMenu() {
     };
   }, [open]);
 
-  if (isPending) {
+  if (isLoading) {
     return <span className="inline-block h-[34px] w-[34px] animate-pulse rounded-full bg-white/10" aria-hidden />;
   }
 
