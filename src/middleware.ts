@@ -6,7 +6,6 @@ import { AUTH_HOME_URL, AUTH_SIGN_IN_URL } from "@/lib/auth/urls";
 
 const PUBLIC_PREFIXES = [
   "/",
-  "/dashboard",
   "/courses",
   "/pricing",
   "/about",
@@ -18,6 +17,7 @@ const PUBLIC_PREFIXES = [
 ];
 
 const PROTECTED_PREFIXES = [
+  "/dashboard",
   "/learn",
   "/practice",
   "/leaderboard",
@@ -34,6 +34,9 @@ const PROTECTED_PREFIXES = [
   "/creator",
   "/marketplace",
   "/library",
+  "/xp",
+  "/progress",
+  "/premium",
 ];
 
 function matchesPrefix(pathname: string, prefixes: string[]) {
@@ -111,6 +114,8 @@ export const config = {
     "/marketplace/:path*",
     "/library/:path*",
     "/xp/:path*",
+    "/progress/:path*",
+    "/premium/:path*",
     "/admin/:path*",
     "/sign-in/:path*",
     "/sign-up/:path*",

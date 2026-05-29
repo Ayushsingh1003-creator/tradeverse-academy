@@ -33,13 +33,18 @@ export function AuthSessionProvider({
   const pathname = usePathname();
   const { data, isPending, isRefetching, refetch } = authClient.useSession();
   const retriedRef = useRef(false);
+  const clearingStaleRef = useRef(false);
+
+  const clientUser = data?.user ?? null;
+  const resolved = !isPending && !isRefetching;
+  const staleClientSession = resolved && initialUser === null && clientUser !== null;
 
   useEffect(() => {
     void refetch();
   }, [pathname, refetch]);
 
   useEffect(() => {
-    if (retriedRef.current || data?.user || initialUser) return;
+    if (retriedRef.current || clientUser || initialUser) return;
     if (isPending || isRefetching) return;
 
     retriedRef.current = true;
@@ -47,11 +52,31 @@ export function AuthSessionProvider({
       void refetch();
     }, 250);
     return () => window.clearTimeout(t);
-  }, [data?.user, initialUser, isPending, isRefetching, refetch]);
+  }, [clientUser, initialUser, isPending, isRefetching, refetch]);
 
-  const clientUser = data?.user ?? null;
-  const user = clientUser ?? initialUser;
-  const isLoading = !user && (isPending || isRefetching);
+  useEffect(() => {
+    if (!staleClientSession || clearingStaleRef.current) return;
+    clearingStaleRef.current = true;
+    void authClient.signOut().finally(() => {
+      clearingStaleRef.current = false;
+      void refetch();
+    });
+  }, [staleClientSession, refetch]);
+
+  useEffect(() => {
+    if (initialUser) retriedRef.current = false;
+  }, [initialUser?.id]);
+
+  let user: AuthSessionUser | null;
+  if (staleClientSession) {
+    user = null;
+  } else if (resolved) {
+    user = clientUser;
+  } else {
+    user = initialUser ?? clientUser ?? null;
+  }
+
+  const isLoading = staleClientSession || (!user && (isPending || isRefetching));
 
   return (
     <AuthSessionContext.Provider value={{ user, isLoading, refetch }}>

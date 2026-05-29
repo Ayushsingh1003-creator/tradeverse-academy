@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useShowAdminNav } from "@/lib/admin/useShowAdminNav";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { signOutAction } from "@/lib/auth/sign-out-action";
+import { clearClientAuthSession } from "@/lib/auth/sign-out-client";
 
 function userInitials(name: string | null | undefined, email: string | null | undefined): string {
   if (name?.trim()) {
@@ -126,7 +127,10 @@ export function AuthUserMenu() {
               className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
               onClick={() => {
                 setOpen(false);
-                void signOutAction();
+                void (async () => {
+                  await clearClientAuthSession();
+                  await signOutAction();
+                })();
               }}
             >
               Log out

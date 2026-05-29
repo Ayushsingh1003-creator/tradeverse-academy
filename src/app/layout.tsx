@@ -61,7 +61,7 @@ export default async function RootLayout({
         <AppBackground />
         <div className="relative z-10">
           {authEnabled ? (
-            <AuthSessionProvider initialUser={initialUser}>
+            <AuthSessionProvider key={initialUser?.id ?? "guest"} initialUser={initialUser}>
               <AuthSessionHydration />
               {children}
             </AuthSessionProvider>
