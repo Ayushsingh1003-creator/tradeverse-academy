@@ -43,7 +43,7 @@ export function SettingsClient({ fullName, email }: { fullName: string; email: s
           <h2 className="text-xl font-semibold">Account</h2>
           <p className="mt-2 text-sm text-text-muted">{fullName}</p>
           <p className="text-sm text-text-muted">{email}</p>
-          <Link href="/user-profile" className="mt-4 inline-block rounded-2xl border border-border px-4 py-2">
+          <Link href="/profile" className="mt-4 inline-block rounded-2xl border border-border px-4 py-2">
             Manage Account
           </Link>
         </Card>

@@ -46,9 +46,6 @@ export function ProfileClient({
             <p className="rounded-2xl border border-accent/40 bg-accent/10 px-4 py-2 text-sm text-accent">
               Level {level} · {getLevelTitle(level)}
             </p>
-            <Link href="/user-profile" className="mt-3 inline-block rounded-2xl border border-border px-4 py-2 text-sm">
-              Edit Profile
-            </Link>
           </div>
         </Card>
 
