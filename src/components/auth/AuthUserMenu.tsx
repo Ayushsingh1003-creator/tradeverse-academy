@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useShowAdminNav } from "@/lib/admin/useShowAdminNav";
 import { authClient } from "@/lib/auth/client";
-import { AUTH_AFTER_SIGN_OUT_URL } from "@/lib/auth/urls";
+import { signOutAction } from "@/lib/auth/sign-out-action";
 
 function userInitials(name: string | null | undefined, email: string | null | undefined): string {
   if (name?.trim()) {
@@ -21,7 +20,6 @@ function userInitials(name: string | null | undefined, email: string | null | un
 }
 
 export function AuthUserMenu() {
-  const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const { data: session, isPending } = authClient.useSession();
@@ -129,11 +127,7 @@ export function AuthUserMenu() {
               className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
               onClick={() => {
                 setOpen(false);
-                void authClient.signOut({
-                  fetchOptions: {
-                    onSuccess: () => router.push(AUTH_AFTER_SIGN_OUT_URL),
-                  },
-                });
+                void signOutAction();
               }}
             >
               Log out
