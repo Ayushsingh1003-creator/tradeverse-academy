@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { ensureAdminAccess } from "@/lib/admin/ensureAdmin";
 
+/** Admin UI reads session cookies — do not prerender at build time. */
+export const dynamic = "force-dynamic";
+
 const NAV = [
   { label: "Dashboard", href: "/admin", icon: "📊" },
   { label: "Courses", href: "/admin/courses", icon: "📚" },

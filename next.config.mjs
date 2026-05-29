@@ -32,11 +32,16 @@ const withPWAConfig = withPWA({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "lh3.googleusercontent.com", pathname: "/**" },
+      { protocol: "https", hostname: "**.googleusercontent.com", pathname: "/**" },
+      { protocol: "https", hostname: "i.ytimg.com", pathname: "/**" },
+    ],
+  },
   experimental: {
     // Keep heavy server-only packages out of the dev/client graph when possible.
     serverComponentsExternalPackages: [
-      "@prisma/client",
-      "prisma",
       "bcryptjs",
       "stripe",
       "@mux/mux-node",
@@ -55,7 +60,6 @@ const nextConfig = {
       "gsap",
       "lightweight-charts",
       "@mux/mux-player-react",
-      "@clerk/nextjs",
       "@tanstack/react-query",
     ],
   },

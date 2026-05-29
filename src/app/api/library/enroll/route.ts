@@ -1,12 +1,12 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { requireDbUser } from "@/lib/auth/api";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { resolveUserForClerk } from "@/lib/server/resolveDbUser";
 import { getLibraryCourseBySlugFromDb } from "@/lib/queries/contentFromDb";
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authResult = await requireDbUser();
+  if (authResult.error) return authResult.error;
+  const { dbUser } = authResult;
 
   let body: { slug?: string; lastVideoId?: string | null };
   try {
@@ -28,11 +28,7 @@ export async function POST(req: NextRequest) {
           ? lastVideoIdRaw.trim().slice(0, 128) || null
           : null;
 
-  const clerk = await currentUser();
-  const email = clerk?.primaryEmailAddress?.emailAddress ?? null;
-  const dbUser = await resolveUserForClerk(userId, email);
-  if (!dbUser) return NextResponse.json({ error: "No account" }, { status: 404 });
-
+  
   const course = await getLibraryCourseBySlugFromDb(slug);
   if (!course?.videos?.length) {
     return NextResponse.json({ error: "Course not found" }, { status: 404 });

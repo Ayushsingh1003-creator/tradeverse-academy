@@ -1,5 +1,5 @@
 import type { LibraryCourse, LibraryVideo } from "@/lib/data/library";
-import type { LibraryCourse as DbCourse, LibraryVideo as DbVideo } from "@prisma/client";
+import type { LibraryCourse as DbCourse, LibraryVideo as DbVideo } from "@/lib/db/schema";
 
 function parseTags(json: string): string[] {
   try {
@@ -23,8 +23,8 @@ export function mapDbVideo(v: DbVideo, courseId: string): LibraryVideo {
   };
 }
 
-export function mapDbLibraryCourse(row: DbCourse & { videos: DbVideo[] }): LibraryCourse {
-  const videos = [...row.videos].sort((a, b) => a.order - b.order).map((v) => mapDbVideo(v, row.id));
+export function mapDbLibraryCourse(row: DbCourse & { videos?: DbVideo[] }): LibraryCourse {
+  const videos = [...(row.videos ?? [])].sort((a, b) => a.order - b.order).map((v) => mapDbVideo(v, row.id));
   return {
     id: row.id,
     slug: row.slug,

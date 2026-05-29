@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { authClient } from "@/lib/auth/client";
 import CourseCardStack from "@/components/dashboard/CourseCardStack";
-import { isClerkConfigured } from "@/lib/clerkEnabled";
+import { isAuthConfigured } from "@/lib/auth/enabled";
 import { isStreakAtRisk, todayLocalISO, weekActivityMap } from "@/lib/streak";
 import { useUserStore } from "@/lib/store";
 import { useToast } from "@/components/ui/Toast";
@@ -18,10 +18,10 @@ function rowColor(seed: string) {
   return ROW_PALETTE[h % ROW_PALETTE.length];
 }
 
-/** Only mount when `ClerkProvider` is present (same gate as root `layout.tsx`). */
 function WelcomeDisplayName() {
-  const { user } = useUser();
-  return <>{user?.firstName || "Trader"}</>;
+  const { data: session } = authClient.useSession();
+  const name = session?.user?.name?.split(/\s+/)[0];
+  return <>{name || "Trader"}</>;
 }
 
 function WelcomeSection() {
@@ -33,7 +33,7 @@ function WelcomeSection() {
   return (
     <div>
       <h1 className="mb-4 text-2xl font-bold text-white">
-        {greeting}, {isClerkConfigured() ? <WelcomeDisplayName /> : "Trader"} 👋
+        {greeting}, {isAuthConfigured() ? <WelcomeDisplayName /> : "Trader"} 👋
       </h1>
       <div className="flex max-w-[480px] items-center gap-2.5 rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.06)] px-4 py-2.5 transition-colors focus-within:border-[rgba(69,109,255,0.5)]">
         <span className="text-[15px] text-[#666]">🔍</span>
@@ -179,13 +179,15 @@ type LeagueStandingsPayload = {
   myPeriodXp: number;
 };
 
-function LeagueCardClerk() {
-  const { isSignedIn, isLoaded } = useAuth();
+function LeagueCardAuth() {
+  const { data: session, isPending } = authClient.useSession();
+  const isSignedIn = Boolean(session?.user?.id);
+  const isLoaded = !isPending;
   const [data, setData] = useState<LeagueStandingsPayload | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isClerkConfigured() || !isLoaded || !isSignedIn) {
+    if (!isAuthConfigured() || !isLoaded || !isSignedIn) {
       setData(null);
       setErr(null);
       return;
@@ -245,7 +247,7 @@ function LeagueCardClerk() {
         </Link>
       </div>
 
-      {!isClerkConfigured() || !isSignedIn ? (
+      {!isAuthConfigured() || !isSignedIn ? (
         <p className="text-[13px] text-[#666]">Sign in to see your league and period XP standings.</p>
       ) : err ? (
         <p className="text-[13px] text-[#888]">{err}</p>
@@ -292,14 +294,14 @@ function LeagueCardClerk() {
 }
 
 function LeagueCard() {
-  if (!isClerkConfigured()) {
+  if (!isAuthConfigured()) {
     return (
       <div className="overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#1E1E1E] p-4">
-        <p className="text-[13px] text-[#666]">Sign in (with Clerk enabled) to see competitive leagues and period standings.</p>
+        <p className="text-[13px] text-[#666]">Sign in to see competitive leagues and period standings.</p>
       </div>
     );
   }
-  return <LeagueCardClerk />;
+  return <LeagueCardAuth />;
 }
 
 function DailyChallengeCard() {
@@ -310,7 +312,9 @@ function DailyChallengeCard() {
   const dailyChallengeSelected = useUserStore((s) => s.dailyChallengeSelected);
   const dailyChallengeDoneDate = useUserStore((s) => s.dailyChallengeDoneDate);
   const hydrated = useUserStore((s) => s.hydrated);
-  const { isSignedIn, isLoaded } = useAuth();
+  const { data: session, isPending } = authClient.useSession();
+  const isSignedIn = Boolean(session?.user?.id);
+  const isLoaded = !isPending;
   const { push } = useToast();
   const today = todayLocalISO();
 
@@ -320,7 +324,7 @@ function DailyChallengeCard() {
   const earnedXpToday = dailyChallengeDoneDate === today;
 
   useEffect(() => {
-    if (!hydrated || !isClerkConfigured() || !isLoaded || !isSignedIn) return;
+    if (!hydrated || !isAuthConfigured() || !isLoaded || !isSignedIn) return;
     if (dailyChallengeAnsweredDate === today) return;
 
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;

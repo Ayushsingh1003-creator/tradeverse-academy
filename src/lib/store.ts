@@ -63,6 +63,8 @@ type UserState = {
   level: number;
   /** Competitive league tier id (bronze, silver, …) synced from server when signed in. */
   league: string;
+  /** From server `User.role` / admin check — controls Admin nav link. */
+  isAdmin: boolean;
   streak: number;
   lastActiveDate: string | null;
   streakHistory: string[];
@@ -87,6 +89,7 @@ type UserState = {
       league?: string;
       streak?: number;
       streakLocalDate?: string | null;
+      isAdmin?: boolean;
     },
     opts?: { replace?: boolean },
   ) => void;
@@ -169,6 +172,7 @@ const defaultState = {
   xp: 120,
   level: 1,
   league: "bronze",
+  isAdmin: false,
   streak: 0,
   lastActiveDate: null as string | null,
   streakHistory: [] as string[],
@@ -279,6 +283,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         ...(streakFields
           ? { streak: streakFields.streak, lastActiveDate: streakFields.lastActiveDate }
           : {}),
+        ...(data.isAdmin !== undefined ? { isAdmin: data.isAdmin } : {}),
       };
     });
   },

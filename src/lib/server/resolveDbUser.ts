@@ -1,26 +1,23 @@
-import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 
 /**
- * Resolves the DB user for a Clerk session. Returns null if no row matches or if the
- * SQLite schema is behind Prisma (missing columns such as `clerkUserId`). In that case
- * run `npx prisma db push` (or apply migrations) against the same `DATABASE_URL` the app uses.
+ * Resolves the app User row for a Neon Auth session. Creates or links by email on first sign-in.
  */
-export async function resolveUserForClerk(
-  clerkUserId: string,
+export async function resolveUserForAuth(
+  authUserId: string,
   email: string | null,
   profile?: { name?: string | null },
 ) {
   try {
-    const byClerk = await db.user.findUnique({ where: { clerkUserId } });
-    if (byClerk) return byClerk;
+    const byAuth = await db.user.findUnique({ where: { authUserId } });
+    if (byAuth) return byAuth;
     if (!email) return null;
     const byEmail = await db.user.findUnique({ where: { email } });
     if (byEmail) {
-      if (!byEmail.clerkUserId) {
+      if (!byEmail.authUserId) {
         return db.user.update({
           where: { id: byEmail.id },
-          data: { clerkUserId },
+          data: { authUserId },
         });
       }
       return byEmail;
@@ -32,18 +29,15 @@ export async function resolveUserForClerk(
     return db.user.create({
       data: {
         email,
-        clerkUserId,
+        authUserId,
         name: name.slice(0, 80),
       },
-    });  } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      console.warn(
-        "[resolveUserForClerk] Prisma error (is DATABASE_URL in sync? run `npx prisma db push`):",
-        e.code,
-        e.message,
-      );
-      return null;
-    }
-    throw e;
+    });
+  } catch (e) {
+    console.warn("[resolveUserForAuth] Database error (run `npm run db:push`):", e);
+    return null;
   }
 }
+
+/** @deprecated Use resolveUserForAuth */
+export const resolveUserForClerk = resolveUserForAuth;

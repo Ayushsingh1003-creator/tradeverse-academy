@@ -45,6 +45,7 @@ export async function saveLibraryCourse(formData: FormData) {
   }
   revalidatePath("/admin/library");
   revalidatePath("/library");
+  revalidatePath(`/library/${slug}`);
   redirect("/admin/library");
 }
 

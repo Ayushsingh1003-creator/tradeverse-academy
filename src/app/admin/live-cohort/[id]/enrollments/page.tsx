@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import type { LiveCohortEnrollment } from "@/lib/db/schema";
 import { removeEnrollment, setEnrollmentAttended, setEnrollmentPaid } from "../../actions";
 
 export default async function CohortEnrollmentsPage({ params }: { params: { id: string } }) {
@@ -50,7 +51,7 @@ export default async function CohortEnrollmentsPage({ params }: { params: { id: 
                 </td>
               </tr>
             ) : (
-              cohort.enrollments.map((e) => (
+              (cohort.enrollments as LiveCohortEnrollment[]).map((e) => (
                 <tr key={e.id} className="border-b border-white/[0.04]">
                   <td className="px-4 py-3 font-medium">{e.name}</td>
                   <td className="py-3 text-[#999]">{e.email}</td>

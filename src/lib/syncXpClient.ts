@@ -1,6 +1,6 @@
 "use client";
 
-import { isClerkConfigured } from "@/lib/clerkEnabled";
+import { isAuthConfigured } from "@/lib/auth/enabled";
 import type { XpEarnReason } from "@/lib/xpEarnPolicy";
 
 export async function syncXpEarn(payload: {
@@ -13,7 +13,7 @@ export async function syncXpEarn(payload: {
   /** From `Intl.DateTimeFormat().resolvedOptions().timeZone` for server streak reminders. */
   ianaTimezone?: string;
 }) {
-  if (!isClerkConfigured()) return;
+  if (!isAuthConfigured()) return;
   const body: Record<string, unknown> = {
     amount: payload.amount,
     reason: payload.reason,

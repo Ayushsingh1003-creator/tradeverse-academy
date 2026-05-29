@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { LibraryVideo } from "@prisma/client";
+import type { LibraryVideo } from "@/lib/db/schema";
 import { updateLibraryVideo } from "../../actions";
 
 function tagsDisplay(tagsJson: string) {

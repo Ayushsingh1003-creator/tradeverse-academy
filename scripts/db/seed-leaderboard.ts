@@ -1,12 +1,12 @@
 /**
- * Seeds leaderboard demo users + weekly XP ledger rows (local SQLite).
+ * Seeds leaderboard demo users + weekly XP ledger rows.
  * Safe to re-run: upserts by email, skips existing ledger dupes via idempotency keys.
- *
- * Usage: npx tsx prisma/seed-leaderboard.ts
  */
-import { PrismaClient } from "@prisma/client";
+import { config } from "dotenv";
+import { resolve } from "node:path";
 
-const prisma = new PrismaClient();
+config({ path: resolve(process.cwd(), ".env.local") });
+config({ path: resolve(process.cwd(), ".env") });
 
 const DEMO_TRADERS = [
   { email: "ava@tradeverse.demo", name: "Ava Chen", xp: 14200, level: 12, league: "gold", country: "IN" },
@@ -32,8 +32,8 @@ const WEEKLY_XP_SPLITS: Record<string, number[]> = {
   "free@tradeverse.com": [120, 100, 80],
 };
 
-async function ensureSeason() {
-  const open = await prisma.leagueSeason.findFirst({
+async function ensureSeason(db: Awaited<typeof import("../../src/lib/db")>["db"]) {
+  const open = await db.leagueSeason.findFirst({
     where: { finalizedAt: null },
     orderBy: { startsAt: "desc" },
   });
@@ -41,20 +41,23 @@ async function ensureSeason() {
 
   const now = new Date();
   const endsAt = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-  return prisma.leagueSeason.create({
+  return db.leagueSeason.create({
     data: { startsAt: now, endsAt },
   });
 }
 
 async function main() {
-  const season = await ensureSeason();
+  const { createId } = await import("@paralleldrive/cuid2");
+  const { db } = await import("../../src/lib/db");
 
+  const season = await ensureSeason(db);
   const userIds = new Map<string, string>();
 
   for (const trader of DEMO_TRADERS) {
-    const user = await prisma.user.upsert({
+    const user = await db.user.upsert({
       where: { email: trader.email },
       create: {
+        id: createId(),
         email: trader.email,
         name: trader.name,
         xp: trader.xp,
@@ -73,16 +76,16 @@ async function main() {
     userIds.set(trader.email, user.id);
   }
 
-  const premium = await prisma.user.findUnique({ where: { email: "premium@tradeverse.com" } });
-  const free = await prisma.user.findUnique({ where: { email: "free@tradeverse.com" } });
+  const premium = await db.user.findUnique({ where: { email: "premium@tradeverse.com" } });
+  const free = await db.user.findUnique({ where: { email: "free@tradeverse.com" } });
   if (premium) userIds.set("premium@tradeverse.com", premium.id);
   if (free) userIds.set("free@tradeverse.com", free.id);
 
   if (premium && premium.country == null) {
-    await prisma.user.update({ where: { id: premium.id }, data: { country: "IN" } });
+    await db.user.update({ where: { id: premium.id }, data: { country: "IN" } });
   }
   if (free && free.country == null) {
-    await prisma.user.update({ where: { id: free.id }, data: { country: "IN" } });
+    await db.user.update({ where: { id: free.id }, data: { country: "IN" } });
   }
 
   const now = Date.now();
@@ -97,9 +100,10 @@ async function main() {
       const key = `seed-weekly-${season.id}-${userId}-${i}`;
       const createdAt = new Date(Math.max(season.startsAt.getTime(), now - (2 - i) * dayMs));
 
-      await prisma.xpLedger.upsert({
+      await db.xpLedger.upsert({
         where: { idempotencyKey: key },
         create: {
+          id: createId(),
           userId,
           amount,
           reason: "lesson",
@@ -115,13 +119,13 @@ async function main() {
   if (premium && userIds.has("ava@tradeverse.demo")) {
     const avaId = userIds.get("ava@tradeverse.demo")!;
     const miaId = userIds.get("mia@tradeverse.demo");
-    await prisma.follow.upsert({
+    await db.follow.upsert({
       where: { followerId_followingId: { followerId: premium.id, followingId: avaId } },
       create: { followerId: premium.id, followingId: avaId },
       update: {},
     });
     if (miaId) {
-      await prisma.follow.upsert({
+      await db.follow.upsert({
         where: { followerId_followingId: { followerId: premium.id, followingId: miaId } },
         create: { followerId: premium.id, followingId: miaId },
         update: {},
@@ -132,9 +136,7 @@ async function main() {
   console.log(`Leaderboard seed complete (${DEMO_TRADERS.length} demo traders, season ${season.id}).`);
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => prisma.$disconnect());
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

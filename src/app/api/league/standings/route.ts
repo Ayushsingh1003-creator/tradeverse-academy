@@ -1,7 +1,8 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+export { dynamic } from "@/lib/route-dynamic";
+
+import { requireDbUser } from "@/lib/auth/api";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { resolveUserForClerk } from "@/lib/server/resolveDbUser";
 import { finalizeSeasonIfDue } from "@/lib/league/finalizeRound";
 import { ensureActiveSeason, getActiveSeason } from "@/lib/league/season";
 import { isValidLeagueId, leagueColor, leagueDisplayName } from "@/lib/league/tiers";
@@ -11,13 +12,9 @@ function msUntilEnd(endsAt: Date): number {
 }
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const clerk = await currentUser();
-  const email = clerk?.primaryEmailAddress?.emailAddress ?? null;
-  const me = await resolveUserForClerk(userId, email);
-  if (!me) return NextResponse.json({ error: "No account" }, { status: 404 });
+  const authResult = await requireDbUser();
+  if (authResult.error) return authResult.error;
+  const { dbUser: me } = authResult;
 
   await finalizeSeasonIfDue();
   let season = await getActiveSeason();
@@ -28,11 +25,11 @@ export async function GET() {
     await db.user.update({ where: { id: me.id }, data: { league: leagueId } });
   }
 
-  const peers = await db.user.findMany({
+  const peers = (await db.user.findMany({
     where: { league: leagueId },
-    select: { id: true, name: true, avatar: true, clerkUserId: true },
+    select: { id: true, name: true, avatar: true, authUserId: true },
     take: 200,
-  });
+  })) as { id: string; name: string; avatar: string | null; authUserId: string | null }[];
 
   const peerIds = peers.map((p) => p.id);
   const sums =
@@ -94,3 +91,4 @@ export async function GET() {
     myPeriodXp: myRow?.periodXp ?? 0,
   });
 }
+

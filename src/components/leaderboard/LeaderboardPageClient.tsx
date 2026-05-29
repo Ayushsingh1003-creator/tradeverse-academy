@@ -120,7 +120,7 @@ export function LeaderboardPageClient() {
             <p className="text-sm text-red-200">{error}</p>
             <p className="mt-2 text-xs text-text-muted">
               Ensure <code className="text-white/80">DATABASE_URL</code> points at your local SQLite DB and run{" "}
-              <code className="text-white/80">npx prisma db push && npx tsx prisma/seed-leaderboard.ts</code>.
+              <code className="text-white/80">npm run db:setup</code>.
             </p>
           </Card>
         ) : null}

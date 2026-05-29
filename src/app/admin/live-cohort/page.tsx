@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import type { LiveCohort } from "@/lib/db/schema";
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -15,10 +16,9 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default async function AdminLiveCohortPage() {
-  const cohorts = await db.liveCohort.findMany({
+  const cohorts = (await db.liveCohort.findMany({
     orderBy: { createdAt: "desc" },
-    include: { _count: { select: { enrollments: true } } },
-  });
+  })) as LiveCohort[];
 
   return (
     <div>
@@ -39,7 +39,7 @@ export default async function AdminLiveCohortPage() {
           </p>
         ) : null}
         {cohorts.map((c) => {
-          const enrolled = c._count.enrollments;
+          const enrolled = Math.max(0, c.seats - c.seatsLeft);
           const fillPct = c.seats > 0 ? Math.round((enrolled / c.seats) * 100) : 0;
           return (
             <div key={c.id} className="flex flex-col gap-4 rounded-2xl border border-white/[0.08] bg-[#1E1E1E] p-4 sm:flex-row sm:items-center">

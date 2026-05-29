@@ -6,11 +6,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppNav } from "@/components/layout/AppNav";
 import { Button } from "@/components/ui/Button";
 import type { LibraryCourse, LibraryVideo } from "@/lib/data/library";
-import { isClerkConfigured } from "@/lib/clerkEnabled";
+import { isAuthConfigured } from "@/lib/auth/enabled";
 import { getYoutubeEmbedUrl } from "@/lib/youtubeEmbed";
 
 async function postLibraryEnroll(slug: string, lastVideoId?: string | null) {
-  if (!isClerkConfigured()) return;
+  if (!isAuthConfigured()) return;
   try {
     await fetch("/api/library/enroll", {
       method: "POST",

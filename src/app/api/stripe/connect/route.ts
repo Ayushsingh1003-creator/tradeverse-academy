@@ -1,9 +1,9 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { getAuthUserId } from "@/lib/auth/session";
 
 /** Stripe Connect onboarding URL — wire Stripe Account Links in production */
 export async function POST() {
-  const { userId } = await auth();
+  const userId = await getAuthUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const accountId = process.env.STRIPE_CONNECT_ACCOUNT_ID;
@@ -16,3 +16,4 @@ export async function POST() {
 
   return NextResponse.json({ onboardingUrl: `https://connect.stripe.com/express/oauth/authorize?client_id=${accountId}` });
 }
+

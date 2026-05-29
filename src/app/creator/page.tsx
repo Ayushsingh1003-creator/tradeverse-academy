@@ -11,7 +11,7 @@ export default function CreatorLandingPage() {
         <p className="text-lg text-text-muted">70% revenue share to creators · 30% platform. Stripe Connect for payouts.</p>
         <Card>
           <p className="font-semibold">Apply to become a Creator</p>
-          <p className="mt-2 text-sm text-text-muted">Submit the form — admins review via CreatorApplication in Prisma.</p>
+          <p className="mt-2 text-sm text-text-muted">Submit the form — admins review creator applications in the dashboard.</p>
           <Link href="/creator/studio" className="mt-4 inline-block text-accent underline">
             Creator studio (approved users)
           </Link>

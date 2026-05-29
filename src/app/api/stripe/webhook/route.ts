@@ -28,15 +28,15 @@ export async function POST(req: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    const clerkUserId = session.metadata?.clerkUserId;
+    const authUserId = session.metadata?.authUserId ?? session.metadata?.clerkUserId;
     const subscriptionId = typeof session.subscription === "string" ? session.subscription : null;
-    if (clerkUserId) {
+    if (authUserId) {
       const subscription = subscriptionId ? (await stripe.subscriptions.retrieve(subscriptionId) as unknown as Stripe.Subscription) : null;
       const priceId = subscription?.items.data[0]?.price.id ?? null;
       await db.subscription.upsert({
-        where: { clerkUserId },
+        where: { clerkUserId: authUserId },
         create: {
-          clerkUserId,
+          clerkUserId: authUserId,
           stripeCustomerId: typeof session.customer === "string" ? session.customer : null,
           stripeSubscriptionId: subscriptionId,
           stripePriceId: priceId,

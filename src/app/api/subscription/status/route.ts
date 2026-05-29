@@ -1,12 +1,14 @@
+export { dynamic } from "@/lib/route-dynamic";
+
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthUserId } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 
 export async function GET() {
-  const { userId } = await auth();
+  const userId = await getAuthUserId();
   if (!userId) return NextResponse.json({ plan: "free", status: "inactive", isPremium: false });
 
-  const subscription = await db.subscription.findUnique({ where: { clerkUserId: userId } });
+  const subscription = await db.subscription.findUnique({ where: { authUserId: userId } });
   const plan = subscription?.plan ?? "free";
   const status = subscription?.status ?? "inactive";
 
@@ -16,3 +18,4 @@ export async function GET() {
     isPremium: plan !== "free" && ["active", "trialing"].includes(status),
   });
 }
+

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import type { LibraryCourse } from "@/lib/db/schema";
 
 export default async function AdminLibraryPage() {
-  const courses = await db.libraryCourse.findMany({
+  const courses = (await db.libraryCourse.findMany({
     orderBy: { order: "asc" },
-    include: { _count: { select: { videos: true } } },
-  });
+  })) as LibraryCourse[];
 
   return (
     <div>
@@ -38,7 +38,7 @@ export default async function AdminLibraryPage() {
               <div>
                 <h3 className="font-bold">{course.title}</h3>
                 <p className="mt-1 text-xs text-[#666]">
-                  {course._count.videos} videos · {course.level}
+                  {course.level}
                 </p>
               </div>
               <span
@@ -60,7 +60,7 @@ export default async function AdminLibraryPage() {
                 href={`/admin/library/${course.id}/videos`}
                 className="flex-1 rounded-xl border border-white/10 py-2 text-center text-xs font-semibold hover:bg-white/[0.05]"
               >
-                Videos ({course._count.videos})
+                Videos
               </Link>
             </div>
           </div>

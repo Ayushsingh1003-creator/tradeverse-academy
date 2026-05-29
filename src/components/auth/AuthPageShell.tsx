@@ -1,8 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { CLERK_HOME_URL, CLERK_SIGN_IN_URL, CLERK_SIGN_UP_URL } from "@/lib/clerkUrls";
-import "@/styles/clerk-auth.css";
+import {
+  AUTH_HOME_URL,
+  AUTH_SIGN_IN_URL,
+  AUTH_SIGN_UP_URL,
+} from "@/lib/auth/urls";
 
 const FEATURES = [
   { icon: "📈", title: "Interactive lessons", desc: "Charts, drills, and real market scenarios" },
@@ -12,19 +15,22 @@ const FEATURES = [
 
 type AuthVariant = "sign-in" | "sign-up";
 
-const COPY: Record<AuthVariant, { headline: string; sub: string; switchLabel: string; switchHref: string; switchCta: string }> = {
+const COPY: Record<
+  AuthVariant,
+  { headline: string; sub: string; switchLabel: string; switchHref: string; switchCta: string }
+> = {
   "sign-in": {
     headline: "Welcome back",
     sub: "Pick up where you left off — your streak and progress are waiting.",
     switchLabel: "New here?",
-    switchHref: CLERK_SIGN_UP_URL,
+    switchHref: AUTH_SIGN_UP_URL,
     switchCta: "Create free account",
   },
   "sign-up": {
     headline: "Start learning today",
     sub: "Master trading one concept at a time. Free to begin — upgrade when you're ready.",
     switchLabel: "Already have an account?",
-    switchHref: CLERK_SIGN_IN_URL,
+    switchHref: AUTH_SIGN_IN_URL,
     switchCta: "Sign in",
   },
 };
@@ -32,11 +38,11 @@ const COPY: Record<AuthVariant, { headline: string; sub: string; switchLabel: st
 export function AuthPageShell({
   variant,
   children,
-  clerkEnabled,
+  authEnabled,
 }: {
   variant: AuthVariant;
   children: ReactNode;
-  clerkEnabled: boolean;
+  authEnabled: boolean;
 }) {
   const copy = COPY[variant];
 
@@ -52,11 +58,10 @@ export function AuthPageShell({
       />
 
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col lg:flex-row">
-        {/* Brand panel */}
         <section className="flex flex-col justify-between border-b border-white/[0.06] px-6 py-8 lg:w-[44%] lg:border-b-0 lg:border-r lg:px-10 lg:py-12">
           <div>
             <Link
-              href={CLERK_HOME_URL}
+              href={AUTH_HOME_URL}
               className="inline-flex items-center gap-3 no-underline transition-opacity hover:opacity-90"
             >
               <Image
@@ -94,13 +99,12 @@ export function AuthPageShell({
           </div>
 
           <p className="mt-8 text-xs text-[#555] lg:mt-0">
-            <Link href={CLERK_HOME_URL} className="text-[#88C9F7] hover:underline">
+            <Link href={AUTH_HOME_URL} className="text-[#88C9F7] hover:underline">
               ← Back to courses
             </Link>
           </p>
         </section>
 
-        {/* Form panel */}
         <section className="flex min-w-0 flex-1 flex-col justify-center px-6 py-10 lg:px-12 lg:py-12">
           <div className="mx-auto w-full min-w-0 max-w-[420px]">
             <div className="mb-6 flex items-center justify-between gap-3 lg:hidden">
@@ -114,14 +118,15 @@ export function AuthPageShell({
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#1E1E1E]/90 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-sm sm:p-6">
-              {clerkEnabled ? (
-                <div className="tv-auth-clerk w-full min-w-0">{children}</div>
+              {authEnabled ? (
+                <div className="w-full min-w-0">{children}</div>
               ) : (
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-left">
-                  <p className="text-sm font-semibold text-amber-100">Clerk not configured</p>
+                  <p className="text-sm font-semibold text-amber-100">Auth not configured</p>
                   <p className="mt-1 text-xs text-amber-200/80">
-                    Add <code className="rounded bg-black/30 px-1">NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> to{" "}
-                    <code className="rounded bg-black/30 px-1">.env.local</code> to enable sign-in.
+                    Add <code className="rounded bg-black/30 px-1">NEON_AUTH_BASE_URL</code> and{" "}
+                    <code className="rounded bg-black/30 px-1">NEON_AUTH_COOKIE_SECRET</code> to{" "}
+                    <code className="rounded bg-black/30 px-1">.env.local</code>.
                   </p>
                 </div>
               )}

@@ -1,6 +1,6 @@
 "use client";
 
-import type { LiveCohort } from "@prisma/client";
+import type { LiveCohort } from "@/lib/db/schema";
 import Link from "next/link";
 import {
   AdminFormLayout,

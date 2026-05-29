@@ -5,18 +5,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NavLink } from "@/components/layout/NavLink";
 import { useEffect } from "react";
-import { SignedIn, SignedOut, UserButton, useAuth, useUser } from "@clerk/nextjs";
-import { isClerkConfigured } from "@/lib/clerkEnabled";
-import { CLERK_AFTER_SIGN_OUT_URL } from "@/lib/clerkUrls";
-import { getClientAdminAllowlist, isAdminEmail } from "@/lib/admin/adminAllowlist";
+import { authClient } from "@/lib/auth/client";
+import { isAuthConfigured } from "@/lib/auth/enabled";
+import { useShowAdminNav } from "@/lib/admin/useShowAdminNav";
 import { LiveCohortNavButton } from "@/components/layout/LiveCohortNavButton";
 import { MobileMenu } from "@/components/layout/MobileMenu";
 import { StreakNavLink } from "@/components/layout/StreakNavLink";
+import { AuthUserMenu } from "@/components/auth/AuthUserMenu";
 import { useUserStore } from "@/lib/store";
-
-const clerkEnabled =
-  Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) &&
-  !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.includes("REPLACE_ME");
 
 export function AppNav() {
   const hydrate = useUserStore((state) => state.hydrate);
@@ -24,18 +20,15 @@ export function AppNav() {
   const streak = useUserStore((state) => state.streak);
   const xp = useUserStore((state) => state.xp);
   const pathname = usePathname();
-  const { user, isLoaded } = useUser();
-  const { isSignedIn } = useAuth();
-  const navAdminEmails = getClientAdminAllowlist();
-  const showAdmin =
-    clerkEnabled &&
-    isLoaded &&
-    isAdminEmail(user?.primaryEmailAddress?.emailAddress, navAdminEmails);
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+  const isSignedIn = Boolean(user?.id);
+  const showAdmin = useShowAdminNav();
   const adminActive = pathname === "/admin" || pathname.startsWith("/admin/");
 
   useEffect(() => {
     if (hydrated) return;
-    if (isClerkConfigured() && isSignedIn) return;
+    if (isAuthConfigured() && isSignedIn) return;
     hydrate();
   }, [hydrated, hydrate, isSignedIn]);
 
@@ -45,10 +38,7 @@ export function AppNav() {
       style={{ backdropFilter: "blur(8px)" }}
     >
       <nav className="mx-auto flex h-[52px] max-w-[1200px] items-center gap-0 px-5">
-        <Link
-          href="/dashboard"
-          className="mr-8 flex items-center no-underline"
-        >
+        <Link href="/dashboard" className="mr-8 flex items-center no-underline">
           <Image
             src="/images/app-logo.png"
             alt="Tradeverse Academy"
@@ -89,43 +79,9 @@ export function AppNav() {
             </Link>
           </div>
 
-          {clerkEnabled ? (
-            <>
-              <SignedIn>
-                <span className="[&_.cl-userButtonTrigger]:h-[34px] [&_.cl-userButtonTrigger]:w-[34px]">
-                  <UserButton afterSignOutUrl={CLERK_AFTER_SIGN_OUT_URL} />
-                </span>
-              </SignedIn>
-              <SignedOut>
-                <Link
-                  href="/sign-in"
-                  className="rounded-full border border-[rgba(255,255,255,0.12)] px-4 py-2 text-sm md:inline-block"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/sign-up"
-                  className="hidden rounded-full bg-[#456DFF] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#2A4AE8] md:inline-block"
-                >
-                  Start Free
-                </Link>
-              </SignedOut>
-            </>
-          ) : (
-            <>
-              <Link href="/sign-in" className="rounded-full border border-[rgba(255,255,255,0.12)] px-4 py-2 text-sm md:inline-block">
-                Sign In
-              </Link>
-              <Link
-                href="/sign-up"
-                className="hidden rounded-full bg-[#456DFF] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#2A4AE8] md:inline-block"
-              >
-                Start Free
-              </Link>
-            </>
-          )}
+          <AuthUserMenu />
 
-          <MobileMenu streak={streak} xp={xp} clerkEnabled={clerkEnabled} />
+          <MobileMenu streak={streak} xp={xp} />
         </div>
       </nav>
     </header>

@@ -1,8 +1,7 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import { requireDbUser } from "@/lib/auth/api";
 import { applyXp } from "@/lib/xp";
 import { isXpEarnReason, maxXpForReason } from "@/lib/xpEarnPolicy";
-import { resolveUserForClerk } from "@/lib/server/resolveDbUser";
 import { isValidIanaTimezone } from "@/lib/server/localDateInTimeZone";
 import { computeNewStreak } from "@/lib/streak";
 import { db } from "@/lib/db";
@@ -14,14 +13,9 @@ const LOCAL_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const STREAK_SYNC_REASONS = new Set<string>(["lesson", "streak", "daily_challenge"]);
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const clerk = await currentUser();
-  const email = clerk?.primaryEmailAddress?.emailAddress ?? null;
-  const name = clerk?.fullName ?? clerk?.firstName ?? null;
-  const dbUser = await resolveUserForClerk(userId, email, { name });
-  if (!dbUser) return NextResponse.json({ error: "No account" }, { status: 404 });
+  const authResult = await requireDbUser();
+  if (authResult.error) return authResult.error;
+  const { dbUser } = authResult;
 
   let body: {
     amount?: number;

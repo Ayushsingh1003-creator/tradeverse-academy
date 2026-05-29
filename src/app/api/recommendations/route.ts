@@ -1,25 +1,27 @@
-import { auth } from "@clerk/nextjs/server";
+export { dynamic } from "@/lib/route-dynamic";
+
 import { NextResponse } from "next/server";
+import { getAuthUserId } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import type { SRSCard } from "@/lib/db/schema";
 import { COURSES } from "@/lib/data/courses";
 import { LESSONS } from "@/lib/data/lessons";
 
 export async function GET() {
-  const { userId } = await auth();
+  const userId = await getAuthUserId();
 
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
-  const reviewsDue =
-    userId
-      ? await db.sRSCard.findMany({
-          where: { clerkUserId: userId, nextReviewDate: { lte: today } },
-          take: 8,
-        })
-      : [];
+  const reviewsDue: SRSCard[] = userId
+    ? ((await db.sRSCard.findMany({
+        where: { clerkUserId: userId, nextReviewDate: { lte: today } },
+        take: 8,
+      })) as SRSCard[])
+    : [];
 
   const reviewLessons = reviewsDue
-    .map((c) => LESSONS.find((l) => l.slug === c.lessonSlug))
+    .map((c: SRSCard) => LESSONS.find((l) => l.slug === c.lessonSlug))
     .filter(Boolean)
     .map((l) => ({ slug: l!.slug, title: l!.title }));
 
@@ -40,3 +42,4 @@ export async function GET() {
     courseTitle: COURSES[0]?.title ?? "Trading Foundations",
   });
 }
+

@@ -1,16 +1,8 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
 import Script from "next/script";
-import { isClerkConfigured } from "@/lib/clerkEnabled";
-import {
-  CLERK_AFTER_SIGN_IN_URL,
-  CLERK_AFTER_SIGN_OUT_URL,
-  CLERK_AFTER_SIGN_UP_URL,
-  CLERK_SIGN_IN_URL,
-  CLERK_SIGN_UP_URL,
-} from "@/lib/clerkUrls";
+import { isAuthConfigured } from "@/lib/auth/enabled";
+import { AuthSessionHydration } from "@/components/providers/AuthSessionHydration";
 import { AppBackground } from "@/components/layout/AppBackground";
-import { ClerkUserHydration } from "@/components/providers/ClerkUserHydration";
 import { LiquidGlassFilter } from "@/components/ui/LiquidGlassFilter";
 import "./globals.css";
 
@@ -53,23 +45,8 @@ export default function RootLayout({
         `}</Script>
         <AppBackground />
         <div className="relative z-10">
-          {isClerkConfigured() ? (
-            <ClerkProvider
-              publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}
-              signInUrl={CLERK_SIGN_IN_URL}
-              signUpUrl={CLERK_SIGN_UP_URL}
-              afterSignInUrl={CLERK_AFTER_SIGN_IN_URL}
-              afterSignUpUrl={CLERK_AFTER_SIGN_UP_URL}
-              signInFallbackRedirectUrl={CLERK_AFTER_SIGN_IN_URL}
-              signUpFallbackRedirectUrl={CLERK_AFTER_SIGN_UP_URL}
-              afterSignOutUrl={CLERK_AFTER_SIGN_OUT_URL}
-            >
-              <ClerkUserHydration />
-              {children}
-            </ClerkProvider>
-          ) : (
-            children
-          )}
+          {isAuthConfigured() ? <AuthSessionHydration /> : null}
+          {children}
         </div>
       </body>
     </html>

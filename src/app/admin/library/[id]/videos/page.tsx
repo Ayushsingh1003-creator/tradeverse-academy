@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import type { LibraryVideo } from "@/lib/db/schema";
 import { addLibraryVideo, deleteLibraryVideo, moveLibraryVideo } from "../../actions";
 import { LibraryVideoEditRow } from "./LibraryVideoEditRow";
 
@@ -77,7 +78,7 @@ export default async function AdminLibraryVideosPage({ params }: { params: { id:
             </tr>
           </thead>
           <tbody>
-            {course.videos.map((v, idx) => (
+            {(course.videos as LibraryVideo[]).map((v, idx) => (
               <Fragment key={v.id}>
                 <tr className="border-b border-white/[0.04]">
                   <td className="px-4 py-3 text-[#666]">{idx + 1}</td>

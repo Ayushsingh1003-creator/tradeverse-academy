@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { isClerkConfigured } from "@/lib/clerkEnabled";
+import { isAuthConfigured } from "@/lib/auth/enabled";
 
 type Reply = {
   id: string;
@@ -41,7 +41,9 @@ function insightBadge(body: string) {
 }
 
 export function LessonDiscussion({ lessonSlug }: { lessonSlug: string }) {
-  const clerkEnabled = isClerkConfigured();
+  const authEnabled = isAuthConfigured();
+  const { data: session } = authClient.useSession();
+  const isSignedIn = Boolean(session?.user?.id);
   const [sort, setSort] = useState<"helpful" | "newest" | "mine">("helpful");
   const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState("");
@@ -109,24 +111,21 @@ export function LessonDiscussion({ lessonSlug }: { lessonSlug: string }) {
         ))}
       </div>
 
-      {clerkEnabled ? (
-        <>
-          <SignedIn>
-            <div className="mt-4 space-y-2">
-              <textarea
-                value={body}
-                maxLength={500}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="Share a trading insight (max 500 chars)..."
-                className="min-h-[100px] w-full rounded-2xl border border-border bg-surface2 px-3 py-2 text-sm"
-              />
-              <Button onClick={() => void submitComment()}>Post comment</Button>
-            </div>
-          </SignedIn>
-          <SignedOut>
-            <p className="mt-4 text-sm text-text-muted">Sign in to join the discussion.</p>
-          </SignedOut>
-        </>
+      {authEnabled ? (
+        isSignedIn ? (
+          <div className="mt-4 space-y-2">
+            <textarea
+              value={body}
+              maxLength={500}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Share a trading insight (max 500 chars)..."
+              className="min-h-[100px] w-full rounded-2xl border border-border bg-surface2 px-3 py-2 text-sm"
+            />
+            <Button onClick={() => void submitComment()}>Post comment</Button>
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-text-muted">Sign in to join the discussion.</p>
+        )
       ) : (
         <p className="mt-4 text-sm text-text-muted">Sign in is unavailable in this environment.</p>
       )}
@@ -148,12 +147,10 @@ export function LessonDiscussion({ lessonSlug }: { lessonSlug: string }) {
               <button type="button" className="text-xs text-accent" onClick={() => void toggleUpvote(c.id)}>
                 ▲ {c.upvotes}
               </button>
-              {clerkEnabled ? (
-                <SignedIn>
-                  <button type="button" className="text-xs text-text-muted" onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}>
-                    Reply
-                  </button>
-                </SignedIn>
+              {authEnabled && isSignedIn ? (
+                <button type="button" className="text-xs text-text-muted" onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}>
+                  Reply
+                </button>
               ) : null}
             </div>
             {replyTo === c.id ? (

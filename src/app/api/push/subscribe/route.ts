@@ -1,9 +1,9 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { getAuthUserId } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 
 export async function POST(request: Request) {
-  const { userId } = await auth();
+  const userId = await getAuthUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = (await request.json()) as {
@@ -25,3 +25,4 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ ok: true });
 }
+

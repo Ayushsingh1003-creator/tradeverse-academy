@@ -1,10 +1,12 @@
 import { db } from "@/lib/db";
-import { getLibraryCourseBySlug, getLibraryCourses } from "@/lib/data/library";
+import { getLibraryCourseBySlug } from "@/lib/data/library";
 import { getLiveClassBySlug, getLiveClasses } from "@/lib/data/liveClasses";
+import type { LibraryCourse } from "@/lib/data/library";
+import type { LiveClassCourse } from "@/lib/data/liveClasses";
 import { mapDbLibraryCourse } from "@/lib/libraryDbMapper";
 import { mapLiveCohortRow } from "@/lib/liveCohortMapper";
 
-export async function getLibraryCoursesFromDb(): Promise<ReturnType<typeof getLibraryCourses>> {
+export async function getLibraryCoursesFromDb(): Promise<LibraryCourse[]> {
   try {
     const rows = await db.libraryCourse.findMany({
       where: { published: true },
@@ -31,7 +33,7 @@ export async function getLibraryCourseBySlugFromDb(slug: string) {
   return getLibraryCourseBySlug(slug);
 }
 
-export async function getLiveClassesFromDb() {
+export async function getLiveClassesFromDb(): Promise<LiveClassCourse[]> {
   try {
     const rows = await db.liveCohort.findMany({
       where: { status: "published" },

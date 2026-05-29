@@ -1,8 +1,8 @@
 import { getServerAdminAllowlist } from "@/lib/admin/adminAllowlist";
-import { isClerkConfigured } from "@/lib/clerkEnabled";
+import { isAuthConfigured } from "@/lib/auth/enabled";
 
 export default function AdminSettingsPage() {
-  const hasClerk = isClerkConfigured();
+  const hasAuth = isAuthConfigured();
   const allowCount = getServerAdminAllowlist().length;
   const envAdmins = (process.env.ADMIN_EMAILS ?? "").split(",").filter((s) => s.trim()).length;
 
@@ -11,21 +11,21 @@ export default function AdminSettingsPage() {
       <h1 className="mb-6 text-2xl font-black">Settings</h1>
       <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#1E1E1E] p-6 text-sm text-[#ccc]">
         <p>
-          <span className="font-semibold text-white">Admin access</span> — allowed emails: built-in list plus{" "}
-          <code className="rounded bg-black/40 px-1 text-[#88C9F7]">ADMIN_EMAILS</code> in{" "}
-          <code className="rounded bg-black/40 px-1">.env.local</code> ({envAdmins} from env, {allowCount} total
-          allowed).
+          <span className="font-semibold text-white">Admin access</span> — allowlisted emails (built-in +{" "}
+          <code className="rounded bg-black/40 px-1 text-[#88C9F7]">ADMIN_EMAILS</code>, {allowCount} total) or any
+          user with <code className="rounded bg-black/40 px-1">User.role = admin</code> in the database (
+          {envAdmins} extra emails from env).
         </p>
         <p>
-          <span className="font-semibold text-white">Clerk:</span>{" "}
-          {hasClerk ? "enabled — non-admins cannot open /admin" : "not configured (admin open for local dev)"}
+          <span className="font-semibold text-white">Neon Auth:</span>{" "}
+          {hasAuth ? "enabled — non-admins cannot open /admin" : "not configured (admin open for local dev)"}
         </p>
         <p>
           <span className="font-semibold text-white">Content types:</span>
         </p>
         <ul className="list-disc space-y-1 pl-5 text-[#999]">
           <li>
-            <strong className="text-[#ccc]">Library & Live cohort</strong> — edit in admin, stored in Prisma
+            <strong className="text-[#ccc]">Library & Live cohort</strong> — edit in admin, stored in Neon Postgres
           </li>
           <li>
             <strong className="text-[#ccc]">Courses & lesson pages</strong> — edit in{" "}
@@ -39,8 +39,8 @@ export default function AdminSettingsPage() {
           </li>
         </ul>
         <p className="text-xs text-[#555]">
-          Database: <code className="text-[#88C9F7]">npx prisma db push</code> then{" "}
-          <code className="text-[#88C9F7]">npm run prisma:seed</code>
+          Database: <code className="text-[#88C9F7]">npm run db:push</code> then{" "}
+          <code className="text-[#88C9F7]">npm run db:setup</code>
         </p>
       </div>
     </div>

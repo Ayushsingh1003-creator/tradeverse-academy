@@ -1,11 +1,13 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { LibraryPageClient } from "@/components/library/LibraryPageClient";
-import { isClerkConfigured } from "@/lib/clerkEnabled";
+import { isAuthConfigured } from "@/lib/auth/enabled";
+import { getAuthUserEmail, getAuthUserId } from "@/lib/auth/session";
 import type { LibraryCourse, LibraryResumeItem } from "@/lib/data/library";
 import { getStandaloneVideos } from "@/lib/data/library";
 import { getLibraryEnrollmentsForUser } from "@/lib/queries/libraryEnrollments";
 import { getLibraryCoursesFromDb } from "@/lib/queries/contentFromDb";
-import { resolveUserForClerk } from "@/lib/server/resolveDbUser";
+import { resolveUserForAuth } from "@/lib/server/resolveDbUser";
+
+export const dynamic = "force-dynamic";
 
 export default async function LibraryPage() {
   const courses = await getLibraryCoursesFromDb();
@@ -19,12 +21,11 @@ export default async function LibraryPage() {
   const tags = Array.from(tagSet).sort((a, b) => a.localeCompare(b));
 
   const resumeItems: LibraryResumeItem[] = [];
-  if (isClerkConfigured()) {
-    const { userId } = await auth();
+  if (isAuthConfigured()) {
+    const userId = await getAuthUserId();
     if (userId) {
-      const clerk = await currentUser();
-      const email = clerk?.primaryEmailAddress?.emailAddress ?? null;
-      const dbUser = await resolveUserForClerk(userId, email);
+      const email = await getAuthUserEmail();
+      const dbUser = await resolveUserForAuth(userId, email);
       if (dbUser) {
         const enrollments = await getLibraryEnrollmentsForUser(dbUser.id);
         const bySlug = new Map<string, LibraryCourse>(courses.map((c) => [c.slug, c]));

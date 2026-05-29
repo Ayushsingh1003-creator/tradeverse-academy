@@ -1,4 +1,4 @@
-import type { LibraryCourse as DbCourse } from "@prisma/client";
+import type { LibraryCourse as DbCourse } from "@/lib/db/schema";
 import Link from "next/link";
 import {
   AdminFormLayout,

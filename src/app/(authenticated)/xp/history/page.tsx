@@ -1,11 +1,11 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppNav } from "@/components/layout/AppNav";
 import { Card } from "@/components/ui/Card";
-import { isClerkConfigured } from "@/lib/clerkEnabled";
+import { authClient } from "@/lib/auth/client";
+import { isAuthConfigured } from "@/lib/auth/enabled";
 import { useUserStore } from "@/lib/store";
 
 type LedgerRow = {
@@ -53,7 +53,9 @@ function HistoryList({ rows }: { rows: Array<LedgerRow | LocalRow> }) {
 }
 
 function XpHistoryContent() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { data: session, isPending } = authClient.useSession();
+  const isSignedIn = Boolean(session?.user?.id);
+  const isLoaded = !isPending;
   const hydrate = useUserStore((s) => s.hydrate);
   const lessonHistory = useUserStore((s) => s.lessonHistory);
 
@@ -115,7 +117,7 @@ function XpHistoryContent() {
   }, [hydrate]);
 
   useEffect(() => {
-    if (!isClerkConfigured() || !isLoaded || !isSignedIn) {
+    if (!isAuthConfigured() || !isLoaded || !isSignedIn) {
       setServerRows([]);
       setHasMore(false);
       setLoading(false);
@@ -124,7 +126,7 @@ function XpHistoryContent() {
     void load(0, false);
   }, [isLoaded, isSignedIn, load]);
 
-  const showServer = isClerkConfigured() && isLoaded && isSignedIn;
+  const showServer = isAuthConfigured() && isLoaded && isSignedIn;
   const displayRows = showServer && serverRows.length > 0 ? serverRows : localRows;
   const showLocalHint = showServer && serverRows.length === 0 && localRows.length > 0;
   const showEmpty = displayRows.length === 0 && !loading;
@@ -147,9 +149,9 @@ function XpHistoryContent() {
           </Link>
         </div>
 
-        {!isClerkConfigured() ? (
+        {!isAuthConfigured() ? (
           <Card className="mb-4 border-[#456DFF]/30 bg-[#456DFF]/10 p-4 text-sm text-[#88C9F7]">
-            Clerk is not configured — only on-device history is shown below.
+            Sign-in is not configured — only on-device history is shown below.
           </Card>
         ) : !isLoaded ? (
           <Card className="p-6 text-sm text-text-muted">Loading…</Card>

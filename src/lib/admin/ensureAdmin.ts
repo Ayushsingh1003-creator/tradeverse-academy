@@ -1,25 +1,20 @@
 import { redirect } from "next/navigation";
-import { currentUser } from "@clerk/nextjs/server";
-import { getServerAdminAllowlist } from "@/lib/admin/adminAllowlist";
-import { isClerkConfigured } from "@/lib/clerkEnabled";
+import { getSession } from "@/lib/auth/session";
+import { resolveIsAdmin } from "@/lib/admin/checkAdmin";
+import { isAuthConfigured } from "@/lib/auth/enabled";
 
 /**
- * Restricts /admin routes when Clerk is configured.
- * Set `ADMIN_EMAILS` to a comma-separated list (e.g. `you@domain.com,other@domain.com`).
- * Built-in allowlist entries apply in addition to `ADMIN_EMAILS`.
- * Without Clerk, admin is open for local development.
+ * Restricts /admin routes when Neon Auth is configured.
+ * Admins: `ADMIN_EMAILS` / built-in emails, or `User.role === 'admin'` in the database.
  */
 export async function ensureAdminAccess() {
-  if (!isClerkConfigured()) return;
+  if (!isAuthConfigured()) return;
 
-  const allow = getServerAdminAllowlist();
-  if (allow.length === 0) {
-    redirect("/dashboard");
-  }
+  const session = await getSession();
+  const email = session?.user?.email ?? "";
+  const authUserId = session?.user?.id ?? null;
 
-  const user = await currentUser();
-  const email = user?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? "";
-  if (!email || !allow.includes(email)) {
+  if (!(await resolveIsAdmin(email, authUserId))) {
     redirect("/dashboard");
   }
 }

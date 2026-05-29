@@ -8,10 +8,6 @@ export function isNavLinkActive(pathname: string, href: string): boolean {
   const path = pathname.split("?")[0].replace(/\/$/, "") || "/";
   const target = href.replace(/\/$/, "") || "/";
 
-  if (target === "/" || target === "/courses" || target === "/dashboard") {
-    return path === "/" || path === "/courses" || path.startsWith("/courses/") || path === "/dashboard";
-  }
-
   return path === target || path.startsWith(`${target}/`);
 }
 
