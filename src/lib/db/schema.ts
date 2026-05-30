@@ -409,6 +409,7 @@ export const libraryVideos = pgTable(
     id: text("id").primaryKey(),
     courseId: text("courseId").notNull(),
     youtubeVideoId: text("youtubeVideoId").notNull(),
+    youtubeVideoIdHi: text("youtubeVideoIdHi"),
     title: text("title").notNull(),
     description: text("description").notNull(),
     thumbnailUrl: text("thumbnailUrl").notNull(),
@@ -420,6 +421,21 @@ export const libraryVideos = pgTable(
   },
   (t) => [index("LibraryVideo_courseId_idx").on(t.courseId)],
 );
+
+export const libraryStandaloneVideos = pgTable("LibraryStandaloneVideo", {
+  id: text("id").primaryKey(),
+  youtubeVideoId: text("youtubeVideoId").notNull(),
+  youtubeVideoIdHi: text("youtubeVideoIdHi"),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  thumbnailUrl: text("thumbnailUrl").notNull(),
+  duration: text("duration").notNull(),
+  publishedAt: text("publishedAt").notNull(),
+  tags: text("tags").notNull(),
+  published: boolean("published").notNull().default(false),
+  order: integer("order").notNull().default(0),
+  createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
+});
 
 export const liveCohorts = pgTable("LiveCohort", {
   id: text("id").primaryKey(),
@@ -493,6 +509,7 @@ export type User = typeof users.$inferSelect;
 export type XpLedger = typeof xpLedger.$inferSelect;
 export type LibraryCourse = typeof libraryCourses.$inferSelect;
 export type LibraryVideo = typeof libraryVideos.$inferSelect;
+export type LibraryStandaloneVideo = typeof libraryStandaloneVideos.$inferSelect;
 export type LessonComment = typeof lessonComments.$inferSelect;
 export type SRSCard = typeof srsCards.$inferSelect;
 export type LiveCohort = typeof liveCohorts.$inferSelect;

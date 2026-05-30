@@ -169,7 +169,7 @@ function applyParsedPersisted(
 const defaultState = {
   hydrated: false,
   activeClerkUserId: null as string | null,
-  xp: 120,
+  xp: 0,
   level: 1,
   league: "bronze",
   isAdmin: false,
@@ -205,7 +205,12 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     const parsed = readPersistedUserStore(activeStorageKey);
     if (!parsed) {
-      set({ ...defaultState, activeClerkUserId: clerkUserId, hydrated: true });
+      set({
+        ...defaultState,
+        activeClerkUserId: clerkUserId,
+        hydrated: true,
+        ...(clerkUserId ? {} : { xp: 0 }),
+      });
       persistEnabled = true;
       return;
     }
@@ -254,6 +259,7 @@ export const useUserStore = create<UserState>((set, get) => ({
       ...partial,
       activeClerkUserId: clerkUserId,
       hydrated: true,
+      ...(clerkUserId ? {} : { xp: 0 }),
     });
     persistEnabled = true;
   },

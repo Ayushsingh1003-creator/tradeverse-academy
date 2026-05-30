@@ -1,5 +1,9 @@
 import type { LibraryCourse, LibraryVideo } from "@/lib/data/library";
-import type { LibraryCourse as DbCourse, LibraryVideo as DbVideo } from "@/lib/db/schema";
+import type {
+  LibraryCourse as DbCourse,
+  LibraryStandaloneVideo as DbStandalone,
+  LibraryVideo as DbVideo,
+} from "@/lib/db/schema";
 
 function parseTags(json: string): string[] {
   try {
@@ -9,17 +13,32 @@ function parseTags(json: string): string[] {
   }
 }
 
-export function mapDbVideo(v: DbVideo, courseId: string): LibraryVideo {
+export function mapDbVideo(v: DbVideo, courseId?: string): LibraryVideo {
   return {
     id: v.id,
     youtubeVideoId: v.youtubeVideoId,
+    youtubeVideoIdHi: v.youtubeVideoIdHi ?? null,
     title: v.title,
     description: v.description,
     thumbnailUrl: v.thumbnailUrl,
     duration: v.duration,
     publishedAt: v.publishedAt,
     tags: parseTags(v.tags),
-    courseId,
+    ...(courseId ? { courseId } : {}),
+  };
+}
+
+export function mapDbStandaloneVideo(v: DbStandalone): LibraryVideo {
+  return {
+    id: v.id,
+    youtubeVideoId: v.youtubeVideoId,
+    youtubeVideoIdHi: v.youtubeVideoIdHi ?? null,
+    title: v.title,
+    description: v.description,
+    thumbnailUrl: v.thumbnailUrl,
+    duration: v.duration,
+    publishedAt: v.publishedAt,
+    tags: parseTags(v.tags),
   };
 }
 

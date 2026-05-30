@@ -11,12 +11,20 @@ export default async function AdminLibraryPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-black">Library</h1>
-        <Link
-          href="/admin/library/new"
-          className="rounded-xl bg-[#456DFF] px-4 py-2.5 text-sm font-semibold text-white"
-        >
-          + Add Course
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/library/standalone"
+            className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-white/[0.05]"
+          >
+            Independent videos
+          </Link>
+          <Link
+            href="/admin/library/new"
+            className="rounded-xl bg-[#456DFF] px-4 py-2.5 text-sm font-semibold text-white"
+          >
+            + Add Course
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

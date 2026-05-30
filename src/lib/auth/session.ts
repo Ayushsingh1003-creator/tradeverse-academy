@@ -1,8 +1,13 @@
 import { neonAuth } from "@/lib/auth/server";
 
 export async function getSession() {
-  const { data } = await neonAuth.getSession();
-  return data;
+  try {
+    const { data } = await neonAuth.getSession();
+    return data;
+  } catch (error) {
+    console.warn("[auth] getSession failed — treating as signed out:", error);
+    return null;
+  }
 }
 
 export async function getAuthUserId(): Promise<string | null> {

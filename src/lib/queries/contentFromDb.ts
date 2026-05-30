@@ -1,9 +1,9 @@
 import { db } from "@/lib/db";
-import { getLibraryCourseBySlug } from "@/lib/data/library";
+import { getLibraryCourseBySlug, getStandaloneVideos } from "@/lib/data/library";
 import { getLiveClassBySlug, getLiveClasses } from "@/lib/data/liveClasses";
-import type { LibraryCourse } from "@/lib/data/library";
+import type { LibraryCourse, LibraryVideo } from "@/lib/data/library";
 import type { LiveClassCourse } from "@/lib/data/liveClasses";
-import { mapDbLibraryCourse } from "@/lib/libraryDbMapper";
+import { mapDbLibraryCourse, mapDbStandaloneVideo } from "@/lib/libraryDbMapper";
 import { mapLiveCohortRow } from "@/lib/liveCohortMapper";
 
 export async function getLibraryCoursesFromDb(): Promise<LibraryCourse[]> {
@@ -31,6 +31,19 @@ export async function getLibraryCourseBySlugFromDb(slug: string) {
     /* DB unavailable */
   }
   return getLibraryCourseBySlug(slug);
+}
+
+export async function getStandaloneVideosFromDb(): Promise<LibraryVideo[]> {
+  try {
+    const rows = await db.libraryStandaloneVideo.findMany({
+      where: { published: true },
+      orderBy: { order: "asc" },
+    });
+    if (rows.length > 0) return rows.map(mapDbStandaloneVideo);
+  } catch {
+    /* DB unavailable */
+  }
+  return [];
 }
 
 export async function getLiveClassesFromDb(): Promise<LiveClassCourse[]> {

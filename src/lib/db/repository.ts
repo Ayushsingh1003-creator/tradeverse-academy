@@ -311,6 +311,7 @@ export const db: any = {
   subscription: makeModel({ authUserId: s.subscriptions.authUserId, clerkUserId: s.subscriptions.authUserId, stripeCustomerId: s.subscriptions.stripeCustomerId }, s.subscriptions),
   libraryCourse: makeModel({ id: s.libraryCourses.id, slug: s.libraryCourses.slug }, s.libraryCourses),
   libraryVideo: makeModel({ id: s.libraryVideos.id, courseId: s.libraryVideos.courseId, order: s.libraryVideos.order }, s.libraryVideos),
+  libraryStandaloneVideo: makeModel({ id: s.libraryStandaloneVideos.id, order: s.libraryStandaloneVideos.order }, s.libraryStandaloneVideos),
   libraryCourseEnrollment: makeModel(
     { id: s.libraryCourseEnrollments.id, userId: s.libraryCourseEnrollments.userId, courseSlug: s.libraryCourseEnrollments.courseSlug },
     s.libraryCourseEnrollments,

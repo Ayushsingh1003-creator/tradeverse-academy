@@ -22,6 +22,7 @@ export function AppNav() {
   const pathname = usePathname();
   const { user } = useAuthSession();
   const isSignedIn = Boolean(user?.id);
+  const displayXp = isSignedIn ? xp : 0;
   const showAdmin = useShowAdminNav();
   const adminActive = pathname === "/admin" || pathname.startsWith("/admin/");
 
@@ -74,13 +75,13 @@ export function AppNav() {
               aria-label="XP history"
             >
               <span className="text-sm text-[#F7C325]">⚡</span>
-              <span className="text-sm font-bold text-white">{xp}</span>
+              <span className="text-sm font-bold text-white">{displayXp}</span>
             </Link>
           </div>
 
           <AuthUserMenu />
 
-          <MobileMenu streak={streak} xp={xp} />
+          <MobileMenu streak={streak} xp={displayXp} />
         </div>
       </nav>
     </header>

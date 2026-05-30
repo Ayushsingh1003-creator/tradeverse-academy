@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { LibraryVideo } from "@/lib/db/schema";
+import type { LibraryStandaloneVideo } from "@/lib/db/schema";
 import { youtubeWatchUrl } from "@/lib/youtubeEmbed";
-import { updateLibraryVideo } from "../../actions";
+import { updateStandaloneVideo } from "../actions";
 
 function tagsDisplay(tagsJson: string) {
   try {
@@ -13,12 +13,12 @@ function tagsDisplay(tagsJson: string) {
   }
 }
 
-export function LibraryVideoEditRow({ video, courseId }: { video: LibraryVideo; courseId: string }) {
+export function StandaloneVideoEditRow({ video }: { video: LibraryStandaloneVideo }) {
   const [open, setOpen] = useState(false);
 
   return (
     <tr className="border-b border-white/[0.04]">
-      <td colSpan={6} className="px-4 py-2">
+      <td colSpan={7} className="px-4 py-2">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -28,7 +28,7 @@ export function LibraryVideoEditRow({ video, courseId }: { video: LibraryVideo; 
         </button>
         {open ? (
           <form
-            action={updateLibraryVideo.bind(null, video.id, courseId)}
+            action={updateStandaloneVideo.bind(null, video.id)}
             className="mt-3 grid gap-2 rounded-xl border border-white/[0.08] bg-[#141414] p-4 md:grid-cols-2"
           >
             <input
@@ -80,6 +80,17 @@ export function LibraryVideoEditRow({ video, courseId }: { video: LibraryVideo; 
               placeholder="Tags, comma-separated"
               className="md:col-span-2 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 py-2 text-sm"
             />
+            <label className="flex items-center gap-2 text-sm text-[#aaa]">
+              <input type="hidden" name="published" value="false" />
+              <input
+                type="checkbox"
+                name="published"
+                value="true"
+                defaultChecked={video.published}
+                className="rounded border-white/20"
+              />
+              Published (visible on library page)
+            </label>
             <div className="md:col-span-2">
               <button type="submit" className="rounded-xl bg-[#456DFF] px-4 py-2 text-sm font-semibold text-white">
                 Save changes

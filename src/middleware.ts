@@ -70,7 +70,12 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith("/admin")) {
-    const { data: session } = await neonAuth.getSession();
+    let session: { user?: { id?: string; email?: string | null } } | null = null;
+    try {
+      ({ data: session } = await neonAuth.getSession());
+    } catch {
+      return NextResponse.redirect(new URL(AUTH_SIGN_IN_URL, request.url));
+    }
     if (!session?.user) {
       return NextResponse.redirect(new URL(AUTH_SIGN_IN_URL, request.url));
     }

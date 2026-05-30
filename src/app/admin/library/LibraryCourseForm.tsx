@@ -30,7 +30,7 @@ export function LibraryCourseForm({ course }: { course?: DbCourse }) {
             <FormField label="Title" name="title" defaultValue={course?.title} required />
             <FormField label="Slug" name="slug" defaultValue={course?.slug} hint="URL-safe identifier" required />
             <FormField label="Description" name="description" type="textarea" defaultValue={course?.description} />
-            <FormField label="Thumbnail URL" name="thumbnailUrl" defaultValue={course?.thumbnailUrl} />
+            <FormField label="Thumbnail URL" name="thumbnailUrl" defaultValue={course?.thumbnailUrl} required />
             <FormSelect
               label="Level"
               name="level"

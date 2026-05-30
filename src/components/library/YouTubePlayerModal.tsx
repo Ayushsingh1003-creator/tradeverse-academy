@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { LibraryVideoLanguageBar } from "@/components/library/LibraryVideoLanguageBar";
 import type { LibraryVideo } from "@/lib/data/library";
+import {
+  hasLibraryVideoHindi,
+  resolveLibraryVideoYoutubeId,
+  type LibraryVideoLang,
+} from "@/lib/libraryVideoLanguage";
 import { getYoutubeEmbedUrl } from "@/lib/youtubeEmbed";
 
 export function YouTubePlayerModal({
@@ -22,6 +28,20 @@ export function YouTubePlayerModal({
   hasNext?: boolean;
   hasPrev?: boolean;
 }) {
+  const [lang, setLang] = useState<LibraryVideoLang>("en");
+
+  useEffect(() => {
+    if (!open) return;
+    setLang("en");
+  }, [open, video?.id]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (lang === "hi" && video && !hasLibraryVideoHindi(video)) {
+      setLang("en");
+    }
+  }, [open, lang, video]);
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -35,7 +55,8 @@ export function YouTubePlayerModal({
 
   if (!open || !video) return null;
 
-  const embedUrl = getYoutubeEmbedUrl(video.youtubeVideoId, { autoplay: true });
+  const youtubeId = resolveLibraryVideoYoutubeId(video, lang);
+  const embedUrl = getYoutubeEmbedUrl(youtubeId, { autoplay: true });
 
   return (
     <div
@@ -50,9 +71,14 @@ export function YouTubePlayerModal({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-3 flex items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0 flex-1 space-y-2">
             <p className="text-lg font-semibold text-white">{video.title}</p>
             <p className="text-xs text-text-muted">{video.duration} · {video.publishedAt}</p>
+            <LibraryVideoLanguageBar
+              lang={lang}
+              onLangChange={setLang}
+              hindiAvailable={hasLibraryVideoHindi(video)}
+            />
           </div>
           <Button variant="ghost" onClick={onClose}>
             Close
@@ -62,6 +88,7 @@ export function YouTubePlayerModal({
         <div className="relative w-full overflow-hidden rounded-xl border border-border bg-black pb-[56.25%]">
           {embedUrl ? (
             <iframe
+              key={`${video.id}-${lang}`}
               className="absolute inset-0 h-full w-full"
               src={embedUrl}
               title={video.title}

@@ -5,8 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppNav } from "@/components/layout/AppNav";
 import { Button } from "@/components/ui/Button";
+import { LibraryVideoLanguageBar } from "@/components/library/LibraryVideoLanguageBar";
 import type { LibraryCourse, LibraryVideo } from "@/lib/data/library";
 import { isAuthConfigured } from "@/lib/auth/enabled";
+import {
+  hasLibraryVideoHindi,
+  resolveLibraryVideoYoutubeId,
+  type LibraryVideoLang,
+} from "@/lib/libraryVideoLanguage";
 import { getYoutubeEmbedUrl } from "@/lib/youtubeEmbed";
 
 async function postLibraryEnroll(slug: string, lastVideoId?: string | null) {
@@ -42,6 +48,7 @@ export function LibraryCoursePlayerClient({
   const searchParams = useSearchParams();
   const playerAnchorRef = useRef<HTMLDivElement>(null);
   const [activeVideoId, setActiveVideoId] = useState(() => resolveInitialVideoId(course, initialVideoId));
+  const [lang, setLang] = useState<LibraryVideoLang>("en");
 
   const activeIndex = useMemo(
     () => course.videos.findIndex((v) => v.id === activeVideoId),
@@ -106,7 +113,18 @@ export function LibraryCoursePlayerClient({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [goNext, goPrev, hasNext, hasPrev]);
 
-  const embedUrl = activeVideo ? getYoutubeEmbedUrl(activeVideo.youtubeVideoId, { autoplay: false }) : null;
+  useEffect(() => {
+    setLang("en");
+  }, [activeVideoId]);
+
+  useEffect(() => {
+    if (lang === "hi" && activeVideo && !hasLibraryVideoHindi(activeVideo)) {
+      setLang("en");
+    }
+  }, [lang, activeVideo]);
+
+  const activeYoutubeId = activeVideo ? resolveLibraryVideoYoutubeId(activeVideo, lang) : null;
+  const embedUrl = activeYoutubeId ? getYoutubeEmbedUrl(activeYoutubeId, { autoplay: false }) : null;
 
   return (
     <main className="min-h-screen bg-[#141414]">
@@ -136,10 +154,17 @@ export function LibraryCoursePlayerClient({
         ) : (
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] lg:items-start">
             <div ref={playerAnchorRef} className="min-w-0 space-y-4">
+              {activeVideo ? (
+                <LibraryVideoLanguageBar
+                  lang={lang}
+                  onLangChange={setLang}
+                  hindiAvailable={hasLibraryVideoHindi(activeVideo)}
+                />
+              ) : null}
               <div className="relative w-full overflow-hidden rounded-xl border border-border bg-black pb-[56.25%] shadow-lg">
                 {embedUrl ? (
                   <iframe
-                    key={activeVideo?.id}
+                    key={`${activeVideo?.id}-${lang}`}
                     className="absolute inset-0 h-full w-full"
                     src={embedUrl}
                     title={activeVideo?.title ?? "Lesson"}

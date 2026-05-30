@@ -2,16 +2,15 @@ import { LibraryPageClient } from "@/components/library/LibraryPageClient";
 import { isAuthConfigured } from "@/lib/auth/enabled";
 import { getAuthUserEmail, getAuthUserId } from "@/lib/auth/session";
 import type { LibraryCourse, LibraryResumeItem } from "@/lib/data/library";
-import { getStandaloneVideos } from "@/lib/data/library";
+import { getLibraryCoursesFromDb, getStandaloneVideosFromDb } from "@/lib/queries/contentFromDb";
 import { getLibraryEnrollmentsForUser } from "@/lib/queries/libraryEnrollments";
-import { getLibraryCoursesFromDb } from "@/lib/queries/contentFromDb";
 import { resolveUserForAuth } from "@/lib/server/resolveDbUser";
 
 export const dynamic = "force-dynamic";
 
 export default async function LibraryPage() {
   const courses = await getLibraryCoursesFromDb();
-  const standaloneVideos = getStandaloneVideos();
+  const standaloneVideos = await getStandaloneVideosFromDb();
   const tagSet = new Set<string>();
   for (const c of courses) {
     c.tags.forEach((t) => tagSet.add(t));
