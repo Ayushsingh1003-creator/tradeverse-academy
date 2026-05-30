@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getLibraryCourseBySlug, getStandaloneVideos } from "@/lib/data/library";
+import { getLibraryCourseBySlug } from "@/lib/data/library";
 import { getLiveClassBySlug, getLiveClasses } from "@/lib/data/liveClasses";
 import type { LibraryCourse, LibraryVideo } from "@/lib/data/library";
 import type { LiveClassCourse } from "@/lib/data/liveClasses";
