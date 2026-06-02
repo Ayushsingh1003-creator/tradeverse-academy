@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Loader } from "@/components/ui/Loader";
 import { LeagueSymbol } from "@/components/league/LeagueSymbol";
 import { leagueDisplayName } from "@/lib/league/tiers";
-import type { LeaderboardResult, LeaderboardTab } from "@/lib/leaderboard/types";
+import { parseLeaderboardTabParam, type LeaderboardResult, type LeaderboardTab } from "@/lib/leaderboard/types";
 
 const TABS: { id: LeaderboardTab; label: string }[] = [
   { id: "weekly", label: "Weekly" },
@@ -28,8 +28,13 @@ function countryFlag(code: string | null | undefined) {
   return String.fromCodePoint(...[...upper].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
 }
 
+function initialTabFromUrl(): LeaderboardTab {
+  if (typeof window === "undefined") return "weekly";
+  return parseLeaderboardTabParam(new URLSearchParams(window.location.search).get("tab"));
+}
+
 export function LeaderboardPageClient() {
-  const [tab, setTab] = useState<LeaderboardTab>("weekly");
+  const [tab, setTab] = useState<LeaderboardTab>(initialTabFromUrl);
   const [data, setData] = useState<LeaderboardResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +78,8 @@ export function LeaderboardPageClient() {
   }, [tab, load]);
 
   const xpLabel = tab === "weekly" ? "period XP" : "XP";
+  const meRow = data?.rows.find((r) => r.isMe) ?? null;
+  const otherRows = data?.rows.filter((r) => !r.isMe) ?? [];
 
   return (
     <main className="min-h-screen bg-background">
@@ -97,7 +104,12 @@ export function LeaderboardPageClient() {
             <button
               key={t.id}
               type="button"
-              onClick={() => setTab(t.id)}
+              onClick={() => {
+                setTab(t.id);
+                const url = new URL(window.location.href);
+                url.searchParams.set("tab", t.id);
+                window.history.replaceState(null, "", url.pathname + url.search);
+              }}
               className={`rounded-pill px-4 py-2 text-sm font-medium transition-colors ${
                 tab === t.id
                   ? "bg-[#456DFF] text-white"
@@ -146,7 +158,36 @@ export function LeaderboardPageClient() {
 
         {!loading && !error && data && data.rows.length > 0 ? (
           <div className="mt-5 grid gap-3">
-            {data.myRank != null && !data.rows.some((r) => r.isMe) ? (
+            {meRow ? (
+              <Card className="flex items-center gap-3 border-[#456DFF]/40 bg-[rgba(69,109,255,0.20)]">
+                <span className="w-8 text-center text-sm font-bold text-[#88C9F7]">#{meRow.rank}</span>
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-bold text-white"
+                  style={{ background: rowColor(meRow.name) }}
+                >
+                  {meRow.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={meRow.avatar} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    (meRow.name.trim().charAt(0).toUpperCase() || "?")
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-white">You</p>
+                  <p className="flex items-center gap-1.5 text-xs text-text-muted">
+                    <LeagueSymbol leagueId={meRow.league} size={14} title={leagueDisplayName(meRow.league)} />
+                    <span>{leagueDisplayName(meRow.league)}</span>
+                    <span>·</span>
+                    <span>Lv. {meRow.level}</span>
+                  </p>
+                </div>
+                <p className="shrink-0 font-semibold text-[#F7C325]">
+                  {meRow.xp.toLocaleString()} <span className="text-xs font-normal text-text-muted">{xpLabel}</span>
+                </p>
+              </Card>
+            ) : null}
+
+            {data.myRank != null && !meRow ? (
               <Card className="border-[#456DFF]/40 bg-[rgba(69,109,255,0.12)]">
                 <p className="text-sm text-text-muted">
                   Your rank: <span className="font-semibold text-white">#{data.myRank}</span> ·{" "}
@@ -155,20 +196,18 @@ export function LeaderboardPageClient() {
               </Card>
             ) : null}
 
-            {data.rows.map((row) => {
+            {otherRows.map((row) => {
               const letter = row.name.trim().charAt(0).toUpperCase() || "?";
               const bg = rowColor(row.name);
-              const displayName = row.isMe ? "You" : row.name;
+              const displayName = row.name;
 
               return (
                 <Card
                   key={row.userId}
-                  className={`flex items-center gap-3 ${
-                    row.isMe ? "border-[#456DFF]/40 bg-[rgba(69,109,255,0.20)]" : ""
-                  }`}
+                  className="flex items-center gap-3"
                 >
                   <span
-                    className={`w-8 text-center text-sm font-bold ${row.isMe ? "text-[#88C9F7]" : "text-text-muted"}`}
+                    className="w-8 text-center text-sm font-bold text-text-muted"
                   >
                     #{row.rank}
                   </span>

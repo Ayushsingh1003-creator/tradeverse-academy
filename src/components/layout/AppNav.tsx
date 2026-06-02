@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { NavLink } from "@/components/layout/NavLink";
 import { useEffect } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
@@ -19,7 +18,7 @@ export function AppNav() {
   const hydrated = useUserStore((state) => state.hydrated);
   const streak = useUserStore((state) => state.streak);
   const xp = useUserStore((state) => state.xp);
-  const pathname = usePathname();
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
   const { user } = useAuthSession();
   const isSignedIn = Boolean(user?.id);
   const displayXp = isSignedIn ? xp : 0;
@@ -40,7 +39,7 @@ export function AppNav() {
       <nav className="mx-auto flex h-[52px] max-w-[1200px] items-center gap-0 px-5">
         <Link href="/dashboard" className="mr-8 flex items-center no-underline">
           <Image
-            src="/images/app-logo.png"
+            src="/logo.png"
             alt="Tradeverse Academy"
             width={48}
             height={48}

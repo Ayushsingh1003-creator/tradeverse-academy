@@ -13,6 +13,10 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   metadataBase: new URL("https://academy.tradeverse.io"),
   manifest: "/manifest.json",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png", sizes: "32x32" }],
+    apple: [{ url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" }],
+  },
   title: { default: "Tradeverse Academy", template: "%s | Tradeverse Academy" },
   description: "Master trading one concept at a time. Interactive lessons on candlesticks, technical analysis, risk management, and more.",
   keywords: ["trading education", "technical analysis", "candlestick patterns", "trading course", "learn trading"],

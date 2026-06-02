@@ -1,12 +1,10 @@
 import { db } from "@/lib/db";
 import { ensureActiveSeason, getActiveSeason } from "@/lib/league/season";
 import type { LeaderboardResult, LeaderboardRow, LeaderboardTab } from "@/lib/leaderboard/types";
-
-const TAB_SET = new Set<LeaderboardTab>(["weekly", "all-time", "friends", "country"]);
+import { parseLeaderboardTabParam } from "@/lib/leaderboard/types";
 
 export function parseLeaderboardTab(raw: string | null): LeaderboardTab {
-  if (raw && TAB_SET.has(raw as LeaderboardTab)) return raw as LeaderboardTab;
-  return "weekly";
+  return parseLeaderboardTabParam(raw);
 }
 
 function rankRows(

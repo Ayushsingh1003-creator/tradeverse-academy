@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireDbUser } from "@/lib/auth/api";
-import { applyXp } from "@/lib/xp";
+import {
+  getUserXpTotalFromLedger,
+  reconcileUserXpFromLedger,
+} from "@/lib/xp/reconcileUserXpFromLedger";
 import { isXpEarnReason, maxXpForReason } from "@/lib/xpEarnPolicy";
 import { isValidIanaTimezone } from "@/lib/server/localDateInTimeZone";
 import { computeNewStreak } from "@/lib/streak";
@@ -67,19 +70,17 @@ export async function POST(req: NextRequest) {
       if (existing.userId !== dbUser.id) {
         return NextResponse.json({ error: "Idempotency conflict" }, { status: 409 });
       }
-      const u = await db.user.findUnique({ where: { id: dbUser.id } });
+      const u = await reconcileUserXpFromLedger(dbUser.id);
       return NextResponse.json({
         ok: true,
         duplicate: true,
-        xp: u?.xp ?? dbUser.xp,
-        level: u?.level ?? dbUser.level,
-        streak: u?.streak ?? dbUser.streak,
-        streakLocalDate: u?.streakLocalDate ?? dbUser.streakLocalDate ?? null,
+        xp: u.xp,
+        level: u.level,
+        streak: u.streak,
+        streakLocalDate: u.streakLocalDate ?? null,
       });
     }
   }
-
-  const { xp: nextXp, level: nextLevel } = applyXp(dbUser.xp, dbUser.level, capped);
 
   const streakSync = STREAK_SYNC_REASONS.has(reason) && Boolean(activityLocalDate);
   let streakChanged = false;
@@ -99,8 +100,8 @@ export async function POST(req: NextRequest) {
 
   const pingQualifyingActivity = streakSync;
 
-  const [, updatedUser] = await db.$transaction([
-    db.xpLedger.create({
+  const updatedUser = await db.$transaction(async (tx: typeof db) => {
+    await tx.xpLedger.create({
       data: {
         userId: dbUser.id,
         amount: capped,
@@ -108,19 +109,22 @@ export async function POST(req: NextRequest) {
         ref: ref ?? null,
         idempotencyKey: idempotencyKey ?? null,
       },
-    }),
-    db.user.update({
+    });
+
+    const { totalXp, level } = await getUserXpTotalFromLedger(dbUser.id, tx.xpLedger);
+
+    return tx.user.update({
       where: { id: dbUser.id },
       data: {
-        xp: nextXp,
-        level: nextLevel,
+        xp: totalXp,
+        level,
         ...streakData,
         ...(pingQualifyingActivity ? { lastActiveDate: new Date() } : {}),
         ...(ianaTimezoneToStore ? { ianaTimezone: ianaTimezoneToStore } : {}),
       },
       select: { streak: true, streakLocalDate: true, xp: true, level: true },
-    }),
-  ]);
+    });
+  });
 
   return NextResponse.json({
     ok: true,

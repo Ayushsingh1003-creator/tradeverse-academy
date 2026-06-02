@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { resolveIsAdmin } from "@/lib/admin/checkAdmin";
 import { requireDbUser } from "@/lib/auth/api";
 import { db } from "@/lib/db";
+import { reconcileUserXpFromLedger } from "@/lib/xp/reconcileUserXpFromLedger";
 
 const LOCAL_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -11,6 +12,7 @@ export async function GET(req: NextRequest) {
   const authResult = await requireDbUser();
   if (authResult.error) return authResult.error;
   const { dbUser, authUserId } = authResult;
+  const synced = await reconcileUserXpFromLedger(dbUser.id);
   const isAdmin = await resolveIsAdmin(dbUser.email, authUserId);
 
   const localDate = req.nextUrl.searchParams.get("localDate")?.trim() ?? "";
@@ -24,8 +26,8 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    xp: dbUser.xp,
-    level: dbUser.level,
+    xp: synced.xp,
+    level: synced.level,
     league: dbUser.league,
     name: dbUser.name,
     avatar: dbUser.avatar,

@@ -150,8 +150,7 @@ function applyParsedPersisted(
     return {};
   }
   return {
-    xp: parsed.xp,
-    level: parsed.level,
+    ...(clerkUserId ? {} : { xp: parsed.xp, level: parsed.level }),
     league: parsed.league ?? defaultState.league,
     streak: parsed.streak,
     lastActiveDate: parsed.lastActiveDate,
@@ -264,9 +263,9 @@ export const useUserStore = create<UserState>((set, get) => ({
     persistEnabled = true;
   },
   applyServerProfile: (data, opts) => {
-    const replace = opts?.replace ?? false;
+    const replace = opts?.replace ?? true;
     set((state) => {
-      const nextXp = replace ? data.xp : Math.max(state.xp, data.xp);
+      const nextXp = replace ? data.xp : Math.min(state.xp, data.xp);
       const { level } = getLevelFromTotalXp(nextXp);
       const streakFields =
         data.streak !== undefined || data.streakLocalDate !== undefined
@@ -319,6 +318,20 @@ export const useUserStore = create<UserState>((set, get) => ({
         ...(streakReasons.has(opts.reason)
           ? { activityLocalDate: todayLocalISO(), ...(tz ? { ianaTimezone: tz } : {}) }
           : {}),
+      }).then((server) => {
+        if (!server) return;
+        set((state) => {
+          const leveledUp = server.level > state.level;
+          return {
+            xp: server.xp,
+            level: server.level,
+            ...(leveledUp ? { pendingLevelUp: server.level } : {}),
+            ...(server.streak !== undefined ? { streak: server.streak } : {}),
+            ...(server.streakLocalDate !== undefined
+              ? { lastActiveDate: server.streakLocalDate ?? state.lastActiveDate }
+              : {}),
+          };
+        });
       });
     }
     return { leveledUp };

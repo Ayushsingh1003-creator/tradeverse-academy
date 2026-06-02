@@ -9,7 +9,6 @@ const PUBLIC_PREFIXES = [
   "/dashboard",
   "/courses",
   "/pricing",
-  "/about",
   "/live-classes",
   "/paths",
   "/library",
@@ -32,7 +31,6 @@ const PROTECTED_PREFIXES = [
   "/review",
   "/live",
   "/teams",
-  "/creator",
   "/marketplace",
 ];
 
@@ -94,7 +92,6 @@ export const config = {
     "/",
     "/courses/:path*",
     "/pricing/:path*",
-    "/about/:path*",
     "/live-classes/:path*",
     "/paths/:path*",
     "/api/:path*",
@@ -112,7 +109,6 @@ export const config = {
     "/review/:path*",
     "/live/:path*",
     "/teams/:path*",
-    "/creator/:path*",
     "/marketplace/:path*",
     "/library/:path*",
     "/xp/:path*",

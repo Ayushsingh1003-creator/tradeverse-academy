@@ -27,45 +27,26 @@ export async function GET() {
 
   const peers = (await db.user.findMany({
     where: { league: leagueId },
-    select: { id: true, name: true, avatar: true, authUserId: true },
+    select: { id: true, name: true, avatar: true, authUserId: true, xp: true },
     take: 200,
-  })) as { id: string; name: string; avatar: string | null; authUserId: string | null }[];
-
-  const peerIds = peers.map((p) => p.id);
-  const sums =
-    peerIds.length === 0
-      ? []
-      : await db.xpLedger.groupBy({
-          by: ["userId"],
-          where: {
-            userId: { in: peerIds },
-            createdAt: { gte: season.startsAt, lte: season.endsAt },
-            amount: { gt: 0 },
-          },
-          _sum: { amount: true },
-        });
-
-  const periodXp = new Map<string, number>();
-  for (const row of sums) {
-    periodXp.set(row.userId, row._sum.amount ?? 0);
-  }
+  })) as { id: string; name: string; avatar: string | null; authUserId: string | null; xp: number }[];
 
   const ranked = peers
     .map((p) => ({
       userId: p.id,
       name: p.name,
       avatar: p.avatar,
-      periodXp: periodXp.get(p.id) ?? 0,
+      totalXp: p.xp,
       isMe: p.id === me.id,
     }))
-    .sort((a, b) => b.periodXp - a.periodXp || a.name.localeCompare(b.name));
+    .sort((a, b) => b.totalXp - a.totalXp || a.name.localeCompare(b.name));
 
   const withRanks = ranked.map((row, i) => ({
     rank: i + 1,
     userId: row.userId,
     name: row.name,
     avatar: row.avatar,
-    periodXp: row.periodXp,
+    totalXp: row.totalXp,
     isMe: row.isMe,
   }));
   const top = withRanks.slice(0, 15);
@@ -88,7 +69,7 @@ export async function GET() {
     roundEndedPending: season.endsAt <= new Date() && season.finalizedAt == null,
     rows: top,
     myRank: myRow?.rank ?? null,
-    myPeriodXp: myRow?.periodXp ?? 0,
+    myTotalXp: myRow?.totalXp ?? 0,
   });
 }
 

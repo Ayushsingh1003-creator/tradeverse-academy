@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 /** True when the current route is this nav item (or a child route). */
 export function isNavLinkActive(pathname: string, href: string): boolean {
@@ -12,7 +11,7 @@ export function isNavLinkActive(pathname: string, href: string): boolean {
 }
 
 export function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  const pathname = usePathname();
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
   const active = isNavLinkActive(pathname, href);
 
   return (

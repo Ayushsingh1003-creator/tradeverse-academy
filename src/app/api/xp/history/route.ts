@@ -3,6 +3,7 @@ export { dynamic } from "@/lib/route-dynamic";
 import { requireDbUser } from "@/lib/auth/api";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { reconcileUserXpFromLedger } from "@/lib/xp/reconcileUserXpFromLedger";
 
 const PAGE_SIZE = 30;
 
@@ -11,7 +12,8 @@ export async function GET(req: NextRequest) {
   if (authResult.error) return authResult.error;
   const { dbUser } = authResult;
 
-  
+  const synced = await reconcileUserXpFromLedger(dbUser.id);
+
   const page = Math.max(0, Number.parseInt(req.nextUrl.searchParams.get("page") ?? "0", 10) || 0);
 
   const [rows, total] = await Promise.all([
@@ -37,5 +39,6 @@ export async function GET(req: NextRequest) {
     pageSize: PAGE_SIZE,
     total,
     hasMore: (page + 1) * PAGE_SIZE < total,
+    totalXp: synced.xp,
   });
 }

@@ -46,7 +46,7 @@ export function AuthSessionHydration() {
               streakLocalDate: data.streakLocalDate,
               isAdmin: Boolean(data.isAdmin),
             },
-            { replace: data.xp != null },
+            { replace: true },
           );
         },
       );

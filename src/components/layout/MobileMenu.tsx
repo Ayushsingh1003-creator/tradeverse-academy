@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
@@ -13,7 +12,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 export function MobileMenu({ streak, xp }: { streak: number; xp: number }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const pathname = usePathname();
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
   const { user } = useAuthSession();
   const isSignedIn = Boolean(user?.id);
   const showAdmin = useShowAdminNav();

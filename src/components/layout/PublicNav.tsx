@@ -14,7 +14,7 @@ export function PublicNav() {
       <nav className="mx-auto flex h-[52px] max-w-[1200px] items-center px-5">
         <Link href={AUTH_HOME_URL} className="mr-8 flex items-center no-underline">
           <Image
-            src="/images/app-logo.png"
+            src="/logo.png"
             alt="Tradeverse Academy"
             width={48}
             height={48}

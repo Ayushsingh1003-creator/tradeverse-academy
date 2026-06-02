@@ -257,27 +257,14 @@ function makeModel<TTable extends Record<string, unknown>>(
       _count?: Record<string, boolean>;
     }) {
       if (tableRef === s.xpLedger && args.by.includes("userId")) {
-        const conditions: SQL[] = [];
-        if (args.where) {
-          const mapped = mapAuthFields(args.where);
-          for (const [key, value] of Object.entries(mapped)) {
-            const col = table[key];
-            if (!col) continue;
-            if (value && typeof value === "object" && !(value instanceof Date)) {
-              const obj = value as Record<string, unknown>;
-              if ("gte" in obj) conditions.push(gte(col as never, obj.gte as never));
-              if ("lte" in obj) conditions.push(lte(col as never, obj.lte as never));
-              if ("gt" in obj && col === s.xpLedger.amount) conditions.push(gt(col as never, obj.gt as never));
-            }
-          }
-        }
+        const w = args.where ? whereToSql(table, args.where) : undefined;
         const rows = await drizzleDb
           .select({
             userId: s.xpLedger.userId,
             _sum: { amount: sql<number>`coalesce(sum(${s.xpLedger.amount}), 0)` },
           })
           .from(s.xpLedger)
-          .where(conditions.length ? and(...conditions) : undefined)
+          .where(w)
           .groupBy(s.xpLedger.userId);
         return rows.map((r) => ({ userId: r.userId, _sum: { amount: Number(r._sum.amount) } }));
       }
@@ -303,6 +290,14 @@ export const db: any = {
       authUserId: s.users.authUserId,
       clerkUserId: s.users.authUserId,
       name: s.users.name,
+      avatar: s.users.avatar,
+      role: s.users.role,
+      xp: s.users.xp,
+      level: s.users.level,
+      league: s.users.league,
+      streak: s.users.streak,
+      streakLocalDate: s.users.streakLocalDate,
+      ianaTimezone: s.users.ianaTimezone,
       country: s.users.country,
     },
     s.users,
@@ -362,7 +357,10 @@ export const db: any = {
     fnOrOps: ((tx: typeof db) => Promise<T>) | Promise<unknown>[],
   ): Promise<T> {
     if (Array.isArray(fnOrOps)) {
-      const results = await Promise.all(fnOrOps);
+      const results: unknown[] = [];
+      for (const op of fnOrOps) {
+        results.push(await op);
+      }
       return results as T;
     }
     return fnOrOps(db);

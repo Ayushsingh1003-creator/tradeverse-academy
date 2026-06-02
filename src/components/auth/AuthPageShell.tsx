@@ -65,7 +65,7 @@ export function AuthPageShell({
               className="inline-flex items-center gap-3 no-underline transition-opacity hover:opacity-90"
             >
               <Image
-                src="/images/app-logo.png"
+                src="/logo.png"
                 alt="Tradeverse Academy"
                 width={44}
                 height={44}

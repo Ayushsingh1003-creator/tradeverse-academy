@@ -1,5 +1,12 @@
 export type LeaderboardTab = "weekly" | "all-time" | "friends" | "country";
 
+const TAB_SET = new Set<LeaderboardTab>(["weekly", "all-time", "friends", "country"]);
+
+export function parseLeaderboardTabParam(raw: string | null | undefined): LeaderboardTab {
+  if (raw && TAB_SET.has(raw as LeaderboardTab)) return raw as LeaderboardTab;
+  return "weekly";
+}
+
 export type LeaderboardRow = {
   rank: number;
   userId: string;

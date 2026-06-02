@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth/client";
 import CourseCardStack from "@/components/dashboard/CourseCardStack";
 import { isAuthConfigured } from "@/lib/auth/enabled";
@@ -9,6 +9,9 @@ import { isStreakAtRisk, todayLocalISO, weekActivityMap } from "@/lib/streak";
 import { useUserStore } from "@/lib/store";
 import { useToast } from "@/components/ui/Toast";
 import { LeagueSymbol } from "@/components/league/LeagueSymbol";
+import { leagueColor, leagueDisplayName } from "@/lib/league/tiers";
+import { getCoachReply } from "@/lib/aiCoach";
+import type { LeaderboardResult } from "@/lib/leaderboard/types";
 
 const ROW_PALETTE = ["#EF4444", "#9D62FF", "#456DFF", "#F59E0B", "#22C55E", "#EC4899"];
 
@@ -26,27 +29,68 @@ function WelcomeDisplayName() {
 
 function WelcomeSection() {
   const [query, setQuery] = useState("");
+  const [aiReply, setAiReply] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
   const greetings = ["Good morning", "Good afternoon", "Good evening"] as const;
   const hour = new Date().getHours();
   const greeting = hour < 12 ? greetings[0] : hour < 17 ? greetings[1] : greetings[2];
+
+  async function handleAsk(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const prompt = query.trim();
+    if (!prompt || asking) return;
+
+    setAsking(true);
+    setAiError(null);
+    try {
+      const { text } = await getCoachReply({
+        prompt,
+        lessonTitle: "Tradeverse Dashboard",
+        lessonTopic: "General trading learning guidance",
+        history: [],
+      });
+      setAiReply(text);
+    } catch {
+      setAiError("Could not get AI response. Please try again.");
+    } finally {
+      setAsking(false);
+    }
+  }
 
   return (
     <div>
       <h1 className="mb-4 text-2xl font-bold text-white">
         {greeting}, {isAuthConfigured() ? <WelcomeDisplayName /> : "Trader"} 👋
       </h1>
-      <div className="flex max-w-[480px] items-center gap-2.5 rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.06)] px-4 py-2.5 transition-colors focus-within:border-[rgba(69,109,255,0.5)]">
-        <span className="text-[15px] text-[#666]">🔍</span>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="What do you want to learn?"
-          className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-white outline-none placeholder:text-[#666]"
-        />
-        <button type="button" className="cursor-pointer rounded-full border-0 bg-[rgba(255,255,255,0.12)] px-3.5 py-1 text-[13px] font-semibold text-white">
-          Ask
-        </button>
-      </div>
+      <form onSubmit={(e) => void handleAsk(e)} className="max-w-[560px]">
+        <div className="flex items-center gap-2.5 rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.06)] px-4 py-2.5 transition-colors focus-within:border-[rgba(69,109,255,0.5)]">
+          <span className="text-[15px] text-[#666]">🔍</span>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="What do you want to learn?"
+            className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-white outline-none placeholder:text-[#666]"
+          />
+          <button
+            type="submit"
+            disabled={asking || !query.trim()}
+            className="cursor-pointer rounded-full border-0 bg-[rgba(255,255,255,0.12)] px-3.5 py-1 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {asking ? "Asking..." : "Ask"}
+          </button>
+        </div>
+      </form>
+      {aiReply ? (
+        <div className="mt-3 max-w-[560px] rounded-xl border border-[rgba(69,109,255,0.3)] bg-[rgba(69,109,255,0.1)] px-4 py-3 text-sm text-[#cfe3ff]">
+          {aiReply}
+        </div>
+      ) : null}
+      {aiError ? (
+        <p className="mt-3 max-w-[560px] rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {aiError}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -159,31 +203,11 @@ function StreakCard() {
   );
 }
 
-type LeagueStandingsRow = {
-  rank: number;
-  name: string;
-  avatar: string | null;
-  periodXp: number;
-  isMe: boolean;
-};
-
-type LeagueStandingsPayload = {
-  /** Tier id for badge symbol (bronze, silver, …). */
-  league: string;
-  leagueLabel: string;
-  leagueColor: string;
-  daysLeft: number;
-  roundEndedPending: boolean;
-  rows: LeagueStandingsRow[];
-  myRank: number | null;
-  myPeriodXp: number;
-};
-
 function LeagueCardAuth() {
   const { data: session, isPending } = authClient.useSession();
   const isSignedIn = Boolean(session?.user?.id);
   const isLoaded = !isPending;
-  const [data, setData] = useState<LeagueStandingsPayload | null>(null);
+  const [data, setData] = useState<LeaderboardResult | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -193,10 +217,10 @@ function LeagueCardAuth() {
       return;
     }
     let cancelled = false;
-    void fetch("/api/league/standings", { cache: "no-store" })
+    void fetch("/api/leaderboard?tab=all-time", { cache: "no-store" })
       .then(async (r) => {
         if (!r.ok) throw new Error(r.status === 401 ? "Sign in required" : "Failed to load");
-        return r.json() as Promise<LeagueStandingsPayload>;
+        return r.json() as Promise<LeaderboardResult>;
       })
       .then((json) => {
         if (!cancelled) {
@@ -215,14 +239,12 @@ function LeagueCardAuth() {
     };
   }, [isLoaded, isSignedIn]);
 
-  const tierColor = data?.leagueColor ?? "#CD7F32";
-  const tierId = data?.league ?? "bronze";
-  const label = data?.leagueLabel ?? "BRONZE";
-  const daysLeft = data?.roundEndedPending ? 0 : Math.max(1, data?.daysLeft ?? 1);
-  const sub =
-    data?.roundEndedPending === true
-      ? "Round ended — finalizing soon"
-      : `Top 10 advance · ${daysLeft} day${daysLeft === 1 ? "" : "s"} left`;
+  const meRow = data?.rows.find((r) => r.isMe) ?? null;
+  const tierId = meRow?.league ?? "bronze";
+  const tierColor = leagueColor(tierId);
+  const label = leagueDisplayName(tierId);
+  const sub = "Global all-time XP · same as Leaderboard → All time";
+  const topRows = data?.rows.filter((r) => !r.isMe).slice(0, 5) ?? [];
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#1E1E1E] p-4">
@@ -235,12 +257,12 @@ function LeagueCardAuth() {
             <LeagueSymbol leagueId={tierId} size={22} title={`${label} league`} />
           </div>
           <div>
-            <div className="text-[13px] font-bold tracking-wide text-white">{label} LEAGUE</div>
+            <div className="text-[13px] font-bold tracking-wide text-white">LEADERBOARD</div>
             <div className="mt-px text-[11px] text-[#666]">{sub}</div>
           </div>
         </div>
         <Link
-          href="/leaderboard"
+          href="/leaderboard?tab=all-time"
           className="flex h-7 w-7 items-center justify-center rounded-lg bg-[rgba(255,255,255,0.06)] text-xs text-[#999] no-underline transition-colors hover:bg-[rgba(255,255,255,0.1)]"
         >
           ↗
@@ -248,7 +270,7 @@ function LeagueCardAuth() {
       </div>
 
       {!isAuthConfigured() || !isSignedIn ? (
-        <p className="text-[13px] text-[#666]">Sign in to see your league and period XP standings.</p>
+        <p className="text-[13px] text-[#666]">Sign in to see global all-time XP standings.</p>
       ) : err ? (
         <p className="text-[13px] text-[#888]">{err}</p>
       ) : !data ? (
@@ -257,17 +279,31 @@ function LeagueCardAuth() {
         <p className="text-[13px] text-[#666]">No players in this league yet. Earn XP to appear on the board.</p>
       ) : (
         <div className="flex flex-col gap-0.5">
-          {data.rows.map((person) => {
+          {meRow ? (
+            <div className="flex items-center gap-2.5 rounded-[10px] border border-[rgba(69,109,255,0.30)] bg-[rgba(69,109,255,0.18)] px-2.5 py-2 transition-colors">
+              <span className="w-4 text-[13px] font-semibold text-[#88C9F7]">{meRow.rank}</span>
+              <div className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white" style={{ background: rowColor(meRow.name) }}>
+                {meRow.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={meRow.avatar} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  (meRow.name.trim().charAt(0).toUpperCase() || "?")
+                )}
+              </div>
+              <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">You</span>
+              <span className="text-[13px] font-semibold text-[#F7C325]">{meRow.xp} XP</span>
+            </div>
+          ) : null}
+
+          {topRows.map((person) => {
             const letter = person.name.trim().charAt(0).toUpperCase() || "?";
             const bg = rowColor(person.name);
             return (
               <div
                 key={`${person.rank}-${person.name}`}
-                className={`flex items-center gap-2.5 rounded-[10px] px-2.5 py-2 transition-colors ${
-                  person.isMe ? "border border-[rgba(69,109,255,0.30)] bg-[rgba(69,109,255,0.18)]" : "border border-transparent"
-                }`}
+                className="flex items-center gap-2.5 rounded-[10px] border border-transparent px-2.5 py-2 transition-colors"
               >
-                <span className={`w-4 text-[13px] font-semibold ${person.isMe ? "text-[#88C9F7]" : "text-[#666]"}`}>
+                <span className="w-4 text-[13px] font-semibold text-[#666]">
                   {person.rank}
                 </span>
                 <div className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white" style={{ background: bg }}>
@@ -278,11 +314,11 @@ function LeagueCardAuth() {
                     letter
                   )}
                 </div>
-                <span className={`min-w-0 flex-1 truncate text-sm ${person.isMe ? "font-bold text-white" : "text-[#aaa]"}`}>
-                  {person.isMe ? "You" : person.name}
+                <span className="min-w-0 flex-1 truncate text-sm text-[#aaa]">
+                  {person.name}
                 </span>
-                <span className={`text-[13px] font-semibold ${person.isMe ? "text-[#F7C325]" : "text-[#555]"}`}>
-                  {person.periodXp} XP
+                <span className="text-[13px] font-semibold text-[#555]">
+                  {person.xp} XP
                 </span>
               </div>
             );

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { guardAdmin } from "@/lib/admin/guardAdmin";
 import { db } from "@/lib/db";
+import { getUserXpTotalFromLedger } from "@/lib/xp/reconcileUserXpFromLedger";
 import { setUserPremium } from "@/lib/admin/syncPremium";
 
 export async function grantPremium(userId: string) {
@@ -24,20 +25,21 @@ export async function adjustXp(userId: string, amount: number) {
   const delta = Math.round(amount);
   if (!delta) return;
 
-  await db.$transaction([
-    db.user.update({
-      where: { id: userId },
-      data: { xp: { increment: delta } },
-    }),
-    db.xpLedger.create({
+  await db.$transaction(async (tx: typeof db) => {
+    await tx.xpLedger.create({
       data: {
         userId,
         amount: delta,
         reason: "admin_adjustment",
         ref: "admin",
       },
-    }),
-  ]);
+    });
+    const { totalXp, level } = await getUserXpTotalFromLedger(userId, tx.xpLedger);
+    await tx.user.update({
+      where: { id: userId },
+      data: { xp: totalXp, level },
+    });
+  });
 
   revalidatePath("/admin/users");
   revalidatePath("/admin");
