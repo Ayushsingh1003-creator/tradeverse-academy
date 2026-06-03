@@ -19,8 +19,8 @@ import { isSoundEnabled, persistSoundPreference, resumeAudioContext, sound } fro
 import type { Lesson } from "@/lib/data/lessons";
 import { COURSES } from "@/lib/data/courses";
 import { buildLibraryCourseHref } from "@/lib/libraryReturn";
+import { postLibraryLearnProgress } from "@/lib/libraryProgressClient";
 import { useSubscription } from "@/lib/hooks/useSubscription";
-import { MENTOR_NAME, MENTOR_TAGLINE } from "@/lib/mentorPersona";
 import { suggestedChipsForPage } from "@/lib/lessonAiResponses";
 import { useUserStore } from "@/lib/store";
 import type {
@@ -33,7 +33,7 @@ import type {
   PretestPage,
   TrueFalsePage,
 } from "@/types/lessonPage";
-import { CoachVoiceInput } from "@/components/lesson/CoachVoiceInput";
+import { LessonCoachAside, LessonCoachMobile } from "@/components/lesson/LessonCoachPanel";
 import { prepareCoachTts, speakCoachText, stopVoiceCoach } from "@/lib/voiceCoach";
 import { textForSpeech } from "@/lib/speechText";
 
@@ -260,10 +260,15 @@ export function LessonPlayer({
 
     setAiLoading(true);
     setAiLoadingPhase("thinking");
+    const lessonTopic =
+      phase === "practice"
+        ? `practice-${lesson.practice?.[practiceIx]?.type ?? "question"}`
+        : String(currentLessonTopic);
+
     const result = await getCoachReply({
       prompt,
       lessonTitle: lesson.title,
-      lessonTopic: String(currentLessonTopic),
+      lessonTopic,
       history: historyForRequest,
       isWrongAttempt,
     });
@@ -292,9 +297,42 @@ export function LessonPlayer({
     });
   };
 
+  const saveLibraryLearnProgress = (opts: {
+    practiceCorrect?: number;
+    practiceTotal?: number;
+    lessonCompleted?: boolean;
+  }) => {
+    if (!libraryCourseSlug?.trim()) return;
+    void postLibraryLearnProgress({
+      courseSlug: libraryCourseSlug.trim(),
+      learnSlug: lesson.slug,
+      practiceCorrect: opts.practiceCorrect ?? 0,
+      practiceTotal: opts.practiceTotal ?? 0,
+      lessonCompleted: opts.lessonCompleted ?? true,
+    });
+  };
+
+  useEffect(() => {
+    if (!libraryCourseSlug?.trim() || phase !== "practiceSummary") return;
+    const total = lesson.practice?.length ?? 0;
+    if (total === 0) return;
+    saveLibraryLearnProgress({
+      practiceCorrect,
+      practiceTotal: total,
+      lessonCompleted: true,
+    });
+  }, [phase, libraryCourseSlug, practiceCorrect, lesson.practice?.length, lesson.slug]);
+
   const persistLessonIfNeeded = () => {
     if (lessonPersisted) return;
     setLessonPersisted(true);
+    if (libraryCourseSlug?.trim() && !lesson.practice?.length) {
+      saveLibraryLearnProgress({
+        practiceCorrect: 0,
+        practiceTotal: 0,
+        lessonCompleted: true,
+      });
+    }
     const result = completeLesson({ lessonSlug: lesson.slug, score: 100, xpEarned: lesson.xpReward });
     if (typeof window !== "undefined") {
       window.localStorage.setItem("tv_first_lesson_done", "1");
@@ -579,6 +617,25 @@ export function LessonPlayer({
 
   const practiceQ = lesson.practice?.[practiceIx];
 
+  const coachSuggestedChips =
+    phase === "practice"
+      ? suggestedChipsForPage("practice")
+      : suggestedChipsForPage(page.type, page.type === "visual" ? page.visualId : undefined);
+
+  const coachPanelProps = {
+    aiHistory,
+    aiLoading,
+    aiLoadingPhase,
+    aiInput,
+    voiceOn,
+    suggestedChips: coachSuggestedChips,
+    onChipClick: (text: string) => void submitCoachPrompt({ text, appendUser: true }),
+    onInputChange: setAiInput,
+    onToggleVoice: () => setVoiceOn((v) => !v),
+    onSubmit: () => void submitCoachPrompt({ text: aiInput, appendUser: true }),
+    onTranscript: (text: string) => void submitCoachPrompt({ text, appendUser: true }),
+  };
+
   const advancePractice = () => {
     sound.pageTurn();
     if (!lesson.practice) return;
@@ -829,6 +886,15 @@ export function LessonPlayer({
           ) : null}
           <Link
             href={postCompletionHref}
+            onClick={() => {
+              if (libraryCourseSlug?.trim() && lesson.practice?.length) {
+                saveLibraryLearnProgress({
+                  practiceCorrect: 0,
+                  practiceTotal: 0,
+                  lessonCompleted: true,
+                });
+              }
+            }}
             className="rounded-2xl border border-border px-8 py-4 font-bold transition hover:bg-surface2"
           >
             {completionExitLabel}
@@ -862,20 +928,27 @@ export function LessonPlayer({
   if (phase === "practice" && practiceQ) {
     return (
       <div className="fixed inset-0 z-[200] flex flex-col bg-[#141414] text-text-primary">
-        <header className="flex items-center justify-between border-b border-border px-4 py-3">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4 py-3">
           <span className="text-sm font-semibold text-purple-300">PRACTICE MODE</span>
           <button type="button" className="text-text-muted" onClick={() => router.push(backToCourseHref)}>
             Exit
           </button>
         </header>
-        <div className="flex flex-1 flex-col items-center overflow-y-auto px-4 py-8">
-          <div className="mb-4 flex gap-1">
-            {lesson.practice!.map((_, i) => (
-              <span key={i} className={`h-2 w-2 rounded-full ${i < practiceIx ? "bg-accent" : i === practiceIx ? "bg-white" : "bg-slate-600"}`} />
-            ))}
-          </div>
-          <div className="w-full max-w-xl">{renderPracticeQuestion(practiceQ)}</div>
+        <div className="flex min-h-0 flex-1">
+          <LessonCoachAside {...coachPanelProps} />
+          <main className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8">
+            <div className="mb-4 flex gap-1">
+              {lesson.practice!.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-2 w-2 rounded-full ${i < practiceIx ? "bg-accent" : i === practiceIx ? "bg-white" : "bg-slate-600"}`}
+                />
+              ))}
+            </div>
+            <div className="w-full max-w-xl">{renderPracticeQuestion(practiceQ)}</div>
+          </main>
         </div>
+        <LessonCoachMobile {...coachPanelProps} aiOpen={aiOpen} onOpenChange={setAiOpen} />
       </div>
     );
   }
@@ -975,50 +1048,7 @@ export function LessonPlayer({
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-[280px] shrink-0 flex-col border-r border-border bg-[#1E1E1E] md:flex">
-          <div className="border-b border-border p-4">
-            <p className="text-sm font-semibold">{MENTOR_NAME}</p>
-            <p className="mt-0.5 text-xs text-slate-400">{MENTOR_TAGLINE}</p>
-            <p className="mt-1 text-[11px] leading-snug text-slate-500">No direct quiz answers — hints only.</p>
-          </div>
-          <div className="flex-1 space-y-2 overflow-y-auto p-3 text-sm">
-            {aiHistory.map((m, i) => (
-              <div key={i} className={`rounded-xl px-3 py-2 ${m.role === "coach" ? "bg-slate-700/80" : "bg-accent/15"}`}>
-                {m.text}
-              </div>
-            ))}
-            {aiLoading ? (
-              <div className="rounded-xl bg-slate-700/50 px-3 py-2 text-slate-400">
-                {aiLoadingPhase === "voice" ? "Preparing voice…" : "Thinking…"}
-              </div>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap gap-2 border-t border-border p-3">
-            {suggestedChipsForPage(page.type, page.type === "visual" ? page.visualId : undefined).map((c) => (
-              <button
-                key={c}
-                type="button"
-                disabled={aiLoading}
-                className="rounded-full border border-slate-600 px-2 py-1 text-xs text-slate-200 transition hover:border-[#456DFF]/50 hover:bg-[#456DFF]/10 disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={() => void submitCoachPrompt({ text: c, appendUser: true })}
-              >
-                💡 {c}
-              </button>
-            ))}
-          </div>
-          <div className="border-t border-border p-3">
-            <CoachVoiceInput
-              aiInput={aiInput}
-              aiLoading={aiLoading}
-              aiLoadingLabel={aiLoadingPhase === "voice" ? "Preparing voice…" : "Thinking…"}
-              voiceOn={voiceOn}
-              onInputChange={setAiInput}
-              onToggleVoice={() => setVoiceOn((v) => !v)}
-              onSubmit={() => submitCoachPrompt({ text: aiInput, appendUser: true })}
-              onTranscript={(text) => submitCoachPrompt({ text, appendUser: true })}
-            />
-          </div>
-        </aside>
+        <LessonCoachAside {...coachPanelProps} />
 
         <main {...bindSwipe()} className="relative flex min-h-0 flex-1 flex-col">
           {muxPlaybackId && !videoSkip ? (
@@ -1194,29 +1224,7 @@ export function LessonPlayer({
         </div>
       </footer>
 
-      <button type="button" className="fixed bottom-24 right-4 z-[130] flex h-14 w-14 items-center justify-center rounded-full bg-accent text-2xl shadow-lg md:hidden" onClick={() => setAiOpen(true)}>
-        💬
-      </button>
-      {aiOpen ? (
-        <div className="fixed inset-x-0 bottom-0 z-[170] max-h-[70vh] rounded-t-2xl border border-border bg-[#1E1E1E] p-4 md:hidden">
-          <div className="mb-2 flex justify-between">
-            <span className="font-semibold">{MENTOR_NAME}</span>
-            <button type="button" onClick={() => setAiOpen(false)}>
-              ✕
-            </button>
-          </div>
-          <CoachVoiceInput
-            aiInput={aiInput}
-            aiLoading={aiLoading}
-            aiLoadingLabel={aiLoadingPhase === "voice" ? "Preparing voice…" : "Thinking…"}
-            voiceOn={voiceOn}
-            onInputChange={setAiInput}
-            onToggleVoice={() => setVoiceOn((v) => !v)}
-            onSubmit={() => submitCoachPrompt({ text: aiInput, appendUser: true })}
-            onTranscript={(text) => submitCoachPrompt({ text, appendUser: true })}
-          />
-        </div>
-      ) : null}
+      <LessonCoachMobile {...coachPanelProps} aiOpen={aiOpen} onOpenChange={setAiOpen} />
     </div>
   );
 }

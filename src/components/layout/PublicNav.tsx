@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AuthUserMenu } from "@/components/auth/AuthUserMenu";
-import { LiveCohortNavButton } from "@/components/layout/LiveCohortNavButton";
 import { NavLink } from "@/components/layout/NavLink";
 import { AUTH_HOME_URL } from "@/lib/auth/urls";
 
@@ -27,7 +26,7 @@ export function PublicNav() {
           <NavLink href={AUTH_HOME_URL}>Home</NavLink>
           <NavLink href="/courses">Courses</NavLink>
           <NavLink href="/library">Library</NavLink>
-          <LiveCohortNavButton />
+          <NavLink href="/live-classes">Live Cohort</NavLink>
           <NavLink href="/pricing">Pricing</NavLink>
         </div>
 

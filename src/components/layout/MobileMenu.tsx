@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { useShowAdminNav } from "@/lib/admin/useShowAdminNav";
-import { LiveCohortNavButton } from "@/components/layout/LiveCohortNavButton";
 import { isNavLinkActive } from "@/components/layout/NavLink";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
@@ -93,9 +92,13 @@ export function MobileMenu({ streak, xp }: { streak: number; xp: number }) {
                 >
                   Library
                 </Link>
-                <div onClick={() => setOpen(false)} className="w-fit">
-                  <LiveCohortNavButton />
-                </div>
+                <Link
+                  onClick={() => setOpen(false)}
+                  href="/live-classes"
+                  className={isNavLinkActive(pathname, "/live-classes") ? "font-semibold text-white" : undefined}
+                >
+                  Live Cohort
+                </Link>
                 {showAdmin ? (
                   <Link
                     onClick={() => setOpen(false)}

@@ -9,7 +9,7 @@ import {
   resolveLibraryVideoYoutubeId,
   type LibraryVideoLang,
 } from "@/lib/libraryVideoLanguage";
-import { getYoutubeEmbedUrl } from "@/lib/youtubeEmbed";
+import { getLibraryYoutubeEmbedUrl } from "@/lib/youtubeEmbed";
 
 export function YouTubePlayerModal({
   open,
@@ -56,7 +56,7 @@ export function YouTubePlayerModal({
   if (!open || !video) return null;
 
   const youtubeId = resolveLibraryVideoYoutubeId(video, lang);
-  const embedUrl = getYoutubeEmbedUrl(youtubeId, { autoplay: true });
+  const embedUrl = getLibraryYoutubeEmbedUrl(youtubeId, { autoplay: true });
 
   return (
     <div

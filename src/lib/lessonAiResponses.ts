@@ -19,6 +19,9 @@ const AI_RESPONSES: Record<string, string> = {
     "A trend is price mostly moving one way. Uptrend: higher lows. Downtrend: lower highs. Trade with the trend.",
   ohlc: "OHLC is open, high, low, close — the four prices in every candle.",
   body: "The body is the thick box from open to close. A big body means a strong move; a tiny body means indecision.",
+  hint: "Re-read the question and eliminate one option that clearly does not fit the lesson idea.",
+  wrong: "Compare your pick to what the lesson emphasized — one clue is usually in the last screen you read.",
+  retry: "Take one small step: name whether buyers or sellers had control, then match that to an option.",
   default:
     "Focus on who won that candle — buyers or sellers. What does the body and wicks tell you?",
 };
@@ -42,6 +45,9 @@ export function matchAiResponse(userMessage: string): string {
 }
 
 export function suggestedChipsForPage(pageType: string, visualId?: string): string[] {
+  if (pageType === "practice") {
+    return ["Explain this simply", "Give a quick example", "Why was I wrong?"];
+  }
   if (pageType === "visual" && visualId === "CandleAnatomy") {
     return ["What's a wick?", "Bullish vs bearish?", "Why do candles matter?"];
   }

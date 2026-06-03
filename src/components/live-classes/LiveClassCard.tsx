@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { LiveClassCourse } from "@/lib/data/liveClasses";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { LiquidButton } from "@/components/ui/LiquidButton";
 
 export function LiveClassCard({ course }: { course: LiveClassCourse }) {
   return (
@@ -24,12 +24,15 @@ export function LiveClassCard({ course }: { course: LiveClassCourse }) {
       <div className="mt-auto">
         <p className="mb-3 text-lg font-extrabold text-white">{course.priceLabel}</p>
         <div className="flex gap-2">
-          <Link href={`/live-classes/${course.slug}`} className="inline-flex h-8 items-center justify-center rounded-lg border border-border px-3 text-sm">
+          <Link
+            href={`/live-classes/${course.slug}`}
+            className="inline-flex h-9 items-center justify-center rounded-lg border border-border px-3 text-sm text-white no-underline transition-colors hover:bg-white/5"
+          >
             View Details
           </Link>
-          <LiquidButton asChild size="default">
+          <Button asChild size="sm">
             <Link href={`/live-classes/${course.slug}`}>Enroll</Link>
-          </LiquidButton>
+          </Button>
         </div>
       </div>
     </Card>

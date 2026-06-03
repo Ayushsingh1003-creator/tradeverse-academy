@@ -14,7 +14,7 @@ function parseTags(json: string): string[] {
 }
 
 export function mapDbVideo(v: DbVideo, courseId?: string): LibraryVideo {
-  const itemType = v.type === "learn" ? "learn" : "video";
+  const itemType = v.type === "learn" || v.learnSlug?.trim() ? "learn" : "video";
   return {
     id: v.id,
     type: itemType,

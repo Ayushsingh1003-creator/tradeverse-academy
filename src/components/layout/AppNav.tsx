@@ -7,7 +7,6 @@ import { useEffect } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { isAuthConfigured } from "@/lib/auth/enabled";
 import { useShowAdminNav } from "@/lib/admin/useShowAdminNav";
-import { LiveCohortNavButton } from "@/components/layout/LiveCohortNavButton";
 import { MobileMenu } from "@/components/layout/MobileMenu";
 import { StreakNavLink } from "@/components/layout/StreakNavLink";
 import { AuthUserMenu } from "@/components/auth/AuthUserMenu";
@@ -52,7 +51,7 @@ export function AppNav() {
           <NavLink href="/dashboard">Home</NavLink>
           <NavLink href="/courses">Courses</NavLink>
           <NavLink href="/library">Library</NavLink>
-          <LiveCohortNavButton />
+          <NavLink href="/live-classes">Live Cohort</NavLink>
           {showAdmin ? (
             <Link
               href="/admin"

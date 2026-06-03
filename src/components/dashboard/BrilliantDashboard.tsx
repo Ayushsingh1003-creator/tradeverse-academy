@@ -5,6 +5,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth/client";
 import CourseCardStack from "@/components/dashboard/CourseCardStack";
 import { isAuthConfigured } from "@/lib/auth/enabled";
+import { getDailyChallengeForDate, parseLocalISODate } from "@/lib/dailyChallenge";
 import { isStreakAtRisk, todayLocalISO, weekActivityMap } from "@/lib/streak";
 import { useUserStore } from "@/lib/store";
 import { useToast } from "@/components/ui/Toast";
@@ -353,6 +354,7 @@ function DailyChallengeCard() {
   const isLoaded = !isPending;
   const { push } = useToast();
   const today = todayLocalISO();
+  const challenge = getDailyChallengeForDate(parseLocalISODate(today));
 
   const answered =
     hydrated && dailyChallengeAnsweredDate === today && dailyChallengeSelected != null;
@@ -369,9 +371,10 @@ function DailyChallengeCard() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { dailyChallengeCompletedToday?: boolean } | null) => {
         if (!data?.dailyChallengeCompletedToday) return;
-        recordDailyChallengeAnswer(1);
+        recordDailyChallengeAnswer(challenge.correctIndex);
       });
   }, [
+    challenge.correctIndex,
     hydrated,
     isLoaded,
     isSignedIn,
@@ -383,7 +386,7 @@ function DailyChallengeCard() {
   const handlePick = (i: number) => {
     if (answered) return;
     recordDailyChallengeAnswer(i);
-    if (i !== 1) return;
+    if (i !== challenge.correctIndex) return;
     if (earnedXpToday) return;
     addXp(30, {
       reason: "daily_challenge",
@@ -414,20 +417,27 @@ function DailyChallengeCard() {
           <div className="text-[11px] text-[#F7C325]">+30 XP · Resets at midnight</div>
         </div>
       </div>
-      <p className="mb-3 text-[13px] leading-relaxed text-[#ccc]">
-        A stock opens at $100, hits $115, drops to $97, closes at $108. What color is this candle?
-      </p>
+      <p className="mb-3 text-[13px] leading-relaxed text-[#ccc]">{challenge.question}</p>
       {!answered ? (
         <div className="flex flex-col gap-1.5">
-          {["Red — closed below open", "Green — closed above open", "Doji — same open/close", "Gray — volatile session"].map((opt, i) => (
-            <button key={opt} type="button" onClick={() => handlePick(i)} className="cursor-pointer rounded-lg border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-left text-xs text-[#ccc] transition-all hover:border-[rgba(69,109,255,0.4)] hover:bg-[rgba(69,109,255,0.08)]">
+          {challenge.options.map((opt, i) => (
+            <button
+              key={`${challenge.dailyChallengeId}-${i}`}
+              type="button"
+              onClick={() => handlePick(i)}
+              className="cursor-pointer rounded-lg border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-left text-xs text-[#ccc] transition-all hover:border-[rgba(69,109,255,0.4)] hover:bg-[rgba(69,109,255,0.08)]"
+            >
               {opt}
             </button>
           ))}
         </div>
       ) : (
-        <div className={`rounded-[10px] px-3 py-2.5 text-xs ${selected === 1 ? "border border-[rgba(69,109,255,0.3)] bg-[rgba(69,109,255,0.12)] text-[#88C9F7]" : "border border-[rgba(255,93,93,0.3)] bg-[rgba(255,93,93,0.12)] text-[#FF5D5D]"}`}>
-          {selected === 1 ? "✓ Correct! +30 XP — Green candle: Close ($108) > Open ($100)" : "✗ Green! Close ($108) > Open ($100) = bullish candle"}
+        <div
+          className={`rounded-[10px] px-3 py-2.5 text-xs ${selected === challenge.correctIndex ? "border border-[rgba(69,109,255,0.3)] bg-[rgba(69,109,255,0.12)] text-[#88C9F7]" : "border border-[rgba(255,93,93,0.3)] bg-[rgba(255,93,93,0.12)] text-[#FF5D5D]"}`}
+        >
+          {selected === challenge.correctIndex
+            ? `✓ Correct! +30 XP — ${challenge.explanation}`
+            : `✗ ${challenge.explanation}`}
         </div>
       )}
     </div>

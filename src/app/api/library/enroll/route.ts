@@ -39,23 +39,40 @@ export async function POST(req: NextRequest) {
     if (!valid) return NextResponse.json({ error: "Invalid video" }, { status: 400 });
   }
 
-  const existing = await db.libraryCourseEnrollment.findUnique({
-    where: {
-      userId_courseSlug: { userId: dbUser.id, courseSlug: slug },
-    },
+  const existing = await db.libraryCourseEnrollment.findFirst({
+    where: { userId: dbUser.id, courseSlug: slug },
   });
+
   if (!existing) {
-    await db.libraryCourseEnrollment.create({
-      data: {
-        userId: dbUser.id,
-        courseSlug: slug,
-        lastVideoId: lastVideoId ?? null,
-      },
-    });
+    try {
+      await db.libraryCourseEnrollment.create({
+        data: {
+          userId: dbUser.id,
+          courseSlug: slug,
+          lastVideoId: lastVideoId ?? null,
+        },
+      });
+    } catch (err) {
+      const code =
+        err && typeof err === "object" && "cause" in err
+          ? (err.cause as { code?: string } | undefined)?.code
+          : undefined;
+      if (code !== "23505") throw err;
+
+      const raced = await db.libraryCourseEnrollment.findFirst({
+        where: { userId: dbUser.id, courseSlug: slug },
+      });
+      if (raced && lastVideoId !== undefined) {
+        await db.libraryCourseEnrollment.update({
+          where: { id: raced.id },
+          data: { lastVideoId, updatedAt: new Date() },
+        });
+      }
+    }
   } else if (lastVideoId !== undefined) {
     await db.libraryCourseEnrollment.update({
       where: { id: existing.id },
-      data: { lastVideoId },
+      data: { lastVideoId, updatedAt: new Date() },
     });
   }
 

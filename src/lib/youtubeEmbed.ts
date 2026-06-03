@@ -32,14 +32,33 @@ export function parseYoutubeVideoId(input: string): string | null {
 
 export function getYoutubeEmbedUrl(
   videoIdOrUrl: string,
-  opts?: { autoplay?: boolean; rel?: number; modestbranding?: number },
+  opts?: { autoplay?: boolean; rel?: number; modestbranding?: number; controls?: number },
 ): string | null {
   const normalized = parseYoutubeVideoId(videoIdOrUrl);
   if (!normalized) return null;
-  const autoplay = opts?.autoplay ? 1 : 0;
-  const rel = opts?.rel ?? 0;
-  const modest = opts?.modestbranding ?? 1;
-  return `https://www.youtube.com/embed/${normalized}?autoplay=${autoplay}&rel=${rel}&modestbranding=${modest}`;
+  const params = new URLSearchParams({
+    autoplay: opts?.autoplay ? "1" : "0",
+    rel: String(opts?.rel ?? 0),
+    modestbranding: String(opts?.modestbranding ?? 1),
+    controls: String(opts?.controls ?? 1),
+    iv_load_policy: "3",
+    playsinline: "1",
+    fs: "1",
+  });
+  return `https://www.youtube-nocookie.com/embed/${normalized}?${params.toString()}`;
+}
+
+/** Library player: hides control bar (and the "Watch on YouTube" badge). Tap video to play/pause. */
+export function getLibraryYoutubeEmbedUrl(
+  videoIdOrUrl: string,
+  opts?: { autoplay?: boolean },
+): string | null {
+  return getYoutubeEmbedUrl(videoIdOrUrl, {
+    autoplay: opts?.autoplay,
+    rel: 0,
+    modestbranding: 1,
+    controls: 0,
+  });
 }
 
 export function youtubeThumbnailUrl(videoIdOrUrl: string): string {

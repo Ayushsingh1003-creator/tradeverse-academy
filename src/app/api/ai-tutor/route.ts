@@ -51,12 +51,41 @@ const TRADING_KEYWORDS = [
   "crypto",
   "futures",
   "options",
+  "hint",
+  "lesson",
+  "learn",
+  "practice",
+  "explain",
+  "example",
+  "answer",
+  "question",
+  "retry",
+  "wrong",
 ];
 
 function isTradingPrompt(text: string) {
   const q = text.toLowerCase();
   if (!q.trim()) return true;
   return TRADING_KEYWORDS.some((kw) => q.includes(kw));
+}
+
+/** Wrong-attempt hints and lesson context are always in-scope for the tutor. */
+function isOnTopicRequest(body: TutorBody) {
+  if (body.isWrongAttempt) return true;
+
+  const prompt = typeof body.prompt === "string" ? body.prompt : "";
+  if (isTradingPrompt(prompt)) return true;
+
+  const lessonTitle = String(body.lessonTitle ?? "");
+  const lessonTopic = String(body.lessonTopic ?? "");
+  if (isTradingPrompt(lessonTitle) || isTradingPrompt(lessonTopic)) return true;
+
+  for (const message of body.messages ?? []) {
+    if (message.role !== "user") continue;
+    if (isTradingPrompt(String(message.content ?? ""))) return true;
+  }
+
+  return false;
 }
 
 function normalizeMessages(
@@ -132,7 +161,7 @@ export async function POST(req: Request) {
     const prompt = typeof body.prompt === "string" ? body.prompt : "";
     const isWrongAttempt = Boolean(body.isWrongAttempt);
     const userMessages = normalizeMessages(prompt, body.messages);
-    if (!isTradingPrompt(prompt)) {
+    if (!isOnTopicRequest(body)) {
       return Response.json({ fallback: false, source: "fallback", reply: OFF_TOPIC_REPLY }, { status: 200 });
     }
 

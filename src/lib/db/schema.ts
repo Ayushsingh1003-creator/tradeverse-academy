@@ -403,6 +403,29 @@ export const libraryCourseEnrollments = pgTable(
   ],
 );
 
+export const libraryLearnProgress = pgTable(
+  "LibraryLearnProgress",
+  {
+    id: text("id").primaryKey(),
+    userId: text("userId").notNull(),
+    courseSlug: text("courseSlug").notNull(),
+    learnSlug: text("learnSlug").notNull(),
+    libraryItemId: text("libraryItemId"),
+    practiceCorrect: integer("practiceCorrect").notNull().default(0),
+    practiceTotal: integer("practiceTotal").notNull().default(0),
+    lessonCompleted: boolean("lessonCompleted").notNull().default(false),
+    updatedAt: timestamp("updatedAt", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("LibraryLearnProgress_userId_courseSlug_learnSlug_key").on(
+      t.userId,
+      t.courseSlug,
+      t.learnSlug,
+    ),
+    index("LibraryLearnProgress_userId_courseSlug_idx").on(t.userId, t.courseSlug),
+  ],
+);
+
 export const libraryVideos = pgTable(
   "LibraryVideo",
   {
@@ -511,6 +534,7 @@ export type User = typeof users.$inferSelect;
 export type XpLedger = typeof xpLedger.$inferSelect;
 export type LibraryCourse = typeof libraryCourses.$inferSelect;
 export type LibraryVideo = typeof libraryVideos.$inferSelect;
+export type LibraryLearnProgress = typeof libraryLearnProgress.$inferSelect;
 export type LibraryStandaloneVideo = typeof libraryStandaloneVideos.$inferSelect;
 export type LessonComment = typeof lessonComments.$inferSelect;
 export type SRSCard = typeof srsCards.$inferSelect;

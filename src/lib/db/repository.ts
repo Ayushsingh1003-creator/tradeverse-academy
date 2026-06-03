@@ -311,6 +311,15 @@ export const db: any = {
     { id: s.libraryCourseEnrollments.id, userId: s.libraryCourseEnrollments.userId, courseSlug: s.libraryCourseEnrollments.courseSlug },
     s.libraryCourseEnrollments,
   ),
+  libraryLearnProgress: makeModel(
+    {
+      id: s.libraryLearnProgress.id,
+      userId: s.libraryLearnProgress.userId,
+      courseSlug: s.libraryLearnProgress.courseSlug,
+      learnSlug: s.libraryLearnProgress.learnSlug,
+    },
+    s.libraryLearnProgress,
+  ),
   liveCohort: makeModel({ id: s.liveCohorts.id, slug: s.liveCohorts.slug }, s.liveCohorts),
   liveCohortEnrollment: makeModel({ id: s.liveCohortEnrollments.id, cohortId: s.liveCohortEnrollments.cohortId, authUserId: s.liveCohortEnrollments.authUserId, clerkUserId: s.liveCohortEnrollments.authUserId }, s.liveCohortEnrollments),
   leagueSeason: makeModel({ id: s.leagueSeasons.id }, s.leagueSeasons),
