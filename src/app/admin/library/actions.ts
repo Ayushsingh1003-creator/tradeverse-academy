@@ -3,8 +3,26 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { guardAdmin } from "@/lib/admin/guardAdmin";
+import { getLearnPageTitle } from "@/lib/data/learnPageOptions";
 import { db } from "@/lib/db";
+import type { LibraryItemType } from "@/lib/libraryItemType";
 import { parseYoutubeVideoId, youtubeThumbnailUrl } from "@/lib/youtubeEmbed";
+
+const LEARN_THUMBNAIL =
+  "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=640&h=360&fit=crop";
+
+function parseLibraryItemType(formData: FormData): LibraryItemType {
+  const raw = String(formData.get("type") ?? "video").trim();
+  return raw === "learn" ? "learn" : "video";
+}
+
+function parseLearnSlug(formData: FormData): string {
+  const learnSlug = String(formData.get("learnSlug") ?? "").trim();
+  if (!learnSlug) throw new Error("Select a learn lesson");
+  const title = getLearnPageTitle(learnSlug);
+  if (!title) throw new Error("Unknown learn lesson slug");
+  return learnSlug;
+}
 
 function tagsToJson(raw: string): string {
   const parts = raw
@@ -84,12 +102,9 @@ export async function deleteLibraryCourse(id: string) {
 
 export async function addLibraryVideo(courseId: string, formData: FormData) {
   await guardAdmin();
-  const { youtubeVideoId, youtubeVideoIdHi } = parseYoutubeUrls(formData);
-  const title = String(formData.get("title") ?? "").trim();
+  const itemType = parseLibraryItemType(formData);
   const description = String(formData.get("description") ?? "").trim();
-  const thumbnailUrl =
-    String(formData.get("thumbnailUrl") ?? "").trim() || youtubeThumbnailUrl(youtubeVideoId);
-  const duration = String(formData.get("duration") ?? "").trim() || "0:00";
+  const duration = String(formData.get("duration") ?? "").trim() || (itemType === "learn" ? "Lesson" : "0:00");
   const publishedAt = String(formData.get("publishedAt") ?? "").trim() || new Date().toISOString().slice(0, 10);
   const tagsRaw = String(formData.get("tags") ?? "");
   const maxOrder = await db.libraryVideo.aggregate({
@@ -97,47 +112,101 @@ export async function addLibraryVideo(courseId: string, formData: FormData) {
     _max: { order: true },
   });
   const order = (maxOrder._max.order ?? -1) + 1;
-  await db.libraryVideo.create({
-    data: {
-      courseId,
-      youtubeVideoId,
-      youtubeVideoIdHi,
-      title: title || youtubeVideoId,
-      description,
-      thumbnailUrl,
-      duration,
-      publishedAt,
-      tags: tagsToJson(tagsRaw),
-      order,
-    },
-  });
+
+  if (itemType === "learn") {
+    const learnSlug = parseLearnSlug(formData);
+    const title = getLearnPageTitle(learnSlug)!;
+    const thumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim() || LEARN_THUMBNAIL;
+    await db.libraryVideo.create({
+      data: {
+        courseId,
+        type: "learn",
+        learnSlug,
+        youtubeVideoId: "",
+        youtubeVideoIdHi: null,
+        title,
+        description: description || `Interactive lesson: ${title}`,
+        thumbnailUrl,
+        duration,
+        publishedAt,
+        tags: tagsToJson(tagsRaw),
+        order,
+      },
+    });
+  } else {
+    const { youtubeVideoId, youtubeVideoIdHi } = parseYoutubeUrls(formData);
+    const title = String(formData.get("title") ?? "").trim();
+    const thumbnailUrl =
+      String(formData.get("thumbnailUrl") ?? "").trim() || youtubeThumbnailUrl(youtubeVideoId);
+    await db.libraryVideo.create({
+      data: {
+        courseId,
+        type: "video",
+        learnSlug: null,
+        youtubeVideoId,
+        youtubeVideoIdHi,
+        title: title || youtubeVideoId,
+        description,
+        thumbnailUrl,
+        duration,
+        publishedAt,
+        tags: tagsToJson(tagsRaw),
+        order,
+      },
+    });
+  }
+
   revalidatePath(`/admin/library/${courseId}/videos`);
   revalidatePath("/library");
 }
 
 export async function updateLibraryVideo(videoId: string, courseId: string, formData: FormData) {
   await guardAdmin();
-  const { youtubeVideoId, youtubeVideoIdHi } = parseYoutubeUrls(formData);
-  const title = String(formData.get("title") ?? "").trim();
+  const itemType = parseLibraryItemType(formData);
   const description = String(formData.get("description") ?? "").trim();
   const thumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
-  const duration = String(formData.get("duration") ?? "").trim() || "0:00";
+  const duration = String(formData.get("duration") ?? "").trim() || (itemType === "learn" ? "Lesson" : "0:00");
   const publishedAt = String(formData.get("publishedAt") ?? "").trim();
   const tagsRaw = String(formData.get("tags") ?? "");
 
-  await db.libraryVideo.update({
-    where: { id: videoId },
-    data: {
-      youtubeVideoId,
-      youtubeVideoIdHi,
-      title,
-      description,
-      thumbnailUrl: thumbnailUrl || youtubeThumbnailUrl(youtubeVideoId),
-      duration,
-      publishedAt: publishedAt || undefined,
-      tags: tagsToJson(tagsRaw),
-    },
-  });
+  if (itemType === "learn") {
+    const learnSlug = parseLearnSlug(formData);
+    const title = getLearnPageTitle(learnSlug)!;
+    await db.libraryVideo.update({
+      where: { id: videoId },
+      data: {
+        type: "learn",
+        learnSlug,
+        youtubeVideoId: "",
+        youtubeVideoIdHi: null,
+        title,
+        description,
+        thumbnailUrl: thumbnailUrl || LEARN_THUMBNAIL,
+        duration,
+        publishedAt: publishedAt || undefined,
+        tags: tagsToJson(tagsRaw),
+      },
+    });
+  } else {
+    const { youtubeVideoId, youtubeVideoIdHi } = parseYoutubeUrls(formData);
+    const title = String(formData.get("title") ?? "").trim();
+    await db.libraryVideo.update({
+      where: { id: videoId },
+      data: {
+        type: "video",
+        learnSlug: null,
+        youtubeVideoId,
+        youtubeVideoIdHi,
+        title,
+        description,
+        thumbnailUrl: thumbnailUrl || youtubeThumbnailUrl(youtubeVideoId),
+        duration,
+        publishedAt: publishedAt || undefined,
+        tags: tagsToJson(tagsRaw),
+      },
+    });
+  }
+
   revalidatePath(`/admin/library/${courseId}/videos`);
   revalidatePath("/library");
 }

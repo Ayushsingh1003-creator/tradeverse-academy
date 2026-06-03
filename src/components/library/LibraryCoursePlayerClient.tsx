@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  getLibraryLearnHref,
+  isLibraryLearnItem,
+} from "@/lib/libraryItemType";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppNav } from "@/components/layout/AppNav";
 import { Button } from "@/components/ui/Button";
@@ -78,15 +82,28 @@ export function LibraryCoursePlayerClient({
     if (v !== activeVideoId) setActiveVideoId(v);
   }, [searchParams, course.videos, activeVideoId]);
 
+  const openLearnLesson = useCallback(
+    (video: LibraryVideo) => {
+      const href = getLibraryLearnHref(video, course.slug);
+      if (href) router.push(href);
+    },
+    [course.slug, router],
+  );
+
   const selectLesson = useCallback(
     (id: string) => {
+      const video = course.videos.find((v) => v.id === id);
+      if (video && isLibraryLearnItem(video)) {
+        openLearnLesson(video);
+        return;
+      }
       setActiveVideoId(id);
       router.replace(`/library/${course.slug}?v=${encodeURIComponent(id)}`, { scroll: false });
       requestAnimationFrame(() => {
         playerAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     },
-    [course.slug, router],
+    [course.slug, course.videos, openLearnLesson, router],
   );
 
   const hasNext = activeIndex >= 0 && activeIndex < course.videos.length - 1;
@@ -123,8 +140,14 @@ export function LibraryCoursePlayerClient({
     }
   }, [lang, activeVideo]);
 
-  const activeYoutubeId = activeVideo ? resolveLibraryVideoYoutubeId(activeVideo, lang) : null;
-  const embedUrl = activeYoutubeId ? getYoutubeEmbedUrl(activeYoutubeId, { autoplay: false }) : null;
+  const activeIsLearn = activeVideo ? isLibraryLearnItem(activeVideo) : false;
+  const activeLearnHref = activeVideo ? getLibraryLearnHref(activeVideo, course.slug) : null;
+  const activeYoutubeId =
+    activeVideo && !activeIsLearn ? resolveLibraryVideoYoutubeId(activeVideo, lang) : null;
+  const embedUrl =
+    activeYoutubeId && !activeIsLearn
+      ? getYoutubeEmbedUrl(activeYoutubeId, { autoplay: false })
+      : null;
 
   return (
     <main className="min-h-screen bg-[#141414]">
@@ -154,7 +177,7 @@ export function LibraryCoursePlayerClient({
         ) : (
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] lg:items-start">
             <div ref={playerAnchorRef} className="min-w-0 space-y-4">
-              {activeVideo ? (
+              {activeVideo && !activeIsLearn ? (
                 <LibraryVideoLanguageBar
                   lang={lang}
                   onLangChange={setLang}
@@ -162,7 +185,21 @@ export function LibraryCoursePlayerClient({
                 />
               ) : null}
               <div className="relative w-full overflow-hidden rounded-xl border border-border bg-black pb-[56.25%] shadow-lg">
-                {embedUrl ? (
+                {activeIsLearn && activeLearnHref ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-[#1a2a4a] to-[#141414] p-6 text-center">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[#88C9F7]">
+                      Interactive lesson
+                    </p>
+                    <p className="max-w-md text-lg font-bold text-white">{activeVideo?.title}</p>
+                    <p className="max-w-md text-sm text-text-muted">{activeVideo?.description}</p>
+                    <Link
+                      href={activeLearnHref}
+                      className="rounded-xl bg-[#456DFF] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#5a7dff]"
+                    >
+                      Open lesson
+                    </Link>
+                  </div>
+                ) : embedUrl ? (
                   <iframe
                     key={`${activeVideo?.id}-${lang}`}
                     className="absolute inset-0 h-full w-full"
@@ -209,6 +246,7 @@ export function LibraryCoursePlayerClient({
               <ol className="space-y-2 border border-border rounded-xl bg-[#1a1a1a] p-2">
                 {course.videos.map((video, index) => {
                   const isActive = video.id === activeVideoId;
+                  const isLearn = isLibraryLearnItem(video);
                   return (
                     <li key={video.id}>
                       <button
@@ -225,9 +263,15 @@ export function LibraryCoursePlayerClient({
                           <span className="text-xs font-semibold text-white">
                             {index + 1}. {video.title}
                           </span>
-                          <span className="shrink-0 text-[10px] text-text-muted">{video.duration}</span>
+                          <span className="shrink-0 text-[10px] text-text-muted">
+                            {isLearn ? "Lesson" : video.duration}
+                          </span>
                         </div>
-                        <span className="text-[10px] text-text-muted">{video.publishedAt}</span>
+                        {isLearn ? (
+                          <span className="text-[10px] font-medium text-[#88C9F7]">Opens interactive lesson</span>
+                        ) : (
+                          <span className="text-[10px] text-text-muted">{video.publishedAt}</span>
+                        )}
                         <p className="line-clamp-2 text-[11px] leading-snug text-[#aaa]">{video.description}</p>
                       </button>
                     </li>

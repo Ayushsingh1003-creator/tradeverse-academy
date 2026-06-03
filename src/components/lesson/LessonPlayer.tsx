@@ -18,6 +18,7 @@ import { getCoachReply } from "@/lib/aiCoach";
 import { isSoundEnabled, persistSoundPreference, resumeAudioContext, sound } from "@/lib/sounds";
 import type { Lesson } from "@/lib/data/lessons";
 import { COURSES } from "@/lib/data/courses";
+import { buildLibraryCourseHref } from "@/lib/libraryReturn";
 import { useSubscription } from "@/lib/hooks/useSubscription";
 import { MENTOR_NAME, MENTOR_TAGLINE } from "@/lib/mentorPersona";
 import { suggestedChipsForPage } from "@/lib/lessonAiResponses";
@@ -70,7 +71,16 @@ const CALLOUT_STYLES = {
   rule: { border: "border-purple-500/40 bg-purple-500/10", icon: "📌", label: "Trading Rule:" },
 } as const;
 
-export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPlaybackId?: string | null }) {
+export function LessonPlayer({
+  lesson,
+  muxPlaybackId,
+  libraryCourseSlug,
+}: {
+  lesson: Lesson;
+  muxPlaybackId?: string | null;
+  /** Library course slug from `?library=` when opened from `/library/[slug]`. */
+  libraryCourseSlug?: string;
+}) {
   const router = useRouter();
   const { push } = useToast();
   const { trigger } = useXPFloat();
@@ -125,14 +135,32 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
 
   const page = pages[pageIndex]!;
   const course = COURSES.find((c) => c.id === lesson.courseId);
-  const backToCourseHref = course ? `/courses/${course.slug}` : "/courses";
+  const fromLibrary = Boolean(libraryCourseSlug?.trim());
+  const libraryBackHref = fromLibrary ? buildLibraryCourseHref(libraryCourseSlug!) : null;
+  const backToCourseHref = libraryBackHref ?? (course ? `/courses/${course.slug}` : "/courses");
   // Final review = the last lesson of the course (or any level-review slug).
   const isFinalReview = course
     ? course.lessonSlugs[course.lessonSlugs.length - 1] === lesson.slug ||
       course.levels.some((l) => l.reviewSlug === lesson.slug)
     : false;
   // Where to send the user AFTER they fully complete the lesson (and any practice).
-  const postCompletionHref = isFinalReview ? "/courses" : backToCourseHref;
+  const postCompletionHref = fromLibrary
+    ? libraryBackHref!
+    : isFinalReview
+      ? "/courses"
+      : backToCourseHref;
+  const completionExitLabel = fromLibrary
+    ? "Back to course"
+    : isFinalReview
+      ? "Continue to all paths →"
+      : lesson.practice?.length
+        ? "I'll practice later"
+        : "Back to course";
+  const practiceSummaryExitLabel = fromLibrary
+    ? "Back to course"
+    : isFinalReview
+      ? "Continue to all paths →"
+      : "Next Lesson →";
   const firstIsPretest = pages[0]?.type === "pretest";
   const showPretestOverlay = phase === "lesson" && pageIndex === 0 && firstIsPretest;
   const showMainContent = phase === "lesson" && (pageIndex > 0 || !firstIsPretest);
@@ -803,7 +831,7 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
             href={postCompletionHref}
             className="rounded-2xl border border-border px-8 py-4 font-bold transition hover:bg-surface2"
           >
-            {isFinalReview ? "Continue to all paths →" : lesson.practice?.length ? "I'll practice later" : "Back to course"}
+            {completionExitLabel}
           </Link>
         </div>
       </div>
@@ -825,7 +853,7 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
           href={postCompletionHref}
           className="mt-10 rounded-2xl bg-accent px-8 py-4 font-semibold text-slate-900"
         >
-          {isFinalReview ? "Continue to all paths →" : "Next Lesson →"}
+          {practiceSummaryExitLabel}
         </Link>
       </div>
     );

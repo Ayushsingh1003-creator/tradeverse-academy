@@ -408,6 +408,8 @@ export const libraryVideos = pgTable(
   {
     id: text("id").primaryKey(),
     courseId: text("courseId").notNull(),
+    type: text("type").notNull().default("video"),
+    learnSlug: text("learnSlug"),
     youtubeVideoId: text("youtubeVideoId").notNull(),
     youtubeVideoIdHi: text("youtubeVideoIdHi"),
     title: text("title").notNull(),
