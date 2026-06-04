@@ -37,5 +37,7 @@ export async function GET(req: NextRequest) {
     dailyChallengeCompletedToday,
     role: dbUser.role,
     isAdmin,
+    onboardingCompleted: Boolean(dbUser.onboardingAssessmentCompletedAt),
+    traderPersona: dbUser.traderPersona ?? null,
   });
 }

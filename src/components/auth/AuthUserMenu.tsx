@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useShowAdminNav } from "@/lib/admin/useShowAdminNav";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
+import { AUTH_AFTER_SIGN_OUT_URL } from "@/lib/auth/urls";
 import { signOutAction } from "@/lib/auth/sign-out-action";
 import { clearClientAuthSession } from "@/lib/auth/sign-out-client";
 
@@ -129,7 +130,12 @@ export function AuthUserMenu() {
                 setOpen(false);
                 void (async () => {
                   await clearClientAuthSession();
-                  await signOutAction();
+                  try {
+                    await signOutAction();
+                  } catch {
+                    /* redirect() throws; fall through to hard navigation */
+                  }
+                  window.location.assign(AUTH_AFTER_SIGN_OUT_URL);
                 })();
               }}
             >

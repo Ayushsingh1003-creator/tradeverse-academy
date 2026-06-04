@@ -33,6 +33,16 @@ export const users = pgTable("User", {
   isCreator: boolean("isCreator").notNull().default(false),
   stripeConnectAccountId: text("stripeConnectAccountId"),
   country: text("country"),
+  /** Set when the 8-question onboarding assessment is completed. */
+  onboardingAssessmentCompletedAt: timestamp("onboardingAssessmentCompletedAt", { mode: "date" }),
+  /** newcomer | knowledgeable_loser | almost_there */
+  traderPersona: text("traderPersona"),
+  assessmentKScore: integer("assessmentKScore"),
+  assessmentDScore: integer("assessmentDScore"),
+  /** JSON map of questionId → selected optionId */
+  assessmentAnswers: text("assessmentAnswers"),
+  /** Disciplined instincts, weak theory — accelerated newcomer track */
+  assessmentAcceleratedPace: boolean("assessmentAcceleratedPace").notNull().default(false),
 });
 
 export const xpLedger = pgTable(

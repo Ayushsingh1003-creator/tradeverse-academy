@@ -1,7 +1,8 @@
 "use server";
 
 import { neonAuth } from "@/lib/auth/server";
-import { AUTH_AFTER_SIGN_IN_URL } from "@/lib/auth/urls";
+import { getAuthUserEmail, getAuthUserId } from "@/lib/auth/session";
+import { resolvePostAuthUrl } from "@/lib/onboarding/resolvePostAuthUrl";
 import type { SignInFormState } from "@/lib/auth/form-state";
 import { buildVerificationResumeState } from "@/lib/auth/verification-flow";
 import { isEmailNotVerifiedError } from "@/lib/auth/verification-errors";
@@ -27,5 +28,9 @@ export async function signInWithEmail(
     return { error: msg || "Failed to sign in. Try again." };
   }
 
-  redirect(AUTH_AFTER_SIGN_IN_URL);
+  const authUserId = await getAuthUserId();
+  if (!authUserId) {
+    redirect("/onboarding");
+  }
+  redirect(await resolvePostAuthUrl(authUserId, await getAuthUserEmail()));
 }

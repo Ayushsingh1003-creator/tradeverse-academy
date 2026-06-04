@@ -3,7 +3,8 @@ import { AuthPageShell } from "@/components/auth/AuthPageShell";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { isAuthConfigured } from "@/lib/auth/enabled";
 import { getAuthUserId } from "@/lib/auth/session";
-import { AUTH_HOME_URL } from "@/lib/auth/urls";
+import { getAuthUserEmail } from "@/lib/auth/session";
+import { resolvePostAuthUrl } from "@/lib/onboarding/resolvePostAuthUrl";
 import { buildVerificationResumeState } from "@/lib/auth/verification-flow";
 import type { SignUpFormState } from "@/lib/auth/form-state";
 
@@ -12,7 +13,10 @@ type PageProps = {
 };
 
 export default async function SignUpPage({ searchParams }: PageProps) {
-  if (await getAuthUserId()) redirect(AUTH_HOME_URL);
+  const authUserId = await getAuthUserId();
+  if (authUserId) {
+    redirect(await resolvePostAuthUrl(authUserId, await getAuthUserEmail()));
+  }
 
   const authEnabled = isAuthConfigured();
   const email = searchParams.email?.trim();
