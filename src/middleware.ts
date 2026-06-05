@@ -10,7 +10,6 @@ const PUBLIC_PREFIXES = [
   "/",
   "/dashboard",
   "/courses",
-  "/pricing",
   "/live-classes",
   "/paths",
   "/library",
@@ -155,7 +154,6 @@ export const config = {
   matcher: [
     "/",
     "/courses/:path*",
-    "/pricing/:path*",
     "/live-classes/:path*",
     "/paths/:path*",
     "/api/:path*",

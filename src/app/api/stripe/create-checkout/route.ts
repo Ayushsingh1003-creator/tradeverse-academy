@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${returnUrl}/premium/success`,
-    cancel_url: `${returnUrl}/pricing`,
+    cancel_url: `${returnUrl}/settings`,
     metadata: { authUserId: userId, clerkUserId: userId },
   });
 

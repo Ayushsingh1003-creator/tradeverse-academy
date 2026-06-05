@@ -27,7 +27,6 @@ export function PublicNav() {
           <NavLink href="/courses">Courses</NavLink>
           <NavLink href="/library">Library</NavLink>
           <NavLink href="/live-classes">Live Cohort</NavLink>
-          <NavLink href="/pricing">Pricing</NavLink>
         </div>
 
         <div className="ml-auto flex items-center gap-2.5">

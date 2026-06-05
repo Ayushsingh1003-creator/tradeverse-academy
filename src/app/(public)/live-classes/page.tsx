@@ -16,11 +16,21 @@ export default async function LiveClassesPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {courses.map((course) => (
-          <LiveClassCard key={course.id} course={course} />
-        ))}
-      </div>
+      {courses.length === 0 ? (
+        <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-16 text-center">
+          <p className="text-sm font-semibold uppercase tracking-wide text-accent">Stay Tuned</p>
+          <h2 className="mt-2 text-xl font-bold text-white">No Upcoming Live Classes!</h2>
+          <p className="mx-auto mt-3 max-w-md text-sm text-text-muted">
+            New cohorts are on the way. Check back soon for live sessions with structured curriculum and instructor support.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {courses.map((course) => (
+            <LiveClassCard key={course.id} course={course} />
+          ))}
+        </div>
+      )}
     </LiveClassesPageShell>
   );
 }

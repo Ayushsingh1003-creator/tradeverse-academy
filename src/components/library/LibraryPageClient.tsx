@@ -8,6 +8,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/free-mode";
 import { AppNav } from "@/components/layout/AppNav";
+import { PAGE_SHELL_CLASSES } from "@/components/layout/pageShell";
 import { Button } from "@/components/ui/Button";
 import { LibraryCourseCard } from "@/components/library/LibraryCourseCard";
 import { LibraryVideoCard } from "@/components/library/LibraryVideoCard";
@@ -125,7 +126,7 @@ export function LibraryPageClient({
   return (
     <main className="min-h-screen bg-[#141414]">
       <AppNav />
-      <section className="mx-auto max-w-6xl px-4 py-8">
+      <section className={`${PAGE_SHELL_CLASSES} py-8`}>
         {resumeItems.length > 0 ? (
           <section className="mb-10">
             <h2 className="mb-1 text-xl font-bold text-white">Resume learning</h2>

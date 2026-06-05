@@ -19,7 +19,12 @@ import { isSoundEnabled, persistSoundPreference, resumeAudioContext, sound } fro
 import type { Lesson } from "@/lib/data/lessons";
 import { COURSES } from "@/lib/data/courses";
 import { buildLibraryCourseHref } from "@/lib/libraryReturn";
+import {
+  readInitialLessonResumeState,
+  shouldResumeLessonToCompletionSplash,
+} from "@/lib/libraryLearnResume";
 import { postLibraryLearnProgress } from "@/lib/libraryProgressClient";
+import { readLocalLibraryProgress } from "@/lib/libraryProgressLocal";
 import { useSubscription } from "@/lib/hooks/useSubscription";
 import { suggestedChipsForPage } from "@/lib/lessonAiResponses";
 import { useUserStore } from "@/lib/store";
@@ -88,12 +93,19 @@ export function LessonPlayer({
   const completeLesson = useUserStore((s) => s.completeLesson);
   const unlockAchievement = useUserStore((s) => s.unlockAchievement);
   const lessonsCompleted = useUserStore((s) => s.lessonsCompleted);
+  const initialResume = readInitialLessonResumeState(
+    libraryCourseSlug,
+    lesson.slug,
+    useUserStore.getState().lessonsCompleted,
+  );
 
   const pages = lesson.pages;
   const [pageIndex, setPageIndex] = useState(0);
   const [pretestReveal, setPretestReveal] = useState(false);
   const [pretestPick, setPretestPick] = useState<number | null>(null);
-  const [phase, setPhase] = useState<"lesson" | "splash" | "practice" | "practiceSummary">("lesson");
+  const [phase, setPhase] = useState<"lesson" | "splash" | "practice" | "practiceSummary">(
+    initialResume.phase,
+  );
   const [videoSkip, setVideoSkip] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiInput, setAiInput] = useState("");
@@ -104,7 +116,8 @@ export function LessonPlayer({
   const [, setCoachSpeaking] = useState(false);
   const [practiceIx, setPracticeIx] = useState(0);
   const [practiceCorrect, setPracticeCorrect] = useState(0);
-  const [lessonPersisted, setLessonPersisted] = useState(false);
+  const [lessonPersisted, setLessonPersisted] = useState(initialResume.lessonPersisted);
+  const [splashFromResume, setSplashFromResume] = useState(initialResume.splashFromResume);
 
   const [mcPick, setMcPick] = useState<number | null>(null);
   const [mcChecked, setMcChecked] = useState(false);
@@ -197,12 +210,53 @@ export function LessonPlayer({
   }, []);
 
   useEffect(() => {
-    if (phase !== "splash") return;
+    if (phase !== "splash" || splashFromResume) return;
     sound.lessonComplete();
     setSplashConfetti(true);
     const t = window.setTimeout(() => setSplashConfetti(false), 2000);
     return () => window.clearTimeout(t);
-  }, [phase]);
+  }, [phase, splashFromResume]);
+
+  useEffect(() => {
+    if (!libraryCourseSlug?.trim()) return;
+
+    const localEntry = readLocalLibraryProgress(libraryCourseSlug.trim()).find(
+      (row) => row.learnSlug === lesson.slug,
+    );
+
+    const applyResume = (entry?: { lessonCompleted: boolean }) => {
+      if (!shouldResumeLessonToCompletionSplash(entry, lesson.slug, lessonsCompleted)) return;
+      setSplashFromResume(true);
+      setLessonPersisted(true);
+      setPhase("splash");
+    };
+
+    if (localEntry) {
+      applyResume(localEntry);
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/library/progress?slug=${encodeURIComponent(libraryCourseSlug.trim())}`,
+          { credentials: "include", cache: "no-store" },
+        );
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as {
+          summary?: { entries: { learnSlug: string; lessonCompleted: boolean; practiceTotal: number }[] };
+        };
+        const serverEntry = data.summary?.entries.find((e) => e.learnSlug === lesson.slug);
+        if (serverEntry) applyResume(serverEntry);
+      } catch {
+        /* keep local resume */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [libraryCourseSlug, lesson.slug, lessonsCompleted]);
 
   useEffect(() => {
     setMcPick(null);
@@ -326,12 +380,8 @@ export function LessonPlayer({
   const persistLessonIfNeeded = () => {
     if (lessonPersisted) return;
     setLessonPersisted(true);
-    if (libraryCourseSlug?.trim() && !lesson.practice?.length) {
-      saveLibraryLearnProgress({
-        practiceCorrect: 0,
-        practiceTotal: 0,
-        lessonCompleted: true,
-      });
+    if (libraryCourseSlug?.trim()) {
+      saveLibraryLearnProgress({ lessonCompleted: true });
     }
     const result = completeLesson({ lessonSlug: lesson.slug, score: 100, xpEarned: lesson.xpReward });
     if (typeof window !== "undefined") {
@@ -356,6 +406,18 @@ export function LessonPlayer({
     if (u) push(`🏆 ${u.title}`, "success");
   };
 
+  const restartLesson = () => {
+    setSplashFromResume(false);
+    setSplashConfetti(false);
+    setPhase("lesson");
+    setPageIndex(0);
+    setPretestReveal(false);
+    setPretestPick(null);
+    setPracticeIx(0);
+    setPracticeCorrect(0);
+    setVideoSkip(false);
+  };
+
   const goNextPage = () => {
     if (!lesson.isFree && !isPremium && pageIndex >= 1) {
       setBlockedPremium(true);
@@ -363,6 +425,7 @@ export function LessonPlayer({
     }
     if (pageIndex >= pages.length - 1) {
       persistLessonIfNeeded();
+      setSplashFromResume(false);
       setPhase("splash");
       return;
     }
@@ -871,34 +934,44 @@ export function LessonPlayer({
             {course.title}: {course.lessonSlugs.filter((s) => lessonsCompleted.includes(s)).length}/{course.lessonSlugs.length} lessons in path
           </p>
         ) : null}
-        <div className="mt-10 flex w-full max-w-sm flex-col gap-3 sm:flex-row sm:justify-center">
-          {lesson.practice?.length ? (
-            <button
-              type="button"
-              className="rounded-2xl bg-[#456DFF] px-8 py-4 text-lg font-black text-white shadow-md transition hover:brightness-110"
-              onClick={() => {
-                sound.pageTurn();
-                setPhase("practice");
-              }}
-            >
-              Practice now ⚡
-            </button>
-          ) : null}
-          <Link
-            href={postCompletionHref}
-            onClick={() => {
-              if (libraryCourseSlug?.trim() && lesson.practice?.length) {
-                saveLibraryLearnProgress({
-                  practiceCorrect: 0,
-                  practiceTotal: 0,
-                  lessonCompleted: true,
-                });
-              }
-            }}
-            className="rounded-2xl border border-border px-8 py-4 font-bold transition hover:bg-surface2"
+        <div className="mt-10 flex w-full max-w-sm flex-col gap-3">
+          <button
+            type="button"
+            className="rounded-2xl border border-border px-8 py-3.5 font-semibold transition hover:bg-surface2"
+            onClick={restartLesson}
           >
-            {completionExitLabel}
-          </Link>
+            Restart lesson
+          </button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+            {lesson.practice?.length ? (
+              <button
+                type="button"
+                className="rounded-2xl bg-[#456DFF] px-8 py-4 text-lg font-black text-white shadow-md transition hover:brightness-110"
+                onClick={() => {
+                  sound.pageTurn();
+                  setSplashFromResume(false);
+                  setPhase("practice");
+                }}
+              >
+                Practice now ⚡
+              </button>
+            ) : null}
+            <Link
+              href={postCompletionHref}
+              onClick={() => {
+                if (libraryCourseSlug?.trim() && lesson.practice?.length) {
+                  saveLibraryLearnProgress({
+                    practiceCorrect: 0,
+                    practiceTotal: 0,
+                    lessonCompleted: true,
+                  });
+                }
+              }}
+              className="rounded-2xl border border-border px-8 py-4 font-bold transition hover:bg-surface2"
+            >
+              {completionExitLabel}
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -963,8 +1036,8 @@ export function LessonPlayer({
           <div className="max-w-md rounded-2xl border border-accent/50 bg-surface p-6 text-center">
             <p className="text-accent">🔒 Premium lesson</p>
             <h3 className="mt-3 text-2xl font-bold">Unlock on Premium</h3>
-            <Link href="/pricing" className="mt-6 inline-block rounded-2xl bg-[#456DFF] px-6 py-3 font-semibold text-white">
-              View plans
+            <Link href="/settings" className="mt-6 inline-block rounded-2xl bg-[#456DFF] px-6 py-3 font-semibold text-white">
+              Upgrade in settings
             </Link>
           </div>
         </div>

@@ -56,7 +56,7 @@ export async function getLiveClassesFromDb(): Promise<LiveClassCourse[]> {
   } catch {
     /* DB unavailable */
   }
-  return getLiveClasses();
+  return [];
 }
 
 export async function getLiveClassBySlugFromDb(slug: string) {

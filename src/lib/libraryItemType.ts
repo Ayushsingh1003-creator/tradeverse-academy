@@ -10,8 +10,9 @@ export function isLibraryLearnItem(video: LibraryVideo): boolean {
 export function getLibraryLearnHref(
   video: LibraryVideo,
   libraryCourseSlug?: string | null,
+  opts?: { resumeToCompletion?: boolean },
 ): string | null {
   const slug = video.learnSlug?.trim();
   if (!slug) return null;
-  return buildLearnHref(slug, libraryCourseSlug);
+  return buildLearnHref(slug, libraryCourseSlug, opts);
 }

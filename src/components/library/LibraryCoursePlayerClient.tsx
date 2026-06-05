@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/Button";
 import { LibraryVideoLanguageBar } from "@/components/library/LibraryVideoLanguageBar";
 import { isAuthConfigured } from "@/lib/auth/enabled";
 import type { LibraryCourse, LibraryVideo } from "@/lib/data/library";
+import { shouldResumeLessonToCompletionSplash } from "@/lib/libraryLearnResume";
+import { useUserStore } from "@/lib/store";
 import {
   hasLibraryVideoHindi,
   resolveLibraryVideoYoutubeId,
@@ -59,6 +61,7 @@ export function LibraryCoursePlayerClient({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const lessonsCompleted = useUserStore((s) => s.lessonsCompleted);
   const playerAnchorRef = useRef<HTMLDivElement>(null);
   const [activeVideoId, setActiveVideoId] = useState(() => resolveInitialVideoId(course, initialVideoId));
   const [lang, setLang] = useState<LibraryVideoLang>("en");
@@ -140,10 +143,18 @@ export function LibraryCoursePlayerClient({
 
   const openLearnLesson = useCallback(
     (video: LibraryVideo) => {
-      const href = getLibraryLearnHref(video, course.slug);
+      const learnSlug = video.learnSlug?.trim();
+      const progress = learnSlug ? learnProgressBySlug.get(learnSlug) : undefined;
+      const href = getLibraryLearnHref(video, course.slug, {
+        resumeToCompletion: shouldResumeLessonToCompletionSplash(
+          progress,
+          learnSlug,
+          lessonsCompleted,
+        ),
+      });
       if (href) router.push(href);
     },
-    [course.slug, router],
+    [course.slug, learnProgressBySlug, lessonsCompleted, router],
   );
 
   const selectLesson = useCallback(
@@ -197,7 +208,19 @@ export function LibraryCoursePlayerClient({
   }, [lang, activeVideo]);
 
   const activeIsLearn = activeVideo ? isLibraryLearnItem(activeVideo) : false;
-  const activeLearnHref = activeVideo ? getLibraryLearnHref(activeVideo, course.slug) : null;
+  const activeLearnProgress =
+    activeVideo?.learnSlug?.trim()
+      ? learnProgressBySlug.get(activeVideo.learnSlug.trim())
+      : undefined;
+  const activeLearnHref = activeVideo
+    ? getLibraryLearnHref(activeVideo, course.slug, {
+        resumeToCompletion: shouldResumeLessonToCompletionSplash(
+          activeLearnProgress,
+          activeVideo.learnSlug?.trim(),
+          lessonsCompleted,
+        ),
+      })
+    : null;
   const activeYoutubeId =
     activeVideo && !activeIsLearn ? resolveLibraryVideoYoutubeId(activeVideo, lang) : null;
   const embedUrl =
@@ -252,7 +275,13 @@ export function LibraryCoursePlayerClient({
                       href={activeLearnHref}
                       className="rounded-xl bg-[#456DFF] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#5a7dff]"
                     >
-                      Open lesson
+                      {shouldResumeLessonToCompletionSplash(
+                        activeLearnProgress,
+                        activeVideo.learnSlug?.trim(),
+                        lessonsCompleted,
+                      )
+                        ? "Practice or review"
+                        : "Open lesson"}
                     </Link>
                   </div>
                 ) : embedUrl ? (

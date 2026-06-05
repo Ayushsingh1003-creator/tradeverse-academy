@@ -1,8 +1,9 @@
+import { PAGE_SHELL_CLASSES } from "@/components/layout/pageShell";
 import { PageLoader } from "@/components/ui/Loader";
 
 export default function Loading() {
   return (
-    <main className="mx-auto max-w-[1240px] px-4 py-8">
+    <main className={`${PAGE_SHELL_CLASSES} py-8`}>
       <PageLoader />
     </main>
   );

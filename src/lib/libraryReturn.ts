@@ -5,10 +5,16 @@ export function buildLibraryCourseHref(courseSlug: string): string {
   return `/library/${encodeURIComponent(courseSlug.trim())}`;
 }
 
-export function buildLearnHref(lessonSlug: string, libraryCourseSlug?: string | null): string {
+export function buildLearnHref(
+  lessonSlug: string,
+  libraryCourseSlug?: string | null,
+  opts?: { resumeToCompletion?: boolean },
+): string {
   const slug = lessonSlug.trim();
   const base = `/learn/${encodeURIComponent(slug)}`;
   const library = libraryCourseSlug?.trim();
   if (!library) return base;
-  return `${base}?${LIBRARY_RETURN_QUERY}=${encodeURIComponent(library)}`;
+  const params = new URLSearchParams({ [LIBRARY_RETURN_QUERY]: library });
+  if (opts?.resumeToCompletion) params.set("resume", "completion");
+  return `${base}?${params.toString()}`;
 }
