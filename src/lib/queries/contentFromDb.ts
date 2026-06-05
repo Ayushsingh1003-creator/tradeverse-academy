@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { getLibraryCourseBySlug } from "@/lib/data/library";
-import { getLiveClassBySlug, getLiveClasses } from "@/lib/data/liveClasses";
+import { getLiveClassBySlug } from "@/lib/data/liveClasses";
 import type { LibraryCourse, LibraryVideo } from "@/lib/data/library";
 import type { LiveClassCourse } from "@/lib/data/liveClasses";
 import { mapDbLibraryCourse, mapDbStandaloneVideo } from "@/lib/libraryDbMapper";
