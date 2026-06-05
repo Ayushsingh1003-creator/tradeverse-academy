@@ -277,7 +277,7 @@ export function LibraryCoursePlayerClient({
                     >
                       {shouldResumeLessonToCompletionSplash(
                         activeLearnProgress,
-                        activeVideo.learnSlug?.trim(),
+                        activeVideo?.learnSlug?.trim(),
                         lessonsCompleted,
                       )
                         ? "Practice or review"
