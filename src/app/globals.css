@@ -268,6 +268,22 @@ main[class*="bg-[#141414]"] {
   animation: fade-in-soft 0.4s ease-out forwards;
 }
 
+@keyframes ask-card-expand {
+  from {
+    opacity: 0;
+    transform: scale(0.9, 0.94) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1, 1) translateY(0);
+  }
+}
+
+.animate-ask-card-expand {
+  transform-origin: center top;
+  animation: ask-card-expand 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 .animate-hammer-ring {
   stroke-dasharray: 8 6;
   animation: hammer-ring-in 0.55s ease-out forwards;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ChevronDown, ChevronLeft } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth/client";
 import { PAGE_SHELL_CLASSES } from "@/components/layout/pageShell";
 import CourseCardStack from "@/components/dashboard/CourseCardStack";
@@ -13,7 +13,7 @@ import { useUserStore } from "@/lib/store";
 import { useToast } from "@/components/ui/Toast";
 import { LeagueSymbol } from "@/components/league/LeagueSymbol";
 import { leagueColor, leagueDisplayName } from "@/lib/league/tiers";
-import { getCoachReply } from "@/lib/aiCoach";
+import { LearningAskCard } from "@/components/dashboard/LearningAskCard";
 import type { LeaderboardResult } from "@/lib/leaderboard/types";
 
 const ROW_PALETTE = ["#EF4444", "#9D62FF", "#456DFF", "#F59E0B", "#22C55E", "#EC4899"];
@@ -30,63 +30,9 @@ function LeagueCollapseIcon({ open }: { open: boolean }) {
 }
 
 function WelcomeSection() {
-  const [query, setQuery] = useState("");
-  const [aiReply, setAiReply] = useState<string | null>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const [asking, setAsking] = useState(false);
-
-  async function handleAsk(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const prompt = query.trim();
-    if (!prompt || asking) return;
-
-    setAsking(true);
-    setAiError(null);
-    try {
-      const { text } = await getCoachReply({
-        prompt,
-        lessonTitle: "Tradeverse Dashboard",
-        lessonTopic: "General trading learning guidance",
-        history: [],
-      });
-      setAiReply(text);
-    } catch {
-      setAiError("Could not get AI response. Please try again.");
-    } finally {
-      setAsking(false);
-    }
-  }
-
   return (
-    <div className="w-full min-w-0">
-      <form onSubmit={(e) => void handleAsk(e)} className="w-full">
-        <div className="flex items-center gap-2.5 rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.06)] px-4 py-2.5 transition-colors focus-within:border-[rgba(69,109,255,0.5)]">
-          <span className="text-[15px] text-[#666]">🔍</span>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="What do you want to learn?"
-            className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-white outline-none placeholder:text-[#666]"
-          />
-          <button
-            type="submit"
-            disabled={asking || !query.trim()}
-            className="cursor-pointer rounded-full border-0 bg-[rgba(255,255,255,0.12)] px-3.5 py-1 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {asking ? "Asking..." : "Ask"}
-          </button>
-        </div>
-      </form>
-      {aiReply ? (
-        <div className="mt-3 w-full rounded-xl border border-[rgba(69,109,255,0.3)] bg-[rgba(69,109,255,0.1)] px-4 py-3 text-sm text-[#cfe3ff]">
-          {aiReply}
-        </div>
-      ) : null}
-      {aiError ? (
-        <p className="mt-3 w-full rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {aiError}
-        </p>
-      ) : null}
+    <div className="relative z-30 w-full min-w-0">
+      <LearningAskCard />
     </div>
   );
 }
@@ -433,7 +379,7 @@ export function BrilliantDashboard() {
   return (
     <div className={`${PAGE_SHELL_CLASSES} py-8 text-white`}>
       <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start">
-        <div className="flex w-full min-w-0 flex-col gap-4 self-center">
+        <div className="relative flex w-full min-w-0 flex-col gap-4 self-center overflow-visible">
           <WelcomeSection />
           <StreakCard />
           <LeagueCard />

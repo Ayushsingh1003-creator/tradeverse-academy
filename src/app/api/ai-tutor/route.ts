@@ -1,3 +1,4 @@
+import { isTradingRelatedQuery } from "@/lib/tradingTopics";
 import { TUTOR_MAX_TOKENS, TUTOR_SYSTEM_PROMPT, TUTOR_TEMPERATURE } from "@/lib/tutorPrompt";
 
 type TutorBody = {
@@ -25,37 +26,9 @@ const OFF_TOPIC_REPLY =
   "That is outside what Tradeverse Academy covers. I am here to help you learn trading, markets, and risk management.";
 
 const TRADING_KEYWORDS = [
-  "trade",
-  "trading",
-  "market",
-  "stock",
-  "candle",
-  "candlestick",
-  "chart",
-  "price",
-  "support",
-  "resistance",
-  "rsi",
-  "macd",
-  "indicator",
-  "risk",
-  "reward",
-  "position",
-  "stop loss",
-  "broker",
-  "nse",
-  "bse",
-  "demat",
-  "leverage",
-  "forex",
-  "crypto",
-  "futures",
-  "options",
   "hint",
   "lesson",
-  "learn",
   "practice",
-  "explain",
   "example",
   "answer",
   "question",
@@ -64,8 +37,8 @@ const TRADING_KEYWORDS = [
 ];
 
 function isTradingPrompt(text: string) {
+  if (isTradingRelatedQuery(text)) return true;
   const q = text.toLowerCase();
-  if (!q.trim()) return true;
   return TRADING_KEYWORDS.some((kw) => q.includes(kw));
 }
 
