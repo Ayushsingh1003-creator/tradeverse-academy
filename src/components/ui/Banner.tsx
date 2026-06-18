@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type HTMLAttributes, useEffect, useState } from "react";
+import { type HTMLAttributes, useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -74,27 +74,27 @@ export function Banner({
   );
 }
 
-const maskImage =
-  "linear-gradient(to bottom,white,transparent), radial-gradient(circle at top center, white, transparent)";
-
 function flow({ colors }: { colors: string[] }) {
+  const backgroundImage = `repeating-linear-gradient(70deg, ${[...colors, colors[0]]
+    .map((color, i) => `${color} ${(i * 50) / colors.length}%`)
+    .join(", ")})`;
+
   return (
     <>
       <div
-        className="absolute inset-0 z-[-1]"
-        style={
-          {
-            maskImage,
-            maskComposite: "intersect",
-            animation: "tv-moving-banner 20s linear infinite",
-            backgroundImage: `repeating-linear-gradient(70deg, ${[...colors, colors[0]].map((color, i) => `${color} ${(i * 50) / colors.length}%`).join(", ")})`,
-            backgroundSize: "200% 100%",
-            filter: "saturate(1.8)",
-          } satisfies CSSProperties
-        }
+        className="tv-banner-flow absolute inset-0 z-[-1]"
+        style={{ backgroundImage }}
       />
       <style>
-        {`@keyframes tv-moving-banner {
+        {`.tv-banner-flow {
+          mask-image: linear-gradient(to bottom, white, transparent),
+            radial-gradient(circle at top center, white, transparent);
+          mask-composite: intersect;
+          animation: tv-moving-banner 20s linear infinite;
+          background-size: 200% 100%;
+          filter: saturate(1.8);
+        }
+        @keyframes tv-moving-banner {
           from { background-position: 0% 0; }
           to { background-position: 100% 0; }
         }`}
