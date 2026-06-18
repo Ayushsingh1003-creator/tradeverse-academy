@@ -39,6 +39,20 @@ export const TEACHING_CANDLES = {
   compareBearish: { o: 50, h: 30, l: 200, c: 140 } satisfies OhlcPixels,
   /** LessonPlayer practice bearish — viewBox 0 0 120 160 */
   practiceBearish: { o: 48, h: 22, l: 142, c: 118 } satisfies OhlcPixels,
+  /** Visual choice — small body bullish */
+  choiceBullish: { o: 130, h: 50, l: 145, c: 70 } satisfies OhlcPixels,
+  /** Visual choice — bearish */
+  choiceBearish: { o: 70, h: 50, l: 145, c: 130 } satisfies OhlcPixels,
+  /** Visual choice — doji (open ≈ close) */
+  choiceDoji: { o: 100, h: 45, l: 155, c: 102 } satisfies OhlcPixels,
+  /** Visual choice — hammer / long lower wick */
+  choiceHammer: { o: 85, h: 45, l: 165, c: 75 } satisfies OhlcPixels,
+  /** Visual choice — shooting star / long upper wick */
+  choiceShootingStar: { o: 125, h: 35, l: 150, c: 115 } satisfies OhlcPixels,
+  /** Visual choice — bullish marubozu (no wicks) */
+  choiceMarubozuBull: { o: 140, h: 55, l: 142, c: 65 } satisfies OhlcPixels,
+  /** Visual choice — bearish marubozu */
+  choiceMarubozuBear: { o: 65, h: 55, l: 142, c: 135 } satisfies OhlcPixels,
   /** CandleAnatomy interactive — viewBox 0 0 320 360 */
   anatomy: { o: 155, h: 40, l: 320, c: 95 } satisfies OhlcPixels,
   anatomyBearish: { o: 95, h: 40, l: 320, c: 155 } satisfies OhlcPixels,

@@ -14,44 +14,40 @@ const CARDS = [
   {
     id: "c1",
     title: "Candlestick Foundations",
-    levelLabel: "LEVEL 1",
-    levelTitle: "Reading Candles",
+    sectionLabel: "Candlestick Essentials",
     accentColor: "#456DFF",
     accentDark: "#1A2A6A",
     emoji: "🕯️",
     recommended: false,
-    lessonSlugs: ["what-is-a-candlestick", "bullish-vs-bearish-candles"],
+    lessonSlugs: ["what-is-a-candlestick", "how-to-read-a-chart"],
     startHref: "/learn/what-is-a-candlestick",
   },
   {
     id: "c2",
-    title: "Hammer & Shooting Star",
-    levelLabel: "LEVEL 2",
-    levelTitle: "Reversal Signals",
+    title: "Meaning of Patterns",
+    sectionLabel: "Candlestick Essentials",
     accentColor: "#8B5CF6",
     accentDark: "#2D1B5A",
     emoji: "🔨",
     recommended: true,
-    lessonSlugs: ["hammer-shooting-star"],
-    startHref: "/learn/hammer-shooting-star",
+    lessonSlugs: ["meaning-of-patterns"],
+    startHref: "/learn/meaning-of-patterns",
   },
   {
     id: "c3",
-    title: "Support & Resistance",
-    levelLabel: "LEVEL 3",
-    levelTitle: "Price Structure",
+    title: "Trend & Structure",
+    sectionLabel: "Candlestick Essentials",
     accentColor: "#F59E0B",
     accentDark: "#4A2E00",
     emoji: "🎯",
     recommended: true,
-    lessonSlugs: ["support-and-resistance", "trend-analysis"],
-    startHref: "/learn/support-and-resistance",
+    lessonSlugs: ["trend-lines", "support-resistance"],
+    startHref: "/learn/trend-lines",
   },
   {
     id: "c4",
     title: "RSI & Momentum",
-    levelLabel: "LEVEL 1",
-    levelTitle: "Momentum Indicators",
+    sectionLabel: "Indicator Starter Kit",
     accentColor: "#10B981",
     accentDark: "#052E1A",
     emoji: "📊",
@@ -62,13 +58,12 @@ const CARDS = [
   {
     id: "c5",
     title: "Risk Management",
-    levelLabel: "LEVEL 1",
-    levelTitle: "Capital Protection",
+    sectionLabel: "All Courses",
     accentColor: "#EF4444",
     accentDark: "#3A0A0A",
     emoji: "🛡️",
     recommended: false,
-    lessonSlugs: ["support-and-resistance"],
+    lessonSlugs: ["support-resistance"],
     startHref: "/courses",
   },
 ] as const;
@@ -297,7 +292,7 @@ export default function CourseCardStack() {
                         className="mb-1 line-clamp-1 text-[10px] font-bold uppercase tracking-widest"
                         style={{ color: card.accentColor }}
                       >
-                        {card.levelLabel} · {card.levelTitle}
+                        {card.sectionLabel}
                       </p>
 
                       <h3 className="mb-3 line-clamp-2 min-h-[2.75rem] text-[20px] font-black leading-tight text-white">

@@ -1,6 +1,27 @@
 import { LESSONS } from "@/lib/data/lessons";
 
-export const DAILY_CHALLENGE_COUNT = 115;
+function pushMcqRef(
+  refs: McqRef[],
+  lessonSlug: string,
+  source: "page" | "practice",
+  item: {
+    id: string;
+    question: string;
+    options: string[];
+    correctIndex: number;
+    explanation: string;
+  },
+) {
+  refs.push({
+    lessonSlug,
+    source,
+    questionId: item.id,
+    question: item.question,
+    options: item.options,
+    correctIndex: item.correctIndex,
+    explanation: item.explanation,
+  });
+}
 
 export type DailyChallengeMcq = {
   dailyChallengeId: number;
@@ -47,42 +68,58 @@ function collectMcqRefs(): McqRef[] {
   const refs: McqRef[] = [];
   for (const lesson of LESSONS) {
     for (const page of lesson.pages) {
-      if (page.type !== "multiple_choice") continue;
-      refs.push({
-        lessonSlug: lesson.slug,
-        source: "page",
-        questionId: page.id,
-        question: page.question,
-        options: page.options,
-        correctIndex: page.correctIndex,
-        explanation: page.explanation,
-      });
+      if (page.type === "multiple_choice") {
+        pushMcqRef(refs, lesson.slug, "page", {
+          id: page.id,
+          question: page.question,
+          options: page.options,
+          correctIndex: page.correctIndex,
+          explanation: page.explanation,
+        });
+      } else if (page.type === "visual_choice") {
+        pushMcqRef(refs, lesson.slug, "page", {
+          id: page.id,
+          question: page.question,
+          options: page.options.map((o) => o.label),
+          correctIndex: page.correctIndex,
+          explanation: page.explanation,
+        });
+      }
     }
     if (!lesson.practice) continue;
     for (const q of lesson.practice) {
-      if (q.type !== "multiple_choice") continue;
-      refs.push({
-        lessonSlug: lesson.slug,
-        source: "practice",
-        questionId: q.id,
-        question: q.question,
-        options: q.options,
-        correctIndex: q.correctIndex,
-        explanation: q.explanation,
-      });
+      if (q.type === "multiple_choice") {
+        pushMcqRef(refs, lesson.slug, "practice", {
+          id: q.id,
+          question: q.question,
+          options: q.options,
+          correctIndex: q.correctIndex,
+          explanation: q.explanation,
+        });
+      } else if (q.type === "visual_choice") {
+        pushMcqRef(refs, lesson.slug, "practice", {
+          id: q.id,
+          question: q.question,
+          options: q.options.map((o) => o.label),
+          correctIndex: q.correctIndex,
+          explanation: q.explanation,
+        });
+      }
     }
   }
   return refs;
 }
 
+const CHALLENGE_REFS = collectMcqRefs();
+
+/** Derived from lesson MCQ + visual-choice pools — stays in sync when lessons change. */
+export const DAILY_CHALLENGE_COUNT = CHALLENGE_REFS.length;
+
 function buildCatalog(): DailyChallengeMcq[] {
-  const refs = collectMcqRefs();
-  if (refs.length !== DAILY_CHALLENGE_COUNT) {
-    throw new Error(
-      `Expected ${DAILY_CHALLENGE_COUNT} lesson MCQs, found ${refs.length}. Update DAILY_CHALLENGE_COUNT or lesson data.`,
-    );
+  if (CHALLENGE_REFS.length === 0) {
+    throw new Error("No lesson MCQs found for daily challenge catalog.");
   }
-  const shuffled = seededShuffle(refs, hashSeed("tradeverse-daily-challenge-v1"));
+  const shuffled = seededShuffle(CHALLENGE_REFS, hashSeed("tradeverse-daily-challenge-v1"));
   return shuffled.map((ref, index) => ({
     ...ref,
     dailyChallengeId: index + 1,
@@ -101,7 +138,7 @@ export function localDayOfYear(now = new Date()): number {
   return Math.floor(ms / 86_400_000) + 1;
 }
 
-/** Today's challenge id: (nth day of year mod 115) + 1 */
+/** Today's challenge id: (nth day of year mod DAILY_CHALLENGE_COUNT) + 1 */
 export function dailyChallengeIdForDate(now = new Date()): number {
   const n = localDayOfYear(now);
   return (n % DAILY_CHALLENGE_COUNT) + 1;

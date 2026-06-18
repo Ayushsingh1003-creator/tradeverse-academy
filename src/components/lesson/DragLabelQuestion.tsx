@@ -59,9 +59,20 @@ export type DragLabelQuestionProps = {
   explanation?: string;
   onCheckResult: (allCorrect: boolean) => void;
   onTryAgain?: () => void;
+  hideInstruction?: boolean;
+  compact?: boolean;
 };
 
-export function DragLabelQuestion({ instruction, labels, zones, explanation, onCheckResult, onTryAgain }: DragLabelQuestionProps) {
+export function DragLabelQuestion({
+  instruction,
+  labels,
+  zones,
+  explanation,
+  onCheckResult,
+  onTryAgain,
+  hideInstruction = false,
+  compact = false,
+}: DragLabelQuestionProps) {
   const layout = useMemo(() => inferLayout(zones), [zones]);
   const [selected, setSelected] = useState<string | null>(null);
   const [placed, setPlaced] = useState<Record<string, string>>({});
@@ -113,8 +124,10 @@ export function DragLabelQuestion({ instruction, labels, zones, explanation, onC
   const remaining = zones.length - Object.keys(placed).length;
 
   return (
-    <div className="flex w-full max-w-xl flex-col items-center gap-6">
-      <p className="w-full text-center text-lg font-medium text-text-primary">{instruction}</p>
+    <div className={`flex w-full flex-col items-center ${compact ? "gap-4" : "max-w-xl gap-6"}`}>
+      {!hideInstruction ? (
+        <p className="w-full text-center text-sm font-medium leading-snug text-text-primary">{instruction}</p>
+      ) : null}
 
       <div className="flex w-full flex-col items-center gap-2">
         <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
@@ -210,7 +223,11 @@ export function DragLabelQuestion({ instruction, labels, zones, explanation, onC
         <div className="relative flex w-full justify-center px-1">
           <svg
             viewBox="0 0 200 360"
-            className="h-[min(78vh,360px)] w-auto max-w-full overflow-visible touch-manipulation"
+            className={
+              compact
+                ? "h-[220px] w-auto max-w-full overflow-visible touch-manipulation"
+                : "h-[min(78vh,360px)] w-auto max-w-full overflow-visible touch-manipulation"
+            }
             role="img"
             aria-label="Interactive candlestick diagram"
           >

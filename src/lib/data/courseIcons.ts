@@ -28,4 +28,11 @@ export const LESSON_ICON_BY_SLUG: Record<string, string> = {
   "emotional-traps": "🧠",
   "beginner-guardrails": "🚧",
   "risk-mindset-review": "🏁",
+
+  // Candlestick Essentials
+  "what-is-a-candlestick": "🕯️",
+  "how-to-read-a-chart": "📖",
+  "meaning-of-patterns": "🔨",
+  "trend-lines": "📈",
+  "support-resistance": "🎯",
 };

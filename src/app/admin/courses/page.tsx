@@ -28,7 +28,6 @@ export default function AdminCoursesPage() {
                     <th className="py-3">Lessons</th>
                     <th className="py-3">XP</th>
                     <th className="py-3">Access</th>
-                    <th className="py-3">Levels</th>
                     <th className="py-3">Actions</th>
                   </tr>
                 </thead>
@@ -57,7 +56,6 @@ export default function AdminCoursesPage() {
                             {course.premium ? "Premium" : "Free"}
                           </span>
                         </td>
-                        <td className="py-3">{course.levels?.length ?? 0}</td>
                         <td className="py-3">
                           <Link
                             href={`/admin/courses/${course.slug}`}

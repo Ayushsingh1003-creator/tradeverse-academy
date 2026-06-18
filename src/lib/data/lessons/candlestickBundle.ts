@@ -1,8 +1,8 @@
 import type { PracticeQuestion } from "@/types/lessonPage";
-import { bullishVsBearishPages, bullishVsBearishPractice } from "@/lib/data/lessons/lessonBullishVsBearish";
-import { hammerShootingStarPages, hammerShootingStarPractice } from "@/lib/data/lessons/lessonHammerShootingStar";
+import { howToReadAChartPages, howToReadAChartPractice } from "@/lib/data/lessons/lessonBullishVsBearish";
+import { meaningOfPatternsPages, meaningOfPatternsPractice } from "@/lib/data/lessons/lessonHammerShootingStar";
 import { supportResistancePages, supportResistancePractice } from "@/lib/data/lessons/lessonSupportResistance";
-import { trendAnalysisPages, trendAnalysisPractice } from "@/lib/data/lessons/lessonTrendAnalysis";
+import { trendLinesPages, trendLinesPractice } from "@/lib/data/lessons/lessonTrendAnalysis";
 import { whatIsCandlestickPages, whatIsCandlestickPractice } from "@/lib/data/lessons/lessonWhatIsCandlestick";
 import type { LessonPage } from "@/types/lessonPage";
 
@@ -30,42 +30,42 @@ export const CANDLESTICK_LESSONS: Lesson[] = [
   },
   {
     id: "l2",
-    slug: "bullish-vs-bearish-candles",
-    title: "Bullish vs Bearish Candles — Reading the Story",
+    slug: "how-to-read-a-chart",
+    title: "How to read a chart",
     courseId: "c1",
     xpReward: 70,
     isFree: true,
-    pages: bullishVsBearishPages,
-    practice: bullishVsBearishPractice,
+    pages: howToReadAChartPages,
+    practice: howToReadAChartPractice,
   },
   {
     id: "l3",
-    slug: "hammer-shooting-star",
-    title: "Hammer & Shooting Star — Reversal Signals",
+    slug: "meaning-of-patterns",
+    title: "Meaning of patterns",
     courseId: "c1",
     xpReward: 80,
     isFree: true,
-    pages: hammerShootingStarPages,
-    practice: hammerShootingStarPractice,
+    pages: meaningOfPatternsPages,
+    practice: meaningOfPatternsPractice,
   },
   {
     id: "l4",
-    slug: "support-and-resistance",
-    title: "Support & Resistance — The Market's Memory",
+    slug: "trend-lines",
+    title: "Trend Lines",
+    courseId: "c1",
+    xpReward: 80,
+    isFree: false,
+    pages: trendLinesPages,
+    practice: trendLinesPractice,
+  },
+  {
+    id: "l5",
+    slug: "support-resistance",
+    title: "Support/Resistance",
     courseId: "c1",
     xpReward: 80,
     isFree: false,
     pages: supportResistancePages,
     practice: supportResistancePractice,
-  },
-  {
-    id: "l5",
-    slug: "trend-analysis",
-    title: "Trend Analysis — Trade With the Market",
-    courseId: "c1",
-    xpReward: 80,
-    isFree: false,
-    pages: trendAnalysisPages,
-    practice: trendAnalysisPractice,
   },
 ];

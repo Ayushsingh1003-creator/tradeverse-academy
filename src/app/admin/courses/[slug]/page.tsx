@@ -28,31 +28,17 @@ export default function AdminCourseDetailPage({ params }: { params: { slug: stri
       </div>
 
       <div className="mt-8 rounded-2xl border border-white/[0.08] bg-[#1E1E1E] p-5">
-        <h2 className="mb-4 font-bold">Levels</h2>
-        <ul className="space-y-4 text-sm">
-          {course.levels.map((lv) => (
-            <li key={lv.id} className="rounded-xl border border-white/10 bg-[#141414] p-4">
-              <p className="font-semibold text-[#88C9F7]">
-                Level {lv.number}: {lv.title}
-              </p>
-              <ul className="mt-2 list-disc pl-5 text-[#999]">
-                {lv.lessonSlugs.map((slug) => {
-                  const lesson = LESSONS.find((l) => l.slug === slug);
-                  return (
-                    <li key={slug}>
-                      {lesson?.title ?? slug}{" "}
-                      {lesson ? (
-                        <Link className="text-[#456DFF] hover:underline" href={`/admin/lessons/${lesson.id}`}>
-                          edit
-                        </Link>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
+        <h2 className="mb-4 font-bold">Lesson order</h2>
+        <ol className="list-decimal space-y-2 pl-5 text-sm text-[#999]">
+          {lessons.map((lesson) => (
+            <li key={lesson.slug}>
+              {lesson.title}{" "}
+              <Link className="text-[#456DFF] hover:underline" href={`/admin/lessons/${lesson.id}`}>
+                edit
+              </Link>
             </li>
           ))}
-        </ul>
+        </ol>
       </div>
 
       <div className="mt-8">

@@ -79,7 +79,7 @@ export function CourseDesignCard({ course, index, completedCount = 0, pathTitle 
       <div className="course-design-card__footer">
         <ul className="course-design-card__avatars" aria-hidden="true">
           <li className="course-design-card__avatar">{course.illustrationEmoji}</li>
-          <li className="course-design-card__avatar">{course.levels[0]?.number ?? 1}</li>
+          <li className="course-design-card__avatar">{course.lessonSlugs.length}</li>
           <li>
             <span className="course-design-card__add">
               <AddIcon />

@@ -92,7 +92,7 @@ function catalogTerms(): string[] {
     for (const word of course.title.toLowerCase().split(/\W+/)) {
       if (word.length > 3) terms.add(word);
     }
-    for (const level of course.levels) {
+    for (const level of course.levels ?? []) {
       for (const word of level.title.toLowerCase().split(/\W+/)) {
         if (word.length > 3) terms.add(word);
       }

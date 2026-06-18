@@ -22,7 +22,8 @@ export type Course = {
   xpReward: number;
   premium: boolean;
   lessonSlugs: string[];
-  levels: CourseLevel[];
+  /** Optional grouping for admin/AI; UI shows a flat lesson checklist from lessonSlugs. */
+  levels?: CourseLevel[];
   totalExercises?: number;
   illustrationEmoji: string;
 };
@@ -62,27 +63,6 @@ export const COURSES: Course[] = [
       "bid-ask-spread-cost",
       "financial-markets-101-review",
     ],
-    levels: [
-      {
-        id: "fm1-l1",
-        number: 1,
-        title: "The Market Game",
-        lessonSlugs: ["what-is-the-market", "market-participants", "indian-markets-101"],
-      },
-      {
-        id: "fm1-l2",
-        number: 2,
-        title: "When & What You Trade",
-        lessonSlugs: ["market-hours-india", "asset-classes-india"],
-      },
-      {
-        id: "fm1-l3",
-        number: 3,
-        title: "How Price Forms",
-        lessonSlugs: ["how-prices-form", "bid-ask-spread-cost", "financial-markets-101-review"],
-        reviewSlug: "financial-markets-101-review",
-      },
-    ],
   },
   {
     id: "fm2",
@@ -104,32 +84,6 @@ export const COURSES: Course[] = [
       "execution-and-slippage",
       "first-trade-walkthrough",
       "how-to-trade-review",
-    ],
-    levels: [
-      {
-        id: "fm2-l1",
-        number: 1,
-        title: "Getting Set Up",
-        lessonSlugs: ["demat-and-trading-account", "picking-a-broker"],
-      },
-      {
-        id: "fm2-l2",
-        number: 2,
-        title: "Placing Trades",
-        lessonSlugs: ["order-types-explained", "anatomy-of-trade"],
-      },
-      {
-        id: "fm2-l3",
-        number: 3,
-        title: "Costs & Execution",
-        lessonSlugs: [
-          "brokerage-and-taxes-india",
-          "execution-and-slippage",
-          "first-trade-walkthrough",
-          "how-to-trade-review",
-        ],
-        reviewSlug: "how-to-trade-review",
-      },
     ],
   },
   {
@@ -153,32 +107,6 @@ export const COURSES: Course[] = [
       "beginner-guardrails",
       "risk-mindset-review",
     ],
-    levels: [
-      {
-        id: "fm3-l1",
-        number: 1,
-        title: "Survival First",
-        lessonSlugs: ["why-traders-lose", "position-sizing-rule"],
-      },
-      {
-        id: "fm3-l2",
-        number: 2,
-        title: "Risk Mechanics",
-        lessonSlugs: ["stop-loss-discipline", "risk-reward-ratio"],
-      },
-      {
-        id: "fm3-l3",
-        number: 3,
-        title: "The Trader's Mind",
-        lessonSlugs: [
-          "journaling-your-trades",
-          "emotional-traps",
-          "beginner-guardrails",
-          "risk-mindset-review",
-        ],
-        reviewSlug: "risk-mindset-review",
-      },
-    ],
   },
   {
     id: "c1",
@@ -193,30 +121,10 @@ export const COURSES: Course[] = [
     totalExercises: 85,
     lessonSlugs: [
       "what-is-a-candlestick",
-      "bullish-vs-bearish-candles",
-      "hammer-shooting-star",
-      "support-and-resistance",
-      "trend-analysis",
-    ],
-    levels: [
-      {
-        id: "c1-l1",
-        number: 1,
-        title: "Reading Candles",
-        lessonSlugs: ["what-is-a-candlestick", "bullish-vs-bearish-candles"],
-      },
-      {
-        id: "c1-l2",
-        number: 2,
-        title: "Reversal Signals",
-        lessonSlugs: ["hammer-shooting-star"],
-      },
-      {
-        id: "c1-l3",
-        number: 3,
-        title: "Price Structure",
-        lessonSlugs: ["support-and-resistance", "trend-analysis"],
-      },
+      "how-to-read-a-chart",
+      "meaning-of-patterns",
+      "trend-lines",
+      "support-resistance",
     ],
   },
   {
@@ -230,19 +138,5 @@ export const COURSES: Course[] = [
     illustrationEmoji: "📊",
     totalExercises: 120,
     lessonSlugs: ["rsi-basics", "moving-averages"],
-    levels: [
-      {
-        id: "c2-l1",
-        number: 1,
-        title: "Momentum Indicators",
-        lessonSlugs: ["rsi-basics"],
-      },
-      {
-        id: "c2-l2",
-        number: 2,
-        title: "Trend Indicators",
-        lessonSlugs: ["moving-averages"],
-      },
-    ],
   },
 ];

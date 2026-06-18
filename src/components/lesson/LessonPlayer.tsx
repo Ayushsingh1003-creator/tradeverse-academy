@@ -4,12 +4,14 @@ import { useDrag } from "@use-gesture/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CandlestickSvg } from "@/components/lesson/CandlestickSvg";
 import { ChartTapCandles } from "@/components/lesson/ChartTapCandles";
 import { TEACHING_CANDLES } from "@/lib/candleGeometry";
 import { DragLabelQuestion } from "@/components/lesson/DragLabelQuestion";
+import { LessonImageFrame } from "@/components/lesson/LessonImageFrame";
 import { LessonVisual } from "@/components/lesson/visuals/LessonVisual";
+import { VisualChoiceGrid } from "@/components/lesson/VisualChoiceGrid";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { Confetti } from "@/components/ui/Confetti";
 import { useToast } from "@/components/ui/Toast";
@@ -32,11 +34,13 @@ import type {
   ChartTapPage,
   DragLabelPage,
   FillBlankPage,
+  LessonImageRef,
   LessonPage,
   MultipleChoicePage,
   PracticeQuestion,
   PretestPage,
   TrueFalsePage,
+  VisualChoicePage,
 } from "@/types/lessonPage";
 import { LessonCoachAside, LessonCoachMobile } from "@/components/lesson/LessonCoachPanel";
 import { prepareCoachTts, speakCoachText, stopVoiceCoach } from "@/lib/voiceCoach";
@@ -66,6 +70,54 @@ function BearishCandleSvg() {
     <svg viewBox="0 0 120 160" className="mx-auto mb-4 h-40 w-28" aria-label="Bearish candlestick">
       <CandlestickSvg cx={60} bodyWidth={32} ohlc={TEACHING_CANDLES.practiceBearish} wickWidth={2} bodyRx={3} />
     </svg>
+  );
+}
+
+function GamifiedBadge({ label }: { label: string }) {
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-accent">
+      <span aria-hidden>⚡</span>
+      {label}
+    </div>
+  );
+}
+
+function LessonImageSlot({ image }: { image?: LessonImageRef }) {
+  if (!image) return null;
+  return <LessonImageFrame alt={image.alt} src={image.src} />;
+}
+
+/** Consistent vertical rhythm for every lesson screen */
+function PageShell({ children }: { children: ReactNode }) {
+  return <div className="flex flex-col gap-5">{children}</div>;
+}
+
+/** Question on the left, interactive options on the right (used by candlestick lesson). */
+function QuestionLayout({
+  badge,
+  image,
+  question,
+  children,
+  footer,
+}: {
+  badge?: ReactNode;
+  image?: LessonImageRef;
+  question: ReactNode;
+  children: ReactNode;
+  footer?: ReactNode;
+}) {
+  return (
+    <PageShell>
+      {badge}
+      <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] md:gap-8">
+        <div className="flex flex-col gap-3 md:sticky md:top-0">
+          <LessonImageSlot image={image} />
+          <div className="text-base font-semibold leading-snug text-text-primary md:text-lg">{question}</div>
+        </div>
+        <div className="min-w-0 flex flex-col gap-3">{children}</div>
+      </div>
+      {footer}
+    </PageShell>
   );
 }
 
@@ -146,7 +198,16 @@ export function LessonPlayer({
   const [splashConfetti, setSplashConfetti] = useState(false);
   const aiHistoryRef = useRef(aiHistory);
 
+  const splitQuestionLayout = lesson.courseId === "c1";
   const page = pages[pageIndex]!;
+  const isQuestionPage =
+    page.type === "visual_choice" ||
+    page.type === "multiple_choice" ||
+    page.type === "true_false" ||
+    page.type === "fill_blank" ||
+    page.type === "drag_label" ||
+    page.type === "chart_tap";
+  const contentMaxWidth = splitQuestionLayout && isQuestionPage ? "max-w-[780px]" : "max-w-[640px]";
   const course = COURSES.find((c) => c.id === lesson.courseId);
   const fromLibrary = Boolean(libraryCourseSlug?.trim());
   const libraryBackHref = fromLibrary ? buildLibraryCourseHref(libraryCourseSlug!) : null;
@@ -154,7 +215,7 @@ export function LessonPlayer({
   // Final review = the last lesson of the course (or any level-review slug).
   const isFinalReview = course
     ? course.lessonSlugs[course.lessonSlugs.length - 1] === lesson.slug ||
-      course.levels.some((l) => l.reviewSlug === lesson.slug)
+      (course.levels?.some((l) => l.reviewSlug === lesson.slug) ?? false)
     : false;
   // Where to send the user AFTER they fully complete the lesson (and any practice).
   const postCompletionHref = fromLibrary
@@ -434,8 +495,8 @@ export function LessonPlayer({
   };
 
   const bottomClass =
-    page.type === "multiple_choice" && mcChecked
-      ? mcPick === (page as MultipleChoicePage).correctIndex
+    (page.type === "multiple_choice" || page.type === "visual_choice") && mcChecked
+      ? mcPick === (page as MultipleChoicePage | VisualChoicePage).correctIndex
         ? "bg-[rgba(69,109,255,0.15)]"
         : "bg-amber-500/10"
       : page.type === "fill_blank" && fillChecked
@@ -456,22 +517,37 @@ export function LessonPlayer({
     switch (p.type) {
       case "text":
         return (
-          <div className="transition-all duration-300">
-            {p.title ? <h2 className="text-2xl font-bold text-text-primary">{p.title}</h2> : null}
-            <div className="mt-4 space-y-4 text-lg leading-relaxed text-text-muted">
+          <PageShell>
+            {p.badge ? <GamifiedBadge label={p.badge} /> : null}
+            <LessonImageSlot image={p.image} />
+            {p.title ? <h2 className="text-2xl font-bold leading-tight text-text-primary">{p.title}</h2> : null}
+            <div className="space-y-4 text-base leading-relaxed text-text-muted md:text-lg">
               {p.body.split("\n\n").map((para, i) => (
                 <p key={i}>
                   <RichText text={para} />
                 </p>
               ))}
             </div>
-          </div>
+          </PageShell>
+        );
+      case "image":
+        return (
+          <PageShell>
+            {p.badge ? <GamifiedBadge label={p.badge} /> : null}
+            <LessonImageFrame alt={p.alt} src={p.src} priority />
+            {p.title ? <h2 className="text-2xl font-bold leading-tight text-text-primary">{p.title}</h2> : null}
+            {p.caption ? (
+              <p className="text-base leading-relaxed text-text-muted md:text-lg">
+                <RichText text={p.caption} />
+              </p>
+            ) : null}
+          </PageShell>
         );
       case "visual":
         return (
-          <div className="flex min-h-0 flex-col gap-5 transition-all duration-300">
+          <PageShell>
             <div
-              className={`flex w-full flex-1 flex-col justify-center ${p.visualId === "HammerCandle" ? "min-h-[min(68vh,480px)]" : "min-h-[240px]"}`}
+              className={`flex w-full flex-col justify-center ${p.visualId === "HammerCandle" ? "min-h-[min(60vh,420px)]" : "min-h-[220px]"}`}
             >
               <LessonVisual
                 visualId={p.visualId}
@@ -479,134 +555,265 @@ export function LessonPlayer({
               />
             </div>
             {p.caption ? (
-              <p className="text-center text-base leading-relaxed text-text-muted">
+              <p className="text-center text-base leading-relaxed text-text-muted md:text-lg">
                 <RichText text={p.caption} />
               </p>
             ) : null}
-          </div>
+          </PageShell>
         );
       case "callout": {
         const st = CALLOUT_STYLES[p.variant];
         return (
-          <div className={`rounded-2xl border p-6 transition-all duration-300 ${st.border}`}>
-            <p className="text-sm font-semibold text-text-muted">
-              {st.icon} {st.label}
-            </p>
-            <h3 className="mt-2 text-xl font-bold text-text-primary">{p.title}</h3>
-            <p className="mt-3 whitespace-pre-wrap text-text-muted">{p.content}</p>
+          <PageShell>
+            <div className={`rounded-2xl border p-5 md:p-6 ${st.border}`}>
+              {p.badge ? <GamifiedBadge label={p.badge} /> : null}
+              <p className="text-sm font-semibold text-text-muted">
+                {st.icon} {st.label}
+              </p>
+              <LessonImageSlot image={p.image} />
+              <h3 className="text-xl font-bold text-text-primary">{p.title}</h3>
+              <p className="mt-3 whitespace-pre-wrap text-base leading-relaxed text-text-muted">{p.content}</p>
+            </div>
+          </PageShell>
+        );
+      }
+      case "visual_choice": {
+        const pp = p as VisualChoicePage;
+        const grid = (
+          <VisualChoiceGrid
+            options={pp.options}
+            selectedIndex={mcPick}
+            checked={mcChecked}
+            correctIndex={pp.correctIndex}
+            onSelect={(i) => {
+              if (!mcChecked) {
+                sound.tick();
+                setMcPick(i);
+              }
+            }}
+          />
+        );
+        const explanationBlock = mcChecked ? (
+          <div className="rounded-2xl border border-border bg-surface2/90 p-4 text-sm leading-relaxed text-text-muted animate-slide-up-fade">
+            <RichText text={pp.explanation} />
           </div>
+        ) : null;
+
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout
+              badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+              image={pp.image}
+              question={pp.question}
+              footer={explanationBlock}
+            >
+              {grid}
+            </QuestionLayout>
+          );
+        }
+
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonImageSlot image={pp.image} />
+            <p className="text-xl font-semibold leading-snug text-text-primary">{pp.question}</p>
+            {grid}
+            {explanationBlock}
+          </PageShell>
         );
       }
       case "multiple_choice": {
         const pp = p as MultipleChoicePage;
         const show = mcChecked;
         const pickedCorrect = mcPick === pp.correctIndex;
-        return (
-          <div>
-            <p className="text-xl font-semibold leading-snug">{pp.question}</p>
-            {pp.showBearishCandle ? <BearishCandleSvg /> : null}
-            <div className="mt-6 grid gap-3">
-              {pp.options.map((opt, i) => {
-                const sel = mcPick === i;
-                const correct = i === pp.correctIndex;
-                const wrongOpt = show && sel && !correct;
-                const correctChosen = show && correct && sel && pickedCorrect;
-                const correctReveal = show && correct && !pickedCorrect;
-                const dim = show && i !== pp.correctIndex && (pickedCorrect || i !== mcPick);
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    disabled={mcChecked}
-                    onMouseEnter={() => sound.tick()}
-                    onClick={() => {
-                      if (!mcChecked) sound.tick();
-                      setMcPick(i);
-                    }}
-                    className={`relative min-h-[56px] rounded-xl border-2 px-5 py-4 text-left text-sm font-medium transition-all duration-150 active:scale-[0.99] md:min-h-[52px] ${
-                      sel && !show
-                        ? "scale-[1.005] border-[#456DFF] bg-[rgba(69,109,255,0.15)] ring-2 ring-[#456DFF]/35"
-                        : "border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.04)] hover:border-[rgba(255,255,255,0.20)] hover:bg-[rgba(255,255,255,0.08)]"
-                    } ${correctChosen ? "animate-correct-pulse border-[#456DFF] bg-[rgba(69,109,255,0.20)] text-[#88C9F7]" : ""} ${
-                      wrongOpt ? "animate-wrong-shake border-red-400 bg-red-500/20 text-red-100" : ""
-                    } ${correctReveal ? "border-[#456DFF]/60 bg-[rgba(69,109,255,0.15)] text-[#88C9F7]" : ""} ${dim ? "opacity-[0.28]" : ""}`}
-                  >
-                    <span className="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-lg bg-[rgba(255,255,255,0.08)] text-xs font-bold text-[#999999]">
-                      {String.fromCharCode(65 + i)}
+        const optionsGrid = (
+          <div className="grid gap-3">
+            {pp.options.map((opt, i) => {
+              const sel = mcPick === i;
+              const correct = i === pp.correctIndex;
+              const wrongOpt = show && sel && !correct;
+              const correctChosen = show && correct && sel && pickedCorrect;
+              const correctReveal = show && correct && !pickedCorrect;
+              const dim = show && i !== pp.correctIndex && (pickedCorrect || i !== mcPick);
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  disabled={mcChecked}
+                  onMouseEnter={() => sound.tick()}
+                  onClick={() => {
+                    if (!mcChecked) sound.tick();
+                    setMcPick(i);
+                  }}
+                  className={`relative min-h-[56px] rounded-xl border-2 px-5 py-4 text-left text-sm font-medium transition-all duration-150 active:scale-[0.99] md:min-h-[52px] ${
+                    sel && !show
+                      ? "scale-[1.005] border-[#456DFF] bg-[rgba(69,109,255,0.15)] ring-2 ring-[#456DFF]/35"
+                      : "border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.04)] hover:border-[rgba(255,255,255,0.20)] hover:bg-[rgba(255,255,255,0.08)]"
+                  } ${correctChosen ? "animate-correct-pulse border-[#456DFF] bg-[rgba(69,109,255,0.20)] text-[#88C9F7]" : ""} ${
+                    wrongOpt ? "animate-wrong-shake border-red-400 bg-red-500/20 text-red-100" : ""
+                  } ${correctReveal ? "border-[#456DFF]/60 bg-[rgba(69,109,255,0.15)] text-[#88C9F7]" : ""} ${dim ? "opacity-[0.28]" : ""}`}
+                >
+                  <span className="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-lg bg-[rgba(255,255,255,0.08)] text-xs font-bold text-[#999999]">
+                    {String.fromCharCode(65 + i)}
+                  </span>
+                  {opt}
+                  {correctChosen ? (
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl text-[#88C9F7] animate-pop-in" aria-hidden>
+                      ✓
                     </span>
-                    {opt}
-                    {correctChosen ? (
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl text-[#88C9F7] animate-pop-in" aria-hidden>
-                        ✓
-                      </span>
-                    ) : null}
-                    {wrongOpt ? (
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl text-red-300 animate-pop-in" aria-hidden>
-                        ✗
-                      </span>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-            {mcChecked ? (
-              <div className="mt-6 rounded-2xl border border-border bg-surface2/90 p-4 text-sm text-text-muted animate-slide-up-fade">
-                <RichText text={pp.explanation} />
-              </div>
-            ) : null}
+                  ) : null}
+                  {wrongOpt ? (
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl text-red-300 animate-pop-in" aria-hidden>
+                      ✗
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
+        );
+        const explanationBlock = mcChecked ? (
+          <div className="rounded-2xl border border-border bg-surface2/90 p-4 text-sm leading-relaxed text-text-muted animate-slide-up-fade">
+            <RichText text={pp.explanation} />
+          </div>
+        ) : null;
+
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout
+              badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+              image={pp.image}
+              question={pp.question}
+              footer={explanationBlock}
+            >
+              {pp.showBearishCandle ? <BearishCandleSvg /> : null}
+              {optionsGrid}
+            </QuestionLayout>
+          );
+        }
+
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonImageSlot image={pp.image} />
+            <p className="text-xl font-semibold leading-snug text-text-primary">{pp.question}</p>
+            {pp.showBearishCandle ? <BearishCandleSvg /> : null}
+            {optionsGrid}
+            {explanationBlock}
+          </PageShell>
         );
       }
       case "true_false": {
         const pp = p as TrueFalsePage;
-        return (
-          <div>
-            <p className="text-xl font-semibold">{pp.statement}</p>
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              {([true, false] as const).map((v) => {
-                const picked = tfPick === v;
-                const show = tfShow;
-                const ok = show && v === pp.correct;
-                const bad = show && picked && v !== pp.correct;
-                return (
-                  <button
-                    key={String(v)}
-                    type="button"
-                    disabled={tfShow}
-                    onClick={() => {
-                      setTfPick(v);
-                      setTfShow(true);
-                      if (v === pp.correct) {
-                        sound.correct();
-                        awardXp(15);
-                      } else {
-                        sound.wrong();
-                        handleWrongAttemptCoach();
-                      }
-                    }}
-                    className={`flex min-h-[72px] flex-col items-center justify-center rounded-2xl border-2 px-4 py-6 text-lg font-bold transition-all ${
-                      v ? "border-[#456DFF]/50 text-[#456DFF]" : "border-red-500/50 text-red-400"
-                    } ${picked && !show ? "ring-2 ring-[#456DFF]" : ""} ${ok ? "bg-[rgba(69,109,255,0.15)]" : ""} ${bad ? "animate-shake bg-red-500/10" : ""}`}
-                  >
-                    {v ? "TRUE" : "FALSE"}
-                  </button>
-                );
-              })}
-            </div>
-            {tfShow ? (
-              <div className="mt-6 rounded-2xl border border-border bg-surface2/80 p-4 text-sm text-text-muted">
-                <RichText text={pp.explanation} />
-              </div>
-            ) : null}
+        const tfButtons = (
+          <div className="grid grid-cols-2 gap-3">
+            {([true, false] as const).map((v) => {
+              const picked = tfPick === v;
+              const show = tfShow;
+              const ok = show && v === pp.correct;
+              const bad = show && picked && v !== pp.correct;
+              return (
+                <button
+                  key={String(v)}
+                  type="button"
+                  disabled={tfShow}
+                  onClick={() => {
+                    setTfPick(v);
+                    setTfShow(true);
+                    if (v === pp.correct) {
+                      sound.correct();
+                      awardXp(15);
+                    } else {
+                      sound.wrong();
+                      handleWrongAttemptCoach();
+                    }
+                  }}
+                  className={`flex min-h-[72px] flex-col items-center justify-center rounded-2xl border-2 px-4 py-6 text-lg font-bold transition-all ${
+                    v ? "border-[#456DFF]/50 text-[#456DFF]" : "border-red-500/50 text-red-400"
+                  } ${picked && !show ? "ring-2 ring-[#456DFF]" : ""} ${ok ? "bg-[rgba(69,109,255,0.15)]" : ""} ${bad ? "animate-shake bg-red-500/10" : ""}`}
+                >
+                  {v ? "TRUE" : "FALSE"}
+                </button>
+              );
+            })}
           </div>
+        );
+        const explanationBlock = tfShow ? (
+          <div className="rounded-2xl border border-border bg-surface2/80 p-4 text-sm leading-relaxed text-text-muted">
+            <RichText text={pp.explanation} />
+          </div>
+        ) : null;
+
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout
+              badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+              image={pp.image}
+              question={pp.statement}
+              footer={explanationBlock}
+            >
+              {tfButtons}
+            </QuestionLayout>
+          );
+        }
+
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonImageSlot image={pp.image} />
+            <p className="text-xl font-semibold text-text-primary">{pp.statement}</p>
+            {tfButtons}
+            {explanationBlock}
+          </PageShell>
         );
       }
       case "fill_blank": {
         const pp = p as FillBlankPage;
         const parts = pp.sentence.split("[___]");
+        const answerPanel = (
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold uppercase tracking-wide text-text-muted">Your answer</label>
+            <input
+              value={fill}
+              disabled={fillChecked}
+              onChange={(e) => setFill(e.target.value)}
+              className="w-full rounded-xl border-2 border-border bg-background px-4 py-3 text-center text-lg font-semibold text-text-primary outline-none focus:border-accent"
+              placeholder="Type here…"
+            />
+          </div>
+        );
+        const explanationBlock = fillChecked ? (
+          <div className="rounded-2xl border border-border bg-surface2/80 p-4 text-sm leading-relaxed text-text-muted">
+            <RichText text={pp.explanation} />
+          </div>
+        ) : null;
+
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout
+              badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+              image={pp.image}
+              question={
+                <>
+                  {parts[0]}
+                  <span className="mx-1 inline-block min-w-[4rem] border-b-2 border-dashed border-accent/60 align-bottom" aria-hidden>
+                    &nbsp;
+                  </span>
+                  {parts[1] ?? ""}
+                </>
+              }
+              footer={explanationBlock}
+            >
+              {answerPanel}
+            </QuestionLayout>
+          );
+        }
+
         return (
-          <div>
-            <p className="text-xl leading-relaxed">
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonImageSlot image={pp.image} />
+            <p className="text-xl leading-relaxed text-text-primary">
               {parts[0]}
               <input
                 value={fill}
@@ -616,23 +823,21 @@ export function LessonPlayer({
               />
               {parts[1] ?? ""}
             </p>
-            {fillChecked ? (
-              <div className="mt-6 rounded-2xl border border-border bg-surface2/80 p-4 text-sm text-text-muted">
-                <RichText text={pp.explanation} />
-              </div>
-            ) : null}
-          </div>
+            {explanationBlock}
+          </PageShell>
         );
       }
       case "drag_label": {
         const pp = p as DragLabelPage;
-        return (
+        const dragUi = (
           <DragLabelQuestion
             key={pp.id}
             instruction={pp.instruction}
             labels={pp.labels}
             zones={pp.zones}
             explanation={pp.explanation}
+            hideInstruction={splitQuestionLayout}
+            compact={splitQuestionLayout}
             onCheckResult={(ok) => {
               setDragChecked(true);
               setDragCheckCorrect(ok);
@@ -651,26 +856,66 @@ export function LessonPlayer({
             }}
           />
         );
+
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout
+              badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+              image={pp.image}
+              question={pp.instruction}
+            >
+              {dragUi}
+            </QuestionLayout>
+          );
+        }
+
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonImageSlot image={pp.image} />
+            {dragUi}
+          </PageShell>
+        );
       }
       case "chart_tap": {
         const pp = p as ChartTapPage;
-        return (
-          <div>
-            <p className="mb-4 text-xl font-semibold">{pp.question}</p>
-            <ChartTapCandles
-              count={pp.candleCount ?? 6}
-              correctIndex={pp.correctCandleIndex}
-              selectedIndex={tapPick}
-              onSelect={(i) => !tapChecked && setTapPick(i)}
-              highlightStyle={pp.highlightStyle}
-              showSupportZone={/support/i.test(pp.question)}
-            />
-            {tapChecked ? (
-              <div className="mt-6 rounded-2xl border border-border bg-surface2/80 p-4 text-sm text-text-muted">
-                <RichText text={pp.explanation} />
-              </div>
-            ) : null}
+        const chart = (
+          <ChartTapCandles
+            count={pp.candleCount ?? 6}
+            correctIndex={pp.correctCandleIndex}
+            selectedIndex={tapPick}
+            onSelect={(i) => !tapChecked && setTapPick(i)}
+            highlightStyle={pp.highlightStyle}
+            showSupportZone={/support/i.test(pp.question)}
+          />
+        );
+        const explanationBlock = tapChecked ? (
+          <div className="rounded-2xl border border-border bg-surface2/80 p-4 text-sm leading-relaxed text-text-muted">
+            <RichText text={pp.explanation} />
           </div>
+        ) : null;
+
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout
+              badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+              image={pp.image}
+              question={pp.question}
+              footer={explanationBlock}
+            >
+              {chart}
+            </QuestionLayout>
+          );
+        }
+
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonImageSlot image={pp.image} />
+            <p className="text-xl font-semibold text-text-primary">{pp.question}</p>
+            {chart}
+            {explanationBlock}
+          </PageShell>
         );
       }
       default:
@@ -710,9 +955,68 @@ export function LessonPlayer({
   };
 
   const renderPracticeQuestion = (q: PracticeQuestion) => {
+    if (q.type === "visual_choice") {
+      const grid = (
+        <VisualChoiceGrid
+          options={q.options}
+          selectedIndex={prMc}
+          checked={prMcOk}
+          correctIndex={q.correctIndex}
+          onSelect={(i) => !prMcOk && setPrMc(i)}
+        />
+      );
+      const actions = !prMcOk ? (
+        <button
+          type="button"
+          disabled={prMc == null}
+          className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white disabled:opacity-40"
+          onClick={() => {
+            setPrMcOk(true);
+            if (prMc === q.correctIndex) {
+              sound.correct();
+              setPracticeCorrect((c) => c + 1);
+              awardXp(12);
+            } else {
+              sound.wrong();
+              handleWrongAttemptCoach();
+            }
+          }}
+        >
+          Check
+        </button>
+      ) : (
+        <>
+          <p className="text-sm leading-relaxed text-text-muted">{q.explanation}</p>
+          <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+            Next →
+          </button>
+        </>
+      );
+
+      if (splitQuestionLayout) {
+        return (
+          <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} image={q.image} question={q.question}>
+            {grid}
+            {actions}
+          </QuestionLayout>
+        );
+      }
+
+      return (
+        <PageShell>
+          {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
+          <LessonImageSlot image={q.image} />
+          <p className="text-lg font-semibold text-text-primary">{q.question}</p>
+          {grid}
+          {actions}
+        </PageShell>
+      );
+    }
     if (q.type === "multiple_choice") {
       return (
         <div>
+          {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
+          <LessonImageSlot image={q.image} />
           <p className="text-lg font-semibold">{q.question}</p>
           <div className="mt-4 grid gap-2">
             {q.options.map((o, i) => (
@@ -758,6 +1062,8 @@ export function LessonPlayer({
     if (q.type === "true_false") {
       return (
         <div>
+          {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
+          <LessonImageSlot image={q.image} />
           <p className="text-lg font-semibold">{q.statement}</p>
           <div className="mt-6 grid grid-cols-2 gap-3">
             {([true, false] as const).map((v) => (
@@ -795,8 +1101,53 @@ export function LessonPlayer({
     }
     if (q.type === "fill_blank") {
       const parts = q.sentence.split("[___]");
+      const answerPanel = (
+        <>
+          <input
+            value={prFill}
+            disabled={prFillOk}
+            onChange={(e) => setPrFill(e.target.value)}
+            className="w-full rounded-xl border-2 border-border bg-background px-4 py-3 text-center text-lg font-semibold text-text-primary outline-none focus:border-accent"
+            placeholder="Type here…"
+          />
+          {!prFillOk ? (
+            <button
+              type="button"
+              className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white"
+              onClick={() => {
+                setPrFillOk(true);
+                if (prFill.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()) {
+                  sound.correct();
+                  setPracticeCorrect((c) => c + 1);
+                  awardXp(10);
+                } else {
+                  sound.wrong();
+                  handleWrongAttemptCoach();
+                }
+              }}
+            >
+              Check
+            </button>
+          ) : (
+            <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+              Next →
+            </button>
+          )}
+        </>
+      );
+
+      if (splitQuestionLayout) {
+        return (
+          <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} image={q.image} question={`${parts[0]}_____${parts[1] ?? ""}`}>
+            {answerPanel}
+          </QuestionLayout>
+        );
+      }
+
       return (
         <div>
+          {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
+          <LessonImageSlot image={q.image} />
           <p className="text-lg">
             {parts[0]}
             <input
@@ -834,47 +1185,102 @@ export function LessonPlayer({
       );
     }
     if (q.type === "chart_tap") {
+      const chart = (
+        <ChartTapCandles
+          count={q.candleCount ?? 6}
+          correctIndex={q.correctCandleIndex}
+          selectedIndex={prTap}
+          onSelect={(i) => !prTapOk && setPrTap(i)}
+          highlightStyle={q.highlightStyle}
+          showSupportZone={/support/i.test(q.question)}
+        />
+      );
+      const actions = !prTapOk ? (
+        <button
+          type="button"
+          disabled={prTap == null}
+          className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white disabled:opacity-40"
+          onClick={() => {
+            setPrTapOk(true);
+            if (prTap === q.correctCandleIndex) {
+              sound.correct();
+              setPracticeCorrect((c) => c + 1);
+              awardXp(12);
+            } else {
+              sound.wrong();
+              handleWrongAttemptCoach();
+            }
+          }}
+        >
+          Check
+        </button>
+      ) : (
+        <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+          Next →
+        </button>
+      );
+
+      if (splitQuestionLayout) {
+        return (
+          <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} image={q.image} question={q.question}>
+            {chart}
+            {actions}
+          </QuestionLayout>
+        );
+      }
+
       return (
         <div>
+          {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
+          <LessonImageSlot image={q.image} />
           <p className="text-lg font-semibold">{q.question}</p>
-          <ChartTapCandles
-            count={q.candleCount ?? 6}
-            correctIndex={q.correctCandleIndex}
-            selectedIndex={prTap}
-            onSelect={(i) => !prTapOk && setPrTap(i)}
-            highlightStyle={q.highlightStyle}
-            showSupportZone={/support/i.test(q.question)}
-          />
-          {!prTapOk ? (
-            <button
-              type="button"
-              disabled={prTap == null}
-              className="mt-6 h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white disabled:opacity-40"
-              onClick={() => {
-                setPrTapOk(true);
-                if (prTap === q.correctCandleIndex) {
-                  sound.correct();
-                  setPracticeCorrect((c) => c + 1);
-                  awardXp(12);
-                } else {
-                  sound.wrong();
-                  handleWrongAttemptCoach();
-                }
-              }}
-            >
-              Check
-            </button>
-          ) : (
-            <button type="button" className="mt-6 h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
-              Next →
-            </button>
-          )}
+          {chart}
+          {actions}
         </div>
       );
     }
     if (q.type === "drag_label") {
+      const dragUi = (
+        <DragLabelQuestion
+          key={q.id}
+          instruction={q.instruction}
+          labels={q.labels}
+          zones={q.zones}
+          explanation={q.explanation}
+          hideInstruction={splitQuestionLayout}
+          compact={splitQuestionLayout}
+          onCheckResult={(ok) => {
+            setPrDragOk(true);
+            if (ok) {
+              sound.correct();
+              setPracticeCorrect((c) => c + 1);
+              awardXp(12);
+            } else {
+              sound.wrong();
+              handleWrongAttemptCoach();
+            }
+          }}
+          onTryAgain={() => setPrDragOk(false)}
+        />
+      );
+
+      if (splitQuestionLayout) {
+        return (
+          <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} image={q.image} question={q.instruction}>
+            {dragUi}
+            {prDragOk ? (
+              <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+                Next →
+              </button>
+            ) : null}
+          </QuestionLayout>
+        );
+      }
+
       return (
         <div className="w-full max-w-xl">
+          {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
+          <LessonImageSlot image={q.image} />
           <DragLabelQuestion
             key={q.id}
             instruction={q.instruction}
@@ -1018,7 +1424,7 @@ export function LessonPlayer({
                 />
               ))}
             </div>
-            <div className="w-full max-w-xl">{renderPracticeQuestion(practiceQ)}</div>
+            <div className={`w-full ${splitQuestionLayout ? "max-w-[780px]" : "max-w-xl"}`}>{renderPracticeQuestion(practiceQ)}</div>
           </main>
         </div>
         <LessonCoachMobile {...coachPanelProps} aiOpen={aiOpen} onOpenChange={setAiOpen} />
@@ -1132,19 +1538,19 @@ export function LessonPlayer({
               </button>
             </div>
           ) : null}
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-8 md:px-10">
-            <div className="mx-auto flex min-h-0 w-full max-w-[680px] flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-6 md:px-8 md:py-8">
+            <div className={`mx-auto flex min-h-0 w-full ${contentMaxWidth} flex-1 flex-col`}>
               {showMainContent ? renderPage(page) : null}
             </div>
           </div>
         </main>
       </div>
 
-      <footer className={`shrink-0 border-t border-border px-4 py-4 transition-colors ${bottomClass}`}>
-        <div className="mx-auto flex max-w-[680px] flex-col gap-3">
+      <footer className={`shrink-0 border-t border-border px-5 py-5 transition-colors ${bottomClass}`}>
+        <div className={`mx-auto flex ${contentMaxWidth} flex-col gap-3`}>
           {phase === "lesson" && !hideLessonFooter ? (
             <>
-              {page.type === "text" || page.type === "callout" ? (
+              {page.type === "text" || page.type === "callout" || page.type === "image" ? (
                 <button
                   type="button"
                   className="h-14 w-full rounded-2xl bg-[#456DFF] text-lg font-semibold text-white"
@@ -1176,14 +1582,14 @@ export function LessonPlayer({
                   </button>
                 )
               ) : null}
-              {page.type === "multiple_choice" ? (
+              {page.type === "multiple_choice" || page.type === "visual_choice" ? (
                 !mcChecked ? (
                   <button
                     type="button"
                     disabled={mcPick == null}
                     className="h-14 w-full rounded-2xl bg-[#456DFF] text-lg font-semibold text-white disabled:opacity-40"
                     onClick={() => {
-                      const pp = page as MultipleChoicePage;
+                      const pp = page as MultipleChoicePage | VisualChoicePage;
                       const ok = mcPick === pp.correctIndex;
                       setMcChecked(true);
                       if (ok) {
@@ -1199,7 +1605,7 @@ export function LessonPlayer({
                   >
                     Check Answer
                   </button>
-                ) : mcPick === (page as MultipleChoicePage).correctIndex ? (
+                ) : mcPick === (page as MultipleChoicePage | VisualChoicePage).correctIndex ? (
                   <button
                     type="button"
                     className="animate-continue-pulse h-14 w-full rounded-2xl bg-[#456DFF] text-lg font-semibold text-white"
@@ -1208,7 +1614,7 @@ export function LessonPlayer({
                     Continue →
                   </button>
                 ) : (
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <button
                       type="button"
                       className="h-14 flex-1 rounded-2xl border border-border text-base font-semibold"
