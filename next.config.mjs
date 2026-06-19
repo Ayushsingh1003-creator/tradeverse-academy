@@ -37,6 +37,7 @@ const nextConfig = {
       { protocol: "https", hostname: "lh3.googleusercontent.com", pathname: "/**" },
       { protocol: "https", hostname: "**.googleusercontent.com", pathname: "/**" },
       { protocol: "https", hostname: "i.ytimg.com", pathname: "/**" },
+      { protocol: "https", hostname: "**.investopedia.com", pathname: "/**" },
     ],
   },
   experimental: {

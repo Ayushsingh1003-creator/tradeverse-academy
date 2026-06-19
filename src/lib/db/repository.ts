@@ -330,6 +330,10 @@ export const db: any = {
   liveCohortEnrollment: makeModel({ id: s.liveCohortEnrollments.id, cohortId: s.liveCohortEnrollments.cohortId, authUserId: s.liveCohortEnrollments.authUserId, clerkUserId: s.liveCohortEnrollments.authUserId }, s.liveCohortEnrollments),
   leagueSeason: makeModel({ id: s.leagueSeasons.id }, s.leagueSeasons),
   lessonVideo: makeModel({ lessonSlug: s.lessonVideos.lessonSlug }, s.lessonVideos),
+  lessonImage: makeModel(
+    { lessonSlug: s.lessonImages.lessonSlug, pageId: s.lessonImages.pageId },
+    s.lessonImages,
+  ),
   lesson: makeModel({ slug: s.lessons.slug, id: s.lessons.id }, s.lessons),
   lessonComment: makeModel({ id: s.lessonComments.id, lessonSlug: s.lessonComments.lessonSlug }, s.lessonComments),
   lessonCommentReply: makeModel({ id: s.lessonCommentReplies.id, commentId: s.lessonCommentReplies.commentId }, s.lessonCommentReplies),

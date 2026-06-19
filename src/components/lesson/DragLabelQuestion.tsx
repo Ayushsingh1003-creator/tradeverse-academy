@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { RichText } from "@/components/ui/RichText";
 import { CandlestickSvg } from "@/components/lesson/CandlestickSvg";
 import { TEACHING_CANDLES } from "@/lib/candleGeometry";
 import type { DragLabelPage } from "@/types/lessonPage";
@@ -19,10 +20,18 @@ function inferLayout(zones: Zone[]): LayoutKind {
 }
 
 /** viewBox 0 0 200 360 — positions for OHLC (bullish) */
-const OHLC_ZONE_POS: Record<string, { cx: number; cy: number; r: number; hint: string }> = {
+const OHLC_BULLISH_ZONE_POS: Record<string, { cx: number; cy: number; r: number; hint: string }> = {
   HIGH: { cx: 100, cy: 24, r: 26, hint: "Upper wick tip" },
   CLOSE: { cx: 100, cy: 82, r: 26, hint: "Top of body" },
   OPEN: { cx: 100, cy: 158, r: 26, hint: "Bottom of body" },
+  LOW: { cx: 100, cy: 312, r: 26, hint: "Lower wick tip" },
+};
+
+/** viewBox 0 0 200 360 — positions for OHLC (bearish: open at top, close at bottom) */
+const OHLC_BEARISH_ZONE_POS: Record<string, { cx: number; cy: number; r: number; hint: string }> = {
+  HIGH: { cx: 100, cy: 24, r: 26, hint: "Upper wick tip" },
+  OPEN: { cx: 100, cy: 82, r: 26, hint: "Top of body" },
+  CLOSE: { cx: 100, cy: 158, r: 26, hint: "Bottom of body" },
   LOW: { cx: 100, cy: 312, r: 26, hint: "Lower wick tip" },
 };
 
@@ -34,18 +43,43 @@ const HAMMER_ZONE_POS: Record<string, { cx: number; cy: number; r: number; hint:
   "THE REJECTION ZONE": { cx: 100, cy: 288, r: 26, hint: "Deep wick" },
 };
 
+function inferOhlcVariant(zones: Zone[], instruction: string): "bullish" | "bearish" {
+  if (/red|bearish/i.test(instruction)) return "bearish";
+  if (/green|bullish/i.test(instruction)) return "bullish";
+
+  const openZone = zones.find((z) => z.correctLabel === "OPEN");
+  const closeZone = zones.find((z) => z.correctLabel === "CLOSE");
+  const openTitle = openZone?.title.toLowerCase() ?? "";
+  const closeTitle = closeZone?.title.toLowerCase() ?? "";
+
+  if (openTitle.includes("top") && closeTitle.includes("bottom")) return "bearish";
+  if (closeTitle.includes("top") && openTitle.includes("bottom")) return "bullish";
+
+  return "bullish";
+}
+
 function zoneGeometry(
   layout: LayoutKind,
   zone: Zone,
+  ohlcVariant: "bullish" | "bearish",
 ): { cx: number; cy: number; r: number; hint: string } {
-  const map = layout === "hammer" ? HAMMER_ZONE_POS : OHLC_ZONE_POS;
-  const pos = map[zone.correctLabel];
-  if (pos) return pos;
+  if (layout === "hammer") {
+    const pos = HAMMER_ZONE_POS[zone.correctLabel];
+    if (pos) return pos;
+  } else if (layout === "ohlc") {
+    const map = ohlcVariant === "bearish" ? OHLC_BEARISH_ZONE_POS : OHLC_BULLISH_ZONE_POS;
+    const pos = map[zone.correctLabel];
+    if (pos) return pos;
+  }
   return { cx: 100, cy: 180, r: 26, hint: zone.title };
 }
 
 function BullishCandleSvg() {
   return <CandlestickSvg cx={100} bodyWidth={56} ohlc={TEACHING_CANDLES.ohlcBullish} wickWidth={3} bodyRx={4} />;
+}
+
+function BearishCandleSvg() {
+  return <CandlestickSvg cx={100} bodyWidth={56} ohlc={TEACHING_CANDLES.ohlcBearish} wickWidth={3} bodyRx={4} />;
 }
 
 function HammerCandleSvg() {
@@ -74,6 +108,7 @@ export function DragLabelQuestion({
   compact = false,
 }: DragLabelQuestionProps) {
   const layout = useMemo(() => inferLayout(zones), [zones]);
+  const ohlcVariant = useMemo(() => inferOhlcVariant(zones, instruction), [zones, instruction]);
   const [selected, setSelected] = useState<string | null>(null);
   const [placed, setPlaced] = useState<Record<string, string>>({});
   const [checked, setChecked] = useState(false);
@@ -129,7 +164,7 @@ export function DragLabelQuestion({
         <p className="w-full text-center text-sm font-medium leading-snug text-text-primary">{instruction}</p>
       ) : null}
 
-      <div className="flex w-full flex-col items-center gap-2">
+      <div className="flex w-full min-h-[2rem] flex-col items-center justify-center gap-2">
         <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
           {labels.map((label) => {
             const isUsed = placedLabels.has(label);
@@ -157,7 +192,11 @@ export function DragLabelQuestion({
           <p className="w-full animate-pulse text-center text-xs text-accent">
             ↓ Tap on the candle where <strong className="text-text-primary">{selected}</strong> belongs
           </p>
-        ) : null}
+        ) : (
+          <span className="invisible text-xs" aria-hidden>
+            ↓ Tap on the candle where label belongs
+          </span>
+        )}
       </div>
 
       {layout === "list" ? (
@@ -229,12 +268,18 @@ export function DragLabelQuestion({
                 : "h-[min(78vh,360px)] w-auto max-w-full overflow-visible touch-manipulation"
             }
             role="img"
-            aria-label="Interactive candlestick diagram"
+            aria-label={ohlcVariant === "bearish" ? "Interactive bearish candlestick diagram" : "Interactive bullish candlestick diagram"}
           >
-            {layout === "hammer" ? <HammerCandleSvg /> : <BullishCandleSvg />}
+            {layout === "hammer" ? (
+              <HammerCandleSvg />
+            ) : ohlcVariant === "bearish" ? (
+              <BearishCandleSvg />
+            ) : (
+              <BullishCandleSvg />
+            )}
 
             {zones.map((zone) => {
-              const { cx, cy, r, hint } = zoneGeometry(layout, zone);
+              const { cx, cy, r, hint } = zoneGeometry(layout, zone, ohlcVariant);
               const isPlaced = !!placed[zone.id];
               const placedLabel = placed[zone.id];
               const isCorrect = results[zone.id] === true;
@@ -320,7 +365,7 @@ export function DragLabelQuestion({
 
       {checked ? (
         <div
-          className={`w-full rounded-2xl border p-4 transition-all duration-300 ${
+          className={`mb-2 w-full rounded-2xl border p-4 transition-all duration-300 ${
             Object.values(results).every(Boolean)
               ? "border-[#456DFF]/40 bg-[rgba(69,109,255,0.12)]"
               : "border-amber-500/40 bg-amber-500/10"
@@ -329,7 +374,11 @@ export function DragLabelQuestion({
           <p className={`mb-1 font-bold ${Object.values(results).every(Boolean) ? "text-[#88C9F7]" : "text-amber-400"}`}>
             {Object.values(results).every(Boolean) ? "🎯 Perfect! All labels placed correctly." : "🔍 Some were off — check the highlights on the candle."}
           </p>
-          {explanation ? <p className="text-sm leading-relaxed text-slate-300">{explanation}</p> : null}
+          {explanation ? (
+            <p className="text-sm leading-relaxed text-slate-300">
+              <RichText text={explanation} />
+            </p>
+          ) : null}
           {!Object.values(results).every(Boolean) ? (
             <button type="button" onClick={handleReset} className="mt-3 text-sm font-semibold text-accent hover:underline">
               ↺ Try again

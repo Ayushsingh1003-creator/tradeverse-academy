@@ -356,6 +356,22 @@ export const lessonVideos = pgTable("LessonVideo", {
   thumbnail: text("thumbnail"),
 });
 
+/** Admin overrides for lesson page / question images (PNG, JPG, GIF URLs). */
+export const lessonImages = pgTable(
+  "LessonImage",
+  {
+    id: text("id").primaryKey(),
+    lessonSlug: text("lessonSlug").notNull(),
+    pageId: text("pageId").notNull(),
+    alt: text("alt").notNull(),
+    url: text("url"),
+    widthPercent: integer("widthPercent").notNull().default(100),
+    align: text("align").notNull().default("left"),
+    updatedAt: timestamp("updatedAt", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("LessonImage_lessonSlug_pageId_key").on(t.lessonSlug, t.pageId)],
+);
+
 export const creatorApplications = pgTable("CreatorApplication", {
   id: text("id").primaryKey(),
   authUserId: text("authUserId").notNull(),

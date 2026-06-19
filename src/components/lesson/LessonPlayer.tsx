@@ -4,7 +4,7 @@ import { useDrag } from "@use-gesture/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CandlestickSvg } from "@/components/lesson/CandlestickSvg";
 import { ChartTapCandles } from "@/components/lesson/ChartTapCandles";
 import { TEACHING_CANDLES } from "@/lib/candleGeometry";
@@ -20,6 +20,8 @@ import { getCoachReply } from "@/lib/aiCoach";
 import { isSoundEnabled, persistSoundPreference, resumeAudioContext, sound } from "@/lib/sounds";
 import type { Lesson } from "@/lib/data/lessons";
 import { COURSES } from "@/lib/data/courses";
+import { applyLessonImageConfigMap } from "@/lib/lessonImageOverrides";
+import type { LessonImageAdminConfig } from "@/lib/lessonImageOverrides";
 import { buildLibraryCourseHref } from "@/lib/libraryReturn";
 import {
   readInitialLessonResumeState,
@@ -45,25 +47,10 @@ import type {
 import { LessonCoachAside, LessonCoachMobile } from "@/components/lesson/LessonCoachPanel";
 import { prepareCoachTts, speakCoachText, stopVoiceCoach } from "@/lib/voiceCoach";
 import { textForSpeech } from "@/lib/speechText";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { RichText } from "@/components/ui/RichText";
 
 const MuxPlayer = dynamic(() => import("@mux/mux-player-react").then((m) => m.default), { ssr: false });
-
-function RichText({ text }: { text: string }) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.startsWith("**") && part.endsWith("**") ? (
-          <strong key={i} className="font-semibold text-accent">
-            {part.slice(2, -2)}
-          </strong>
-        ) : (
-          <span key={i}>{part}</span>
-        ),
-      )}
-    </>
-  );
-}
 
 function BearishCandleSvg() {
   return (
@@ -84,12 +71,19 @@ function GamifiedBadge({ label }: { label: string }) {
 
 function LessonImageSlot({ image }: { image?: LessonImageRef }) {
   if (!image) return null;
-  return <LessonImageFrame alt={image.alt} src={image.src} />;
+  return (
+    <LessonImageFrame
+      alt={image.alt}
+      src={image.src}
+      widthPercent={image.widthPercent}
+      align={image.align}
+    />
+  );
 }
 
 /** Consistent vertical rhythm for every lesson screen */
 function PageShell({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col gap-5">{children}</div>;
+  return <div className="flex flex-col gap-5 pb-8">{children}</div>;
 }
 
 /** Question on the left, interactive options on the right (used by candlestick lesson). */
@@ -112,12 +106,65 @@ function QuestionLayout({
       <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] md:gap-8">
         <div className="flex flex-col gap-3 md:sticky md:top-0">
           <LessonImageSlot image={image} />
-          <div className="text-base font-semibold leading-snug text-text-primary md:text-lg">{question}</div>
+          <div className="text-[1.1rem] font-semibold leading-snug text-text-primary md:text-[1.2375rem]">{question}</div>
         </div>
         <div className="min-w-0 flex flex-col gap-3">{children}</div>
       </div>
       {footer}
     </PageShell>
+  );
+}
+
+function LessonNavArrow({
+  direction,
+  disabled,
+  onClick,
+  label,
+  placement = "absolute",
+}: {
+  direction: "prev" | "next";
+  disabled: boolean;
+  onClick: () => void;
+  label: string;
+  placement?: "absolute" | "inline";
+}) {
+  const Icon = direction === "prev" ? ChevronLeft : ChevronRight;
+  const placementClass =
+    placement === "inline"
+      ? "relative shrink-0"
+      : `absolute top-1/2 z-20 -translate-y-1/2 ${direction === "prev" ? "left-2 md:left-4" : "right-2 md:right-4"}`;
+
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className={`${placementClass} flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-[#1E1E1E]/95 text-white shadow-[0_4px_20px_rgba(0,0,0,0.35)] backdrop-blur transition hover:border-[#456DFF]/50 hover:bg-[#252525] disabled:cursor-not-allowed disabled:opacity-25 sm:h-11 sm:w-11`}
+    >
+      <Icon size={22} strokeWidth={2.5} />
+    </button>
+  );
+}
+
+function FillBlankFeedback({
+  userAnswer,
+  correctAnswer,
+  explanation,
+}: {
+  userAnswer: string;
+  correctAnswer: string;
+  explanation: string;
+}) {
+  const isCorrect = userAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+  return (
+    <div className="rounded-2xl border border-border bg-surface2/80 p-4 text-sm leading-relaxed text-text-muted">
+      <p className="mb-2 font-semibold text-text-primary">
+        {isCorrect ? "Correct!" : "Correct answer:"}{" "}
+        <span className={isCorrect ? "text-[#88C9F7]" : "text-accent"}>{correctAnswer}</span>
+      </p>
+      <RichText text={explanation} />
+    </div>
   );
 }
 
@@ -130,10 +177,13 @@ const CALLOUT_STYLES = {
 
 export function LessonPlayer({
   lesson,
+  imageConfigByPageId = {},
   muxPlaybackId,
   libraryCourseSlug,
 }: {
   lesson: Lesson;
+  /** Admin-configured image URL, width, and alignment keyed by page / question id. */
+  imageConfigByPageId?: Record<string, LessonImageAdminConfig>;
   muxPlaybackId?: string | null;
   /** Library course slug from `?library=` when opened from `/library/[slug]`. */
   libraryCourseSlug?: string;
@@ -145,13 +195,17 @@ export function LessonPlayer({
   const completeLesson = useUserStore((s) => s.completeLesson);
   const unlockAchievement = useUserStore((s) => s.unlockAchievement);
   const lessonsCompleted = useUserStore((s) => s.lessonsCompleted);
+  const resolvedLesson = useMemo(
+    () => applyLessonImageConfigMap(lesson, imageConfigByPageId),
+    [lesson, imageConfigByPageId],
+  );
   const initialResume = readInitialLessonResumeState(
     libraryCourseSlug,
-    lesson.slug,
+    resolvedLesson.slug,
     useUserStore.getState().lessonsCompleted,
   );
 
-  const pages = lesson.pages;
+  const pages = resolvedLesson.pages;
   const [pageIndex, setPageIndex] = useState(0);
   const [pretestReveal, setPretestReveal] = useState(false);
   const [pretestPick, setPretestPick] = useState<number | null>(null);
@@ -207,7 +261,8 @@ export function LessonPlayer({
     page.type === "fill_blank" ||
     page.type === "drag_label" ||
     page.type === "chart_tap";
-  const contentMaxWidth = splitQuestionLayout && isQuestionPage ? "max-w-[780px]" : "max-w-[640px]";
+  const contentMaxWidth = splitQuestionLayout && isQuestionPage ? "" : "";
+  const footerMaxWidth = splitQuestionLayout ? "max-w-[780px]" : "max-w-[640px]";
   const course = COURSES.find((c) => c.id === lesson.courseId);
   const fromLibrary = Boolean(libraryCourseSlug?.trim());
   const libraryBackHref = fromLibrary ? buildLibraryCourseHref(libraryCourseSlug!) : null;
@@ -227,7 +282,7 @@ export function LessonPlayer({
     ? "Back to course"
     : isFinalReview
       ? "Continue to all paths →"
-      : lesson.practice?.length
+      : resolvedLesson.practice?.length
         ? "I'll practice later"
         : "Back to course";
   const practiceSummaryExitLabel = fromLibrary
@@ -377,7 +432,7 @@ export function LessonPlayer({
     setAiLoadingPhase("thinking");
     const lessonTopic =
       phase === "practice"
-        ? `practice-${lesson.practice?.[practiceIx]?.type ?? "question"}`
+        ? `practice-${resolvedLesson.practice?.[practiceIx]?.type ?? "question"}`
         : String(currentLessonTopic);
 
     const result = await getCoachReply({
@@ -429,14 +484,14 @@ export function LessonPlayer({
 
   useEffect(() => {
     if (!libraryCourseSlug?.trim() || phase !== "practiceSummary") return;
-    const total = lesson.practice?.length ?? 0;
+    const total = resolvedLesson.practice?.length ?? 0;
     if (total === 0) return;
     saveLibraryLearnProgress({
       practiceCorrect,
       practiceTotal: total,
       lessonCompleted: true,
     });
-  }, [phase, libraryCourseSlug, practiceCorrect, lesson.practice?.length, lesson.slug]);
+  }, [phase, libraryCourseSlug, practiceCorrect, resolvedLesson.practice?.length, lesson.slug]);
 
   const persistLessonIfNeeded = () => {
     if (lessonPersisted) return;
@@ -479,7 +534,52 @@ export function LessonPlayer({
     setVideoSkip(false);
   };
 
+  const isCurrentStepComplete = (): boolean => {
+    if (phase === "practice") {
+      const q = resolvedLesson.practice?.[practiceIx];
+      if (!q) return true;
+      switch (q.type) {
+        case "visual_choice":
+        case "multiple_choice":
+          return prMcOk;
+        case "true_false":
+          return prTfOk;
+        case "fill_blank":
+          return prFillOk;
+        case "chart_tap":
+          return prTapOk;
+        case "drag_label":
+          return prDragOk;
+        default:
+          return true;
+      }
+    }
+
+    switch (page.type) {
+      case "text":
+      case "callout":
+      case "image":
+        return true;
+      case "visual":
+        return !(page.visualId === "HammerCandle" && hammerPlaybackActive);
+      case "multiple_choice":
+      case "visual_choice":
+        return mcChecked;
+      case "true_false":
+        return tfShow;
+      case "fill_blank":
+        return fillChecked;
+      case "drag_label":
+        return dragChecked;
+      case "chart_tap":
+        return tapChecked;
+      default:
+        return true;
+    }
+  };
+
   const goNextPage = () => {
+    if (!isCurrentStepComplete()) return;
     if (!lesson.isFree && !isPremium && pageIndex >= 1) {
       setBlockedPremium(true);
       return;
@@ -492,6 +592,18 @@ export function LessonPlayer({
     }
     sound.pageTurn();
     setPageIndex((i) => i + 1);
+  };
+
+  const goPrevPage = () => {
+    if (pageIndex <= 0) return;
+    sound.pageTurn();
+    setPageIndex((i) => i - 1);
+  };
+
+  const goPrevPractice = () => {
+    if (practiceIx <= 0) return;
+    sound.pageTurn();
+    setPracticeIx((i) => i - 1);
   };
 
   const bottomClass =
@@ -520,8 +632,8 @@ export function LessonPlayer({
           <PageShell>
             {p.badge ? <GamifiedBadge label={p.badge} /> : null}
             <LessonImageSlot image={p.image} />
-            {p.title ? <h2 className="text-2xl font-bold leading-tight text-text-primary">{p.title}</h2> : null}
-            <div className="space-y-4 text-base leading-relaxed text-text-muted md:text-lg">
+            {p.title ? <h2 className="text-[1.375rem] font-bold leading-tight text-text-primary md:text-[1.65rem]">{p.title}</h2> : null}
+            <div className="space-y-4 text-[1.1rem] leading-relaxed text-text-muted md:text-[1.2375rem]">
               {p.body.split("\n\n").map((para, i) => (
                 <p key={i}>
                   <RichText text={para} />
@@ -534,10 +646,10 @@ export function LessonPlayer({
         return (
           <PageShell>
             {p.badge ? <GamifiedBadge label={p.badge} /> : null}
-            <LessonImageFrame alt={p.alt} src={p.src} priority />
-            {p.title ? <h2 className="text-2xl font-bold leading-tight text-text-primary">{p.title}</h2> : null}
+            <LessonImageFrame alt={p.alt} src={p.src} widthPercent={p.widthPercent} align={p.align} />
+            {p.title ? <h2 className="text-[1.375rem] font-bold leading-tight text-text-primary md:text-[1.65rem]">{p.title}</h2> : null}
             {p.caption ? (
-              <p className="text-base leading-relaxed text-text-muted md:text-lg">
+              <p className="text-[1.1rem] leading-relaxed text-text-muted md:text-[1.2375rem]">
                 <RichText text={p.caption} />
               </p>
             ) : null}
@@ -555,7 +667,7 @@ export function LessonPlayer({
               />
             </div>
             {p.caption ? (
-              <p className="text-center text-base leading-relaxed text-text-muted md:text-lg">
+              <p className="text-center text-[1.1rem] leading-relaxed text-text-muted md:text-[1.2375rem]">
                 <RichText text={p.caption} />
               </p>
             ) : null}
@@ -571,8 +683,14 @@ export function LessonPlayer({
                 {st.icon} {st.label}
               </p>
               <LessonImageSlot image={p.image} />
-              <h3 className="text-xl font-bold text-text-primary">{p.title}</h3>
-              <p className="mt-3 whitespace-pre-wrap text-base leading-relaxed text-text-muted">{p.content}</p>
+              <h3 className="text-[1.2375rem] font-bold text-text-primary">{p.title}</h3>
+              <div className="mt-3 space-y-2 text-[1.1rem] leading-relaxed text-text-muted">
+                {p.content.split("\n").map((line, i) => (
+                  <p key={i}>
+                    <RichText text={line} />
+                  </p>
+                ))}
+              </div>
             </div>
           </PageShell>
         );
@@ -783,9 +901,7 @@ export function LessonPlayer({
           </div>
         );
         const explanationBlock = fillChecked ? (
-          <div className="rounded-2xl border border-border bg-surface2/80 p-4 text-sm leading-relaxed text-text-muted">
-            <RichText text={pp.explanation} />
-          </div>
+          <FillBlankFeedback userAnswer={fill} correctAnswer={pp.correctAnswer} explanation={pp.explanation} />
         ) : null;
 
         if (splitQuestionLayout) {
@@ -923,7 +1039,7 @@ export function LessonPlayer({
     }
   };
 
-  const practiceQ = lesson.practice?.[practiceIx];
+  const practiceQ = resolvedLesson.practice?.[practiceIx];
 
   const coachSuggestedChips =
     phase === "practice"
@@ -946,12 +1062,17 @@ export function LessonPlayer({
 
   const advancePractice = () => {
     sound.pageTurn();
-    if (!lesson.practice) return;
-    if (practiceIx >= lesson.practice.length - 1) {
+    if (!resolvedLesson.practice) return;
+    if (practiceIx >= resolvedLesson.practice.length - 1) {
       setPhase("practiceSummary");
       return;
     }
     setPracticeIx((i) => i + 1);
+  };
+
+  const goNextPractice = () => {
+    if (!isCurrentStepComplete()) return;
+    advancePractice();
   };
 
   const renderPracticeQuestion = (q: PracticeQuestion) => {
@@ -986,7 +1107,9 @@ export function LessonPlayer({
         </button>
       ) : (
         <>
-          <p className="text-sm leading-relaxed text-text-muted">{q.explanation}</p>
+          <p className="text-sm leading-relaxed text-text-muted">
+            <RichText text={q.explanation} />
+          </p>
           <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
             Next →
           </button>
@@ -1055,7 +1178,11 @@ export function LessonPlayer({
               Next →
             </button>
           )}
-          {prMcOk ? <p className="mt-4 text-sm text-text-muted">{q.explanation}</p> : null}
+          {prMcOk ? (
+            <p className="mt-4 text-sm text-text-muted">
+              <RichText text={q.explanation} />
+            </p>
+          ) : null}
         </div>
       );
     }
@@ -1090,7 +1217,9 @@ export function LessonPlayer({
           </div>
           {prTfOk ? (
             <>
-              <p className="mt-4 text-sm text-text-muted">{q.explanation}</p>
+              <p className="mt-4 text-sm text-text-muted">
+                <RichText text={q.explanation} />
+              </p>
               <button type="button" className="mt-6 h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
                 Next →
               </button>
@@ -1138,7 +1267,16 @@ export function LessonPlayer({
 
       if (splitQuestionLayout) {
         return (
-          <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} image={q.image} question={`${parts[0]}_____${parts[1] ?? ""}`}>
+          <QuestionLayout
+            badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
+            image={q.image}
+            question={`${parts[0]}_____${parts[1] ?? ""}`}
+            footer={
+              prFillOk ? (
+                <FillBlankFeedback userAnswer={prFill} correctAnswer={q.correctAnswer} explanation={q.explanation} />
+              ) : null
+            }
+          >
             {answerPanel}
           </QuestionLayout>
         );
@@ -1177,9 +1315,12 @@ export function LessonPlayer({
               Check
             </button>
           ) : (
-            <button type="button" className="mt-6 h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
-              Next →
-            </button>
+            <>
+              <FillBlankFeedback userAnswer={prFill} correctAnswer={q.correctAnswer} explanation={q.explanation} />
+              <button type="button" className="mt-6 h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+                Next →
+              </button>
+            </>
           )}
         </div>
       );
@@ -1349,7 +1490,7 @@ export function LessonPlayer({
             Restart lesson
           </button>
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-            {lesson.practice?.length ? (
+            {resolvedLesson.practice?.length ? (
               <button
                 type="button"
                 className="rounded-2xl bg-[#456DFF] px-8 py-4 text-lg font-black text-white shadow-md transition hover:brightness-110"
@@ -1365,7 +1506,7 @@ export function LessonPlayer({
             <Link
               href={postCompletionHref}
               onClick={() => {
-                if (libraryCourseSlug?.trim() && lesson.practice?.length) {
+                if (libraryCourseSlug?.trim() && resolvedLesson.practice?.length) {
                   saveLibraryLearnProgress({
                     practiceCorrect: 0,
                     practiceTotal: 0,
@@ -1384,7 +1525,7 @@ export function LessonPlayer({
   }
 
   if (phase === "practiceSummary") {
-    const total = lesson.practice?.length ?? 0;
+    const total = resolvedLesson.practice?.length ?? 0;
     return (
       <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#141414] px-6 text-center">
         <h2 className="text-2xl font-bold">
@@ -1415,16 +1556,34 @@ export function LessonPlayer({
         </header>
         <div className="flex min-h-0 flex-1">
           <LessonCoachAside {...coachPanelProps} />
-          <main className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8">
-            <div className="mb-4 flex gap-1">
-              {lesson.practice!.map((_, i) => (
-                <span
-                  key={i}
-                  className={`h-2 w-2 rounded-full ${i < practiceIx ? "bg-accent" : i === practiceIx ? "bg-white" : "bg-slate-600"}`}
-                />
-              ))}
+          <main className="relative flex min-h-0 flex-1 flex-col">
+            <div className="relative flex min-h-0 flex-1 overflow-y-auto px-16 md:px-20 lg:px-24">
+              <LessonNavArrow
+                direction="prev"
+                disabled={practiceIx <= 0}
+                onClick={goPrevPractice}
+                label="Previous practice question"
+              />
+              <LessonNavArrow
+                direction="next"
+                disabled={!isCurrentStepComplete()}
+                onClick={goNextPractice}
+                label="Next practice question"
+              />
+              <div className="flex min-h-0 flex-1 flex-col px-5 py-6 md:px-8 md:py-8 pb-6 md:pb-8">
+                <div className="mb-4 flex justify-center gap-1">
+                  {resolvedLesson.practice!.map((_, i) => (
+                    <span
+                      key={i}
+                      className={`h-2 w-2 rounded-full ${i < practiceIx ? "bg-accent" : i === practiceIx ? "bg-white" : "bg-slate-600"}`}
+                    />
+                  ))}
+                </div>
+                <div className={`mx-auto w-full ${splitQuestionLayout ? "" : "max-w-xl"} [font-size:110%]`}>
+                  {renderPracticeQuestion(practiceQ)}
+                </div>
+              </div>
             </div>
-            <div className={`w-full ${splitQuestionLayout ? "max-w-[780px]" : "max-w-xl"}`}>{renderPracticeQuestion(practiceQ)}</div>
           </main>
         </div>
         <LessonCoachMobile {...coachPanelProps} aiOpen={aiOpen} onOpenChange={setAiOpen} />
@@ -1477,7 +1636,9 @@ export function LessonPlayer({
             </button>
           ) : (
             <>
-              <p className="mt-8 max-w-lg text-center text-text-muted">{pre0.explanation}</p>
+              <p className="mt-8 max-w-lg text-center text-text-muted">
+                <RichText text={pre0.explanation} />
+              </p>
               <button
                 type="button"
                 className="mt-6 rounded-2xl bg-[#456DFF] px-10 py-4 font-semibold text-white"
@@ -1538,16 +1699,30 @@ export function LessonPlayer({
               </button>
             </div>
           ) : null}
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-6 md:px-8 md:py-8">
-            <div className={`mx-auto flex min-h-0 w-full ${contentMaxWidth} flex-1 flex-col`}>
-              {showMainContent ? renderPage(page) : null}
+          <div className="relative flex min-h-0 overflow-y-auto flex-1 px-16 md:px-20 lg:px-24">
+            <LessonNavArrow
+              direction="prev"
+              disabled={pageIndex <= 0 || showPretestOverlay}
+              onClick={goPrevPage}
+              label="Previous step"
+            />
+            <LessonNavArrow
+              direction="next"
+              disabled={!isCurrentStepComplete() || showPretestOverlay}
+              onClick={goNextPage}
+              label="Next step"
+            />
+            <div className="flex min-h-0 flex-1 flex-col px-5 py-6 md:px-8 md:py-8 pb-6 md:pb-8">
+              <div className={`mx-auto w-full ${contentMaxWidth} [font-size:110%]`}>
+                {showMainContent ? renderPage(page) : null}
+              </div>
             </div>
           </div>
         </main>
       </div>
 
-      <footer className={`shrink-0 border-t border-border px-5 py-5 transition-colors ${bottomClass}`}>
-        <div className={`mx-auto flex ${contentMaxWidth} flex-col gap-3`}>
+      <footer className={`shrink-0 border-t border-border px-5 pb-6 pt-5 transition-colors ${bottomClass}`}>
+        <div className={`mx-auto flex w-full ${footerMaxWidth} flex-col gap-3`}>
           {phase === "lesson" && !hideLessonFooter ? (
             <>
               {page.type === "text" || page.type === "callout" || page.type === "image" ? (

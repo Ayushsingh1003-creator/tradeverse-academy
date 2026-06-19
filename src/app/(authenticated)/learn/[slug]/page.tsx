@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import { db } from "@/lib/db";
 import { getLessonBySlug } from "@/lib/data/lessonLookup";
+import { fetchLessonImageConfigMap } from "@/lib/lessonImageOverrides.server";
 import { PageLoader } from "@/components/ui/Loader";
 
 const LessonPlayer = dynamic(
@@ -14,23 +15,30 @@ type PageProps = {
 };
 
 export default async function LearnPage({ params, searchParams }: PageProps) {
-  const lesson = getLessonBySlug(params.slug);
-  if (!lesson) return <main className="mx-auto max-w-3xl p-8">Lesson not found.</main>;
+  const baseLesson = getLessonBySlug(params.slug);
+  if (!baseLesson) return <main className="mx-auto max-w-3xl p-8">Lesson not found.</main>;
 
   const libraryCourseSlug =
     typeof searchParams.library === "string" ? searchParams.library.trim() : undefined;
 
   let playbackId: string | null = null;
+  let imageConfigByPageId = {};
   try {
-    const video = await db.lessonVideo.findUnique({ where: { lessonSlug: params.slug } });
+    const [video, imageConfigs] = await Promise.all([
+      db.lessonVideo.findUnique({ where: { lessonSlug: params.slug } }),
+      fetchLessonImageConfigMap(params.slug),
+    ]);
     playbackId = video?.muxPlaybackId ?? null;
+    imageConfigByPageId = imageConfigs;
   } catch {
     playbackId = null;
+    imageConfigByPageId = {};
   }
 
   return (
     <LessonPlayer
-      lesson={lesson}
+      lesson={baseLesson}
+      imageConfigByPageId={imageConfigByPageId}
       muxPlaybackId={playbackId}
       libraryCourseSlug={libraryCourseSlug || undefined}
     />

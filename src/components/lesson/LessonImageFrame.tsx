@@ -1,32 +1,41 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
-import { LESSON_IMAGE_FRAME_CLASS, LESSON_PLACEHOLDER_SRC, resolveLessonImageSrc } from "@/lib/lessonImages";
+import {
+  clampLessonImageWidthPercent,
+  DEFAULT_LESSON_IMAGE_ALIGN,
+  DEFAULT_LESSON_IMAGE_WIDTH_PERCENT,
+  isExternalLessonImageSrc,
+  LESSON_IMAGE_FRAME_CLASS,
+  lessonImageAlignClass,
+  resolveLessonImageDisplaySrc,
+} from "@/lib/lessonImages";
 import type { LessonImageRef } from "@/types/lessonPage";
 
 type Props = LessonImageRef & {
-  courseSlug?: string;
   className?: string;
-  priority?: boolean;
 };
 
-export function LessonImageFrame({ alt, src, courseSlug, className = "", priority }: Props) {
-  const resolved = resolveLessonImageSrc(alt, src, courseSlug);
-  const [imgSrc, setImgSrc] = useState(resolved);
+export function LessonImageFrame({
+  alt,
+  src,
+  className = "",
+  widthPercent = DEFAULT_LESSON_IMAGE_WIDTH_PERCENT,
+  align = DEFAULT_LESSON_IMAGE_ALIGN,
+}: Props) {
+  const { src: displaySrc, isFallback } = resolveLessonImageDisplaySrc(src);
+  const width = clampLessonImageWidthPercent(widthPercent);
+  const wrapperClass = isFallback
+    ? `block ${lessonImageAlignClass(align)} ${className}`
+    : `${LESSON_IMAGE_FRAME_CLASS} ${lessonImageAlignClass(align)} ${className}`;
 
   return (
-    <div className={`${LESSON_IMAGE_FRAME_CLASS} ${className}`}>
-      <Image
-        src={imgSrc}
+    <div className={wrapperClass} style={{ width: `${width}%` }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={displaySrc}
         alt={alt}
-        fill
-        priority={priority}
-        className="object-contain p-3"
-        sizes="560px"
-        onError={() => {
-          if (imgSrc !== LESSON_PLACEHOLDER_SRC) setImgSrc(LESSON_PLACEHOLDER_SRC);
-        }}
+        className="block h-auto w-full object-contain"
+        loading={!isFallback && isExternalLessonImageSrc(displaySrc) ? "lazy" : undefined}
       />
     </div>
   );

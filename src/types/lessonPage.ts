@@ -2,10 +2,15 @@
 
 export type LessonPageBase = { id: string };
 
-/** Image slot — `alt` is the stable key; drop a PNG at the resolved path to swap art later. */
+/** Image slot — uses fallback bar when no admin URL is set. */
+export type LessonImageAlign = "left" | "center" | "right";
+
 export type LessonImageRef = {
   alt: string;
   src?: string;
+  /** Display width as a percentage of the content column (admin-configurable). */
+  widthPercent?: number;
+  align?: LessonImageAlign;
 };
 
 export type ImagePage = LessonPageBase &

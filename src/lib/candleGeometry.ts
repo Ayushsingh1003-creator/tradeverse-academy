@@ -30,6 +30,8 @@ export function candleLayoutFromOhlc({ o, h, l, c }: OhlcPixels) {
 export const TEACHING_CANDLES = {
   /** DragLabel OHLC bullish — viewBox 0 0 200 360 */
   ohlcBullish: { o: 168, h: 14, l: 328, c: 72 } satisfies OhlcPixels,
+  /** DragLabel OHLC bearish — viewBox 0 0 200 360 */
+  ohlcBearish: { o: 72, h: 14, l: 328, c: 168 } satisfies OhlcPixels,
   /** LessonBlock drag diagram — viewBox 0 0 220 220 */
   lessonBlockBullish: { o: 150, h: 35, l: 185, c: 80 } satisfies OhlcPixels,
   /** Hammer drag layout — small body at top, long lower wick */
