@@ -1,4 +1,19 @@
 import { LESSONS } from "@/lib/data/lessons";
+import type { CandleChoicePreset, VisualChoiceOption } from "@/types/lessonPage";
+
+const PRESET_LABELS: Record<CandleChoicePreset, string> = {
+  bullish: "Bullish candle",
+  bearish: "Bearish candle",
+  doji: "Doji",
+  hammer: "Hammer",
+  shootingStar: "Shooting star",
+  marubozuBull: "Strong bullish candle",
+  marubozuBear: "Strong bearish candle",
+};
+
+function visualChoiceOptionLabels(options: VisualChoiceOption[]): string[] {
+  return options.map((o, i) => o.label ?? PRESET_LABELS[o.preset] ?? `Option ${i + 1}`);
+}
 
 function pushMcqRef(
   refs: McqRef[],
@@ -80,7 +95,7 @@ function collectMcqRefs(): McqRef[] {
         pushMcqRef(refs, lesson.slug, "page", {
           id: page.id,
           question: page.question,
-          options: page.options.map((o) => o.label),
+          options: visualChoiceOptionLabels(page.options),
           correctIndex: page.correctIndex,
           explanation: page.explanation,
         });
@@ -100,7 +115,7 @@ function collectMcqRefs(): McqRef[] {
         pushMcqRef(refs, lesson.slug, "practice", {
           id: q.id,
           question: q.question,
-          options: q.options.map((o) => o.label),
+          options: visualChoiceOptionLabels(q.options),
           correctIndex: q.correctIndex,
           explanation: q.explanation,
         });
