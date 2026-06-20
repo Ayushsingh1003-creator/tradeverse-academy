@@ -102,9 +102,9 @@ function QuestionLayout({
 }) {
   return (
     <PageShell>
-      {badge}
       <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] md:gap-8">
-        <div className="flex flex-col gap-3 md:sticky md:top-0">
+        <div className="flex flex-col gap-5 md:sticky md:top-0">
+          {badge}
           <LessonImageSlot image={image} />
           <div className="text-[1.1rem] font-semibold leading-snug text-text-primary md:text-[1.2375rem]">{question}</div>
         </div>
@@ -556,6 +556,7 @@ export function LessonPlayer({
     }
 
     switch (page.type) {
+      case "intro":
       case "text":
       case "callout":
       case "image":
@@ -627,6 +628,20 @@ export function LessonPlayer({
 
   const renderPage = (p: LessonPage) => {
     switch (p.type) {
+      case "intro":
+        return (
+          <PageShell>
+            <div className="flex flex-col items-center text-center">
+              <LessonImageSlot image={p.image} />
+              <h2 className="mt-4 text-[1.65rem] font-bold leading-tight text-text-primary md:text-[2rem]">{p.title}</h2>
+              {p.subtitle ? (
+                <p className="mt-3 max-w-md text-[1.1rem] leading-relaxed text-text-muted md:text-[1.2375rem]">
+                  <RichText text={p.subtitle} />
+                </p>
+              ) : null}
+            </div>
+          </PageShell>
+        );
       case "text":
         return (
           <PageShell>
@@ -677,14 +692,14 @@ export function LessonPlayer({
         const st = CALLOUT_STYLES[p.variant];
         return (
           <PageShell>
-            <div className={`rounded-2xl border p-5 md:p-6 ${st.border}`}>
-              {p.badge ? <GamifiedBadge label={p.badge} /> : null}
+            <div className={`rounded-2xl border p-6 md:p-8 ${st.border}`}>
+              {p.badge ? <div className="mb-4"><GamifiedBadge label={p.badge} /></div> : null}
               <p className="text-sm font-semibold text-text-muted">
                 {st.icon} {st.label}
               </p>
               <LessonImageSlot image={p.image} />
-              <h3 className="text-[1.2375rem] font-bold text-text-primary">{p.title}</h3>
-              <div className="mt-3 space-y-2 text-[1.1rem] leading-relaxed text-text-muted">
+              <h3 className="mt-3 text-[1.2375rem] font-bold leading-snug text-text-primary md:text-[1.375rem]">{p.title}</h3>
+              <div className="mt-5 space-y-3.5 text-[1.05rem] leading-relaxed text-text-muted md:space-y-4 md:text-[1.1rem] md:leading-loose">
                 {p.content.split("\n").map((line, i) => (
                   <p key={i}>
                     <RichText text={line} />
@@ -1136,54 +1151,68 @@ export function LessonPlayer({
       );
     }
     if (q.type === "multiple_choice") {
+      const optionsGrid = (
+        <div className="grid gap-2">
+          {q.options.map((o, i) => (
+            <button
+              key={i}
+              type="button"
+              disabled={prMcOk}
+              onClick={() => setPrMc(i)}
+              className={`min-h-[52px] rounded-xl border px-3 py-3 text-left text-sm ${prMc === i ? "border-accent ring-1 ring-accent" : "border-border bg-surface2"}`}
+            >
+              {o}
+            </button>
+          ))}
+        </div>
+      );
+      const actions = !prMcOk ? (
+        <button
+          type="button"
+          disabled={prMc == null}
+          className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white disabled:opacity-40"
+          onClick={() => {
+            setPrMcOk(true);
+            if (prMc === q.correctIndex) {
+              sound.correct();
+              setPracticeCorrect((c) => c + 1);
+              awardXp(10);
+            } else {
+              sound.wrong();
+              handleWrongAttemptCoach();
+            }
+          }}
+        >
+          Check
+        </button>
+      ) : (
+        <>
+          <p className="text-sm leading-relaxed text-text-muted">
+            <RichText text={q.explanation} />
+          </p>
+          <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+            Next →
+          </button>
+        </>
+      );
+
+      if (splitQuestionLayout) {
+        return (
+          <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} image={q.image} question={q.question}>
+            {optionsGrid}
+            {actions}
+          </QuestionLayout>
+        );
+      }
+
       return (
-        <div>
+        <PageShell>
           {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
           <LessonImageSlot image={q.image} />
           <p className="text-lg font-semibold">{q.question}</p>
-          <div className="mt-4 grid gap-2">
-            {q.options.map((o, i) => (
-              <button
-                key={i}
-                type="button"
-                disabled={prMcOk}
-                onClick={() => setPrMc(i)}
-                className={`min-h-[52px] rounded-xl border px-3 py-3 text-left text-sm ${prMc === i ? "border-accent ring-1 ring-accent" : "border-border bg-surface2"}`}
-              >
-                {o}
-              </button>
-            ))}
-          </div>
-          {!prMcOk ? (
-            <button
-              type="button"
-              disabled={prMc == null}
-              className="mt-6 h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white disabled:opacity-40"
-              onClick={() => {
-                setPrMcOk(true);
-                if (prMc === q.correctIndex) {
-                  sound.correct();
-                  setPracticeCorrect((c) => c + 1);
-                  awardXp(10);
-                } else {
-                  sound.wrong();
-                  handleWrongAttemptCoach();
-                }
-              }}
-            >
-              Check
-            </button>
-          ) : (
-            <button type="button" className="mt-6 h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
-              Next →
-            </button>
-          )}
-          {prMcOk ? (
-            <p className="mt-4 text-sm text-text-muted">
-              <RichText text={q.explanation} />
-            </p>
-          ) : null}
-        </div>
+          {optionsGrid}
+          {actions}
+        </PageShell>
       );
     }
     if (q.type === "true_false") {
@@ -1571,7 +1600,7 @@ export function LessonPlayer({
                 label="Next practice question"
               />
               <div className="flex min-h-0 flex-1 flex-col px-5 py-6 md:px-8 md:py-8 pb-6 md:pb-8">
-                <div className="mb-4 flex justify-center gap-1">
+                <div className="mb-8 flex justify-center gap-1.5 md:mb-10">
                   {resolvedLesson.practice!.map((_, i) => (
                     <span
                       key={i}
@@ -1725,7 +1754,7 @@ export function LessonPlayer({
         <div className={`mx-auto flex w-full ${footerMaxWidth} flex-col gap-3`}>
           {phase === "lesson" && !hideLessonFooter ? (
             <>
-              {page.type === "text" || page.type === "callout" || page.type === "image" ? (
+              {page.type === "intro" || page.type === "text" || page.type === "callout" || page.type === "image" ? (
                 <button
                   type="button"
                   className="h-14 w-full rounded-2xl bg-[#456DFF] text-lg font-semibold text-white"
@@ -1737,7 +1766,7 @@ export function LessonPlayer({
                     goNextPage();
                   }}
                 >
-                  Continue →
+                  {page.type === "intro" ? (page.startLabel ?? "Start") : "Continue →"}
                 </button>
               ) : null}
               {page.type === "visual" ? (

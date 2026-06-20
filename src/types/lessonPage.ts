@@ -39,6 +39,15 @@ export type TextPage = LessonPageBase & {
   badge?: string;
 };
 
+/** Cover slide with hero image and Start CTA (Brilliant-style lesson opener). */
+export type IntroPage = LessonPageBase & {
+  type: "intro";
+  title: string;
+  subtitle?: string;
+  image?: LessonImageRef;
+  startLabel?: string;
+};
+
 export type VisualPage = LessonPageBase & {
   type: "visual";
   visualId:
@@ -46,6 +55,15 @@ export type VisualPage = LessonPageBase & {
     | "BullishVsBearish"
     | "WickExplainer"
     | "DojiExplainer"
+    | "CandleResearchUnit"
+    | "CandleSnapshot"
+    | "BodyShadowParts"
+    | "BodyOpenClose"
+    | "ShadowLabels"
+    | "HollowGreenExplainer"
+    | "FullBlackRedExplainer"
+    | "CandleForms"
+    | "OhlcPriceChart"
     | "SupportResistanceMap"
     | "TrendLines"
     | "HammerCandle"
@@ -140,7 +158,8 @@ export type CandleChoicePreset =
   | "marubozuBear";
 
 export type VisualChoiceOption = {
-  label: string;
+  /** Omit or leave empty to show candle only (no caption under the SVG). */
+  label?: string;
   preset: CandleChoicePreset;
 };
 
@@ -165,6 +184,7 @@ export type CalloutPage = LessonPageBase & {
 
 export type LessonPage =
   | PretestPage
+  | IntroPage
   | TextPage
   | ImagePage
   | VisualPage
