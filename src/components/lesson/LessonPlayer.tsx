@@ -149,9 +149,9 @@ function QuestionLayout({
 }) {
   return (
     <PageShell>
+      {badge ? <div className="mb-5">{badge}</div> : null}
       <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] md:gap-8">
         <div className="flex flex-col gap-5 md:sticky md:top-0">
-          {badge}
           <LessonImageSlot image={image} />
           {typeof question === "string" ? (
             <LessonPrompt
@@ -1248,7 +1248,7 @@ export function LessonPlayer({
       case "true_false": {
         const pp = p as TrueFalsePage;
         const tfButtons = (
-          <div className="grid grid-cols-2 gap-3">
+          <div className={pp.vertical === false ? "grid grid-cols-2 gap-3" : "flex flex-col gap-3"}>
             {([true, false] as const).map((v) => {
               const picked = tfPick === v;
               const show = tfShow;
@@ -1334,13 +1334,13 @@ export function LessonPlayer({
               badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
               image={pp.image}
               question={
-                <>
+                <p className="text-[1.1rem] font-semibold leading-normal text-text-primary md:text-[1.2375rem]">
                   {parts[0]}
-                  <span className="mx-1 inline-block min-w-[4rem] border-b-2 border-dashed border-accent/60 align-bottom" aria-hidden>
+                  <span className="mx-1 inline-block w-10 border-b-2 border-dashed border-accent/60 align-baseline" aria-hidden>
                     &nbsp;
                   </span>
                   {parts[1] ?? ""}
-                </>
+                </p>
               }
               footer={explanationBlock}
             >
@@ -2159,44 +2159,62 @@ export function LessonPlayer({
       );
     }
     if (q.type === "true_false") {
+      const tfButtons = (
+        <div className={q.vertical ? "flex flex-col gap-3" : "grid grid-cols-2 gap-3"}>
+          {([true, false] as const).map((v) => (
+            <button
+              key={String(v)}
+              type="button"
+              disabled={prTfOk}
+              onClick={() => {
+                setPrTfOk(true);
+                if (v === q.correct) {
+                  sound.correct();
+                  setPracticeCorrect((c) => c + 1);
+                  awardXp(8);
+                } else {
+                  sound.wrong();
+                  handleWrongAttemptCoach();
+                }
+              }}
+              className={`rounded-2xl border-2 py-6 text-lg font-bold ${v ? "border-[#456DFF]/40 text-[#456DFF]" : "border-red-500/40 text-red-400"}`}
+            >
+              {v ? "TRUE" : "FALSE"}
+            </button>
+          ))}
+        </div>
+      );
+      const tfFooter = prTfOk ? (
+        <>
+          <p className="text-sm text-text-muted">
+            <RichText text={q.explanation} />
+          </p>
+          <button type="button" className="mt-4 h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+            Next →
+          </button>
+        </>
+      ) : null;
+
+      if (splitQuestionLayout) {
+        return (
+          <QuestionLayout
+            badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
+            image={q.image}
+            question={q.statement}
+            footer={tfFooter}
+          >
+            {tfButtons}
+          </QuestionLayout>
+        );
+      }
+
       return (
         <div>
           {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
           <LessonImageSlot image={q.image} />
           <p className="text-lg font-semibold">{q.statement}</p>
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            {([true, false] as const).map((v) => (
-              <button
-                key={String(v)}
-                type="button"
-                disabled={prTfOk}
-                onClick={() => {
-                  setPrTfOk(true);
-                  if (v === q.correct) {
-                    sound.correct();
-                    setPracticeCorrect((c) => c + 1);
-                    awardXp(8);
-                  } else {
-                    sound.wrong();
-                    handleWrongAttemptCoach();
-                  }
-                }}
-                className={`rounded-2xl border-2 py-6 text-lg font-bold ${v ? "border-[#456DFF]/40 text-[#456DFF]" : "border-red-500/40 text-red-400"}`}
-              >
-                {v ? "TRUE" : "FALSE"}
-              </button>
-            ))}
-          </div>
-          {prTfOk ? (
-            <>
-              <p className="mt-4 text-sm text-text-muted">
-                <RichText text={q.explanation} />
-              </p>
-              <button type="button" className="mt-6 h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
-                Next →
-              </button>
-            </>
-          ) : null}
+          <div className={`mt-6 ${q.vertical ? "flex flex-col gap-3" : "grid grid-cols-2 gap-3"}`}>{tfButtons}</div>
+          {tfFooter}
         </div>
       );
     }
@@ -2242,7 +2260,15 @@ export function LessonPlayer({
           <QuestionLayout
             badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
             image={q.image}
-            question={`${parts[0]}_____${parts[1] ?? ""}`}
+            question={
+              <p className="text-[1.1rem] font-semibold leading-normal text-text-primary md:text-[1.2375rem]">
+                {parts[0]}
+                <span className="mx-1 inline-block w-10 border-b-2 border-dashed border-accent/60 align-baseline" aria-hidden>
+                  &nbsp;
+                </span>
+                {parts[1] ?? ""}
+              </p>
+            }
             footer={
               prFillOk ? (
                 <FillBlankFeedback userAnswer={prFill} correctAnswer={q.correctAnswer} explanation={q.explanation} />

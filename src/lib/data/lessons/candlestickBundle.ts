@@ -1,6 +1,6 @@
 import type { PracticeQuestion } from "@/types/lessonPage";
 import { howToReadAChartPages, howToReadAChartPractice } from "@/lib/data/lessons/lessonBullishVsBearish";
-import { meaningOfPatternsPages, meaningOfPatternsPractice } from "@/lib/data/lessons/lessonHammerShootingStar";
+import { meaningOfPatternsPages, meaningOfPatternsPractice } from "@/lib/data/lessons/lessonMeaningOfPatterns";
 import { supportResistancePages, supportResistancePractice } from "@/lib/data/lessons/lessonSupportResistance";
 import { trendLinesPages, trendLinesPractice } from "@/lib/data/lessons/lessonTrendAnalysis";
 import { whatIsCandlestickPages, whatIsCandlestickPractice } from "@/lib/data/lessons/lessonWhatIsCandlestick";

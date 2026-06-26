@@ -218,6 +218,8 @@ export type TrueFalsePage = LessonPageBase & {
   explanation: string;
   image?: LessonImageRef;
   challengeBadge?: string;
+  /** Stack TRUE / FALSE vertically (default: side-by-side grid). */
+  vertical?: boolean;
 };
 
 export type FillBlankPage = LessonPageBase & {
