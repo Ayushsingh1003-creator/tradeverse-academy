@@ -8,10 +8,21 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CandlestickSvg } from "@/components/lesson/CandlestickSvg";
 import { ChartTapCandles } from "@/components/lesson/ChartTapCandles";
 import { TEACHING_CANDLES } from "@/lib/candleGeometry";
+import { CandleFuseQuestion } from "@/components/lesson/CandleFuseQuestion";
+import { ChartCompareQuestion } from "@/components/lesson/ChartCompareQuestion";
+import { ChartReadingChoiceGrid } from "@/components/lesson/ChartReadingChoiceGrid";
+import { ChartReadingTapQuestion } from "@/components/lesson/ChartReadingTapQuestion";
 import { DragLabelQuestion } from "@/components/lesson/DragLabelQuestion";
+import { FoldConnectQuestion } from "@/components/lesson/FoldConnectQuestion";
+import { FoldOhlcDragQuestion } from "@/components/lesson/FoldOhlcDragQuestion";
+import { TimeBracketDragQuestion } from "@/components/lesson/TimeBracketDragQuestion";
+import { TimeframeOrderDrag } from "@/components/lesson/TimeframeOrderDrag";
 import { LessonImageFrame } from "@/components/lesson/LessonImageFrame";
 import { LessonVisual } from "@/components/lesson/visuals/LessonVisual";
 import { VisualChoiceGrid } from "@/components/lesson/VisualChoiceGrid";
+import { FifteenMinChoiceGrid } from "@/components/lesson/visuals/ChartReadingVisuals";
+import { FourHourFoldChoiceGrid } from "@/components/lesson/FourHourFoldChoiceGrid";
+import { TextOptionChoiceGrid } from "@/components/lesson/TextOptionChoiceGrid";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { Confetti } from "@/components/ui/Confetti";
 import { useToast } from "@/components/ui/Toast";
@@ -33,15 +44,24 @@ import { useSubscription } from "@/lib/hooks/useSubscription";
 import { suggestedChipsForPage } from "@/lib/lessonAiResponses";
 import { useUserStore } from "@/lib/store";
 import type {
+  CandleFusePage,
+  ChartComparePage,
   ChartTapPage,
   DragLabelPage,
+  DragOrderPage,
   FillBlankPage,
+  FoldConnectPage,
+  FoldChartChoicePage,
+  FoldOhlcDragPage,
   LessonImageRef,
   LessonPage,
   MultipleChoicePage,
   PracticeQuestion,
   PretestPage,
+  TapChoicePage,
+  TimeBracketDragPage,
   TrueFalsePage,
+  UiChoicePage,
   VisualChoicePage,
 } from "@/types/lessonPage";
 import { LessonCoachAside, LessonCoachMobile } from "@/components/lesson/LessonCoachPanel";
@@ -86,6 +106,33 @@ function PageShell({ children }: { children: ReactNode }) {
   return <div className="flex flex-col gap-5 pb-8">{children}</div>;
 }
 
+/** Renders lesson question/instruction copy with **bold** markdown. */
+function LessonPrompt({
+  text,
+  className = "text-[1.1rem] font-semibold leading-normal text-text-primary md:text-[1.2375rem]",
+}: {
+  text: string;
+  className?: string;
+}) {
+  const paragraphs = text.split(/\n\n+/).filter((p) => p.trim());
+  if (paragraphs.length <= 1) {
+    return (
+      <p className={className}>
+        <RichText text={text} />
+      </p>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {paragraphs.map((para, i) => (
+        <p key={i} className={className}>
+          <RichText text={para.trim()} />
+        </p>
+      ))}
+    </div>
+  );
+}
+
 /** Question on the left, interactive options on the right (used by candlestick lesson). */
 function QuestionLayout({
   badge,
@@ -106,7 +153,14 @@ function QuestionLayout({
         <div className="flex flex-col gap-5 md:sticky md:top-0">
           {badge}
           <LessonImageSlot image={image} />
-          <div className="text-[1.1rem] font-semibold leading-snug text-text-primary md:text-[1.2375rem]">{question}</div>
+          {typeof question === "string" ? (
+            <LessonPrompt
+              text={question}
+              className="text-[1.1rem] font-semibold leading-normal text-text-primary md:text-[1.2375rem]"
+            />
+          ) : (
+            question
+          )}
         </div>
         <div className="min-w-0 flex flex-col gap-3">{children}</div>
       </div>
@@ -256,6 +310,10 @@ export function LessonPlayer({
   const page = pages[pageIndex]!;
   const isQuestionPage =
     page.type === "visual_choice" ||
+    page.type === "fold_chart_choice" ||
+    page.type === "ui_choice" ||
+    page.type === "tap_choice" ||
+    page.type === "chart_compare" ||
     page.type === "multiple_choice" ||
     page.type === "true_false" ||
     page.type === "fill_blank" ||
@@ -540,14 +598,24 @@ export function LessonPlayer({
       if (!q) return true;
       switch (q.type) {
         case "visual_choice":
+        case "fold_chart_choice":
+        case "ui_choice":
         case "multiple_choice":
           return prMcOk;
+        case "tap_choice":
+        case "chart_compare":
+        case "chart_tap":
+          return prTapOk;
         case "true_false":
           return prTfOk;
         case "fill_blank":
           return prFillOk;
-        case "chart_tap":
-          return prTapOk;
+        case "time_bracket_drag":
+        case "candle_fuse":
+        case "fold_connect":
+        case "time_bracket_drag":
+        case "fold_ohlc_drag":
+        case "drag_order":
         case "drag_label":
           return prDragOk;
         default:
@@ -563,6 +631,8 @@ export function LessonPlayer({
         return true;
       case "visual":
         return !(page.visualId === "HammerCandle" && hammerPlaybackActive);
+      case "fold_chart_choice":
+      case "ui_choice":
       case "multiple_choice":
       case "visual_choice":
         return mcChecked;
@@ -570,8 +640,15 @@ export function LessonPlayer({
         return tfShow;
       case "fill_blank":
         return fillChecked;
+      case "candle_fuse":
+      case "fold_connect":
+      case "time_bracket_drag":
+      case "fold_ohlc_drag":
+      case "drag_order":
       case "drag_label":
         return dragChecked;
+      case "chart_compare":
+      case "tap_choice":
       case "chart_tap":
         return tapChecked;
       default:
@@ -608,8 +685,8 @@ export function LessonPlayer({
   };
 
   const bottomClass =
-    (page.type === "multiple_choice" || page.type === "visual_choice") && mcChecked
-      ? mcPick === (page as MultipleChoicePage | VisualChoicePage).correctIndex
+    (page.type === "multiple_choice" || page.type === "visual_choice" || page.type === "fold_chart_choice" || page.type === "ui_choice") && mcChecked
+      ? mcPick === (page as MultipleChoicePage | VisualChoicePage | FoldChartChoicePage | UiChoicePage).correctIndex
         ? "bg-[rgba(69,109,255,0.15)]"
         : "bg-amber-500/10"
       : page.type === "fill_blank" && fillChecked
@@ -620,7 +697,15 @@ export function LessonPlayer({
           ? dragCheckCorrect
             ? "bg-[rgba(69,109,255,0.15)]"
             : "bg-amber-500/10"
-          : page.type === "chart_tap" && tapChecked
+          : page.type === "chart_compare" && tapChecked
+            ? tapPick === (page as ChartComparePage).correctIndex
+              ? "bg-[rgba(69,109,255,0.15)]"
+              : "bg-amber-500/10"
+            : page.type === "tap_choice" && tapChecked
+            ? tapPick === (page as TapChoicePage).correctIndex
+              ? "bg-[rgba(69,109,255,0.15)]"
+              : "bg-amber-500/10"
+            : page.type === "chart_tap" && tapChecked
             ? tapPick === (page as ChartTapPage).correctCandleIndex
               ? "bg-[rgba(69,109,255,0.15)]"
               : "bg-amber-500/10"
@@ -749,7 +834,331 @@ export function LessonPlayer({
           <PageShell>
             {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
             <LessonImageSlot image={pp.image} />
-            <p className="text-xl font-semibold leading-snug text-text-primary">{pp.question}</p>
+            <LessonPrompt text={pp.question} className="text-xl font-semibold leading-snug text-text-primary" />
+            {grid}
+            {explanationBlock}
+          </PageShell>
+        );
+      }
+      case "chart_compare": {
+        const pp = p as ChartComparePage;
+        const grid = (
+          <ChartCompareQuestion
+            variants={pp.variants}
+            selectedIndex={tapPick}
+            checked={tapChecked}
+            correctIndex={pp.correctIndex}
+            onSelect={(i) => !tapChecked && setTapPick(i)}
+            disabled={tapChecked}
+          />
+        );
+        const explanationBlock = tapChecked ? (
+          <div className="rounded-2xl border border-border bg-surface2/90 p-4 text-sm leading-relaxed text-text-muted animate-slide-up-fade">
+            <RichText text={pp.explanation} />
+          </div>
+        ) : null;
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null} image={pp.image} question={pp.question} footer={explanationBlock}>
+              {grid}
+            </QuestionLayout>
+          );
+        }
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonPrompt text={pp.question} className="text-xl font-semibold leading-normal text-text-primary" />
+            {grid}
+            {explanationBlock}
+          </PageShell>
+        );
+      }
+      case "time_bracket_drag": {
+        const pp = p as TimeBracketDragPage;
+        const dragUi = (
+          <TimeBracketDragQuestion
+            key={pp.id}
+            correctCandleIndex={pp.correctCandleIndex}
+            explanation={pp.explanation}
+            onCheckResult={(ok) => {
+              setDragChecked(true);
+              setDragCheckCorrect(ok);
+              if (ok) {
+                sound.correct();
+                awardXp(30);
+              } else {
+                sound.wrong();
+                handleWrongAttemptCoach();
+              }
+            }}
+          />
+        );
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null} image={pp.image} question={pp.instruction}>
+              {dragUi}
+            </QuestionLayout>
+          );
+        }
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonPrompt text={pp.instruction} className="text-lg font-semibold text-text-primary" />
+            {dragUi}
+          </PageShell>
+        );
+      }
+      case "fold_connect": {
+        const pp = p as FoldConnectPage;
+        const dragUi = (
+          <FoldConnectQuestion
+            key={pp.id}
+            onCheckResult={(ok) => {
+              setDragChecked(true);
+              setDragCheckCorrect(ok);
+              if (ok) {
+                sound.correct();
+                awardXp(35);
+              } else {
+                sound.wrong();
+                handleWrongAttemptCoach();
+              }
+            }}
+            onTryAgain={() => {
+              setDragChecked(false);
+              setDragCheckCorrect(null);
+            }}
+          />
+        );
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null} image={pp.image} question={pp.instruction}>
+              {dragUi}
+              {dragChecked && pp.explanation ? (
+                <div className="rounded-2xl border border-border bg-surface2/90 p-4 text-sm text-text-muted">
+                  <RichText text={pp.explanation} />
+                </div>
+              ) : null}
+            </QuestionLayout>
+          );
+        }
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonPrompt text={pp.instruction} className="text-lg font-semibold text-text-primary" />
+            {dragUi}
+          </PageShell>
+        );
+      }
+      case "candle_fuse": {
+        const pp = p as CandleFusePage;
+        const fuseUi = (
+          <CandleFuseQuestion
+            key={pp.id}
+            correctResultIndex={pp.correctResultIndex}
+            onCheckResult={(ok) => {
+              setDragChecked(true);
+              setDragCheckCorrect(ok);
+              if (ok) {
+                sound.correct();
+                awardXp(35);
+              } else {
+                sound.wrong();
+                handleWrongAttemptCoach();
+              }
+            }}
+          />
+        );
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null} image={pp.image} question={pp.instruction}>
+              {fuseUi}
+              {dragChecked && pp.explanation ? (
+                <div className="rounded-2xl border border-border bg-surface2/90 p-4 text-sm text-text-muted">
+                  <RichText text={pp.explanation} />
+                </div>
+              ) : null}
+            </QuestionLayout>
+          );
+        }
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonPrompt text={pp.instruction} className="text-lg font-semibold text-text-primary" />
+            {fuseUi}
+          </PageShell>
+        );
+      }
+      case "tap_choice": {
+        const pp = p as TapChoicePage;
+        const tapUi = (
+          <ChartReadingTapQuestion
+            diagram={pp.diagram}
+            selectedIndex={tapPick}
+            checked={tapChecked}
+            correctIndex={pp.correctIndex}
+            onSelect={(i) => !tapChecked && setTapPick(i)}
+            disabled={tapChecked}
+          />
+        );
+        const explanationBlock = tapChecked ? (
+          <div className="rounded-2xl border border-border bg-surface2/90 p-4 text-sm leading-relaxed text-text-muted animate-slide-up-fade">
+            <RichText text={pp.explanation} />
+          </div>
+        ) : null;
+
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout
+              badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+              image={pp.image}
+              question={pp.question}
+              footer={explanationBlock}
+            >
+              {tapUi}
+            </QuestionLayout>
+          );
+        }
+
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonImageSlot image={pp.image} />
+            <LessonPrompt text={pp.question} className="text-xl font-semibold leading-snug text-text-primary" />
+            {tapUi}
+            {explanationBlock}
+          </PageShell>
+        );
+      }
+      case "ui_choice": {
+        const pp = p as UiChoicePage;
+        const grid = (
+          <ChartReadingChoiceGrid
+            options={pp.options}
+            columns={pp.columns}
+            selectedIndex={mcPick}
+            checked={mcChecked}
+            correctIndex={pp.correctIndex}
+            onSelect={(i) => {
+              if (!mcChecked) {
+                sound.tick();
+                setMcPick(i);
+              }
+            }}
+          />
+        );
+        const explanationBlock = mcChecked ? (
+          <div className="rounded-2xl border border-border bg-surface2/90 p-4 text-sm leading-relaxed text-text-muted animate-slide-up-fade">
+            <RichText text={pp.explanation} />
+          </div>
+        ) : null;
+
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout
+              badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+              image={pp.image}
+              question={pp.question}
+              footer={explanationBlock}
+            >
+              {grid}
+            </QuestionLayout>
+          );
+        }
+
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonImageSlot image={pp.image} />
+            <LessonPrompt text={pp.question} className="text-xl font-semibold leading-snug text-text-primary" />
+            {grid}
+            {explanationBlock}
+          </PageShell>
+        );
+      }
+      case "fold_chart_choice": {
+        const pp = p as FoldChartChoicePage;
+        const variant = pp.variant ?? "15m_fuse";
+        const isTextOptions = variant === "text_options";
+        const is4h = variant === "4h_fold";
+        const grid = isTextOptions ? (
+          <TextOptionChoiceGrid
+            selectedIndex={mcPick}
+            checked={mcChecked}
+            correctIndex={pp.correctIndex}
+            onSelect={(i) => {
+              if (!mcChecked) {
+                sound.tick();
+                setMcPick(i);
+              }
+            }}
+            disabled={mcChecked}
+          />
+        ) : is4h ? (
+          <FourHourFoldChoiceGrid
+            selectedIndex={mcPick}
+            checked={mcChecked}
+            correctIndex={pp.correctIndex}
+            onSelect={(i) => {
+              if (!mcChecked) {
+                sound.tick();
+                setMcPick(i);
+              }
+            }}
+            disabled={mcChecked}
+          />
+        ) : (
+          <FifteenMinChoiceGrid
+            selectedIndex={mcPick}
+            checked={mcChecked}
+            correctIndex={pp.correctIndex}
+            onSelect={(i) => {
+              if (!mcChecked) {
+                sound.tick();
+                setMcPick(i);
+              }
+            }}
+            disabled={mcChecked}
+          />
+        );
+        const explanationBlock = mcChecked ? (
+          <div className="rounded-2xl border border-border bg-surface2/90 p-4 text-sm leading-relaxed text-text-muted animate-slide-up-fade">
+            <RichText text={pp.explanation} />
+          </div>
+        ) : null;
+
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout
+              badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+              image={pp.image}
+              question={
+                <>
+                  <RichText text={pp.question} />
+                  <p className="mt-2 text-sm font-normal text-text-muted">
+                    {isTextOptions
+                      ? "Select the right answer:"
+                      : is4h
+                        ? "Pick the matching **4H** candle (A–D)."
+                        : "Select the right answer:"}
+                  </p>
+                </>
+              }
+              footer={explanationBlock}
+            >
+              {grid}
+            </QuestionLayout>
+          );
+        }
+
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonImageSlot image={pp.image} />
+            <LessonPrompt text={pp.question} className="text-xl font-semibold leading-normal text-text-primary" />
+            <p className="text-sm text-text-muted">
+              {is4h ? "Pick the matching 4H candle (A–D)." : "Select the right answer:"}
+            </p>
             {grid}
             {explanationBlock}
           </PageShell>
@@ -829,7 +1238,7 @@ export function LessonPlayer({
           <PageShell>
             {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
             <LessonImageSlot image={pp.image} />
-            <p className="text-xl font-semibold leading-snug text-text-primary">{pp.question}</p>
+            <LessonPrompt text={pp.question} className="text-xl font-semibold leading-snug text-text-primary" />
             {pp.showBearishCandle ? <BearishCandleSvg /> : null}
             {optionsGrid}
             {explanationBlock}
@@ -894,7 +1303,7 @@ export function LessonPlayer({
           <PageShell>
             {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
             <LessonImageSlot image={pp.image} />
-            <p className="text-xl font-semibold text-text-primary">{pp.statement}</p>
+            <LessonPrompt text={pp.statement} className="text-xl font-semibold text-text-primary" />
             {tfButtons}
             {explanationBlock}
           </PageShell>
@@ -1008,6 +1417,106 @@ export function LessonPlayer({
           </PageShell>
         );
       }
+      case "fold_ohlc_drag": {
+        const pp = p as FoldOhlcDragPage;
+        const dragUi = (
+          <FoldOhlcDragQuestion
+            key={pp.id}
+            onCheckResult={(ok) => {
+              setDragChecked(true);
+              setDragCheckCorrect(ok);
+              if (ok) {
+                sound.correct();
+                awardXp(35);
+              } else {
+                sound.wrong();
+                handleWrongAttemptCoach();
+              }
+            }}
+            onTryAgain={() => {
+              setDragChecked(false);
+              setDragCheckCorrect(null);
+            }}
+          />
+        );
+
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout
+              badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+              image={pp.image}
+              question={pp.instruction}
+            >
+              {dragUi}
+              {dragChecked && pp.explanation ? (
+                <div className="rounded-2xl border border-border bg-surface2/90 p-4 text-sm text-text-muted">
+                  <RichText text={pp.explanation} />
+                </div>
+              ) : null}
+            </QuestionLayout>
+          );
+        }
+
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonImageSlot image={pp.image} />
+            <LessonPrompt text={pp.instruction} className="text-lg font-semibold text-text-primary" />
+            {dragUi}
+          </PageShell>
+        );
+      }
+      case "drag_order": {
+        const pp = p as DragOrderPage;
+        const dragUi = (
+          <TimeframeOrderDrag
+            key={pp.id}
+            items={pp.items}
+            correctOrder={pp.correctOrder}
+            onCheckResult={(ok) => {
+              setDragChecked(true);
+              setDragCheckCorrect(ok);
+              if (ok) {
+                sound.correct();
+                awardXp(30);
+              } else {
+                sound.wrong();
+                handleWrongAttemptCoach();
+              }
+            }}
+            onTryAgain={() => {
+              setDragChecked(false);
+              setDragCheckCorrect(null);
+            }}
+          />
+        );
+
+        if (splitQuestionLayout) {
+          return (
+            <QuestionLayout
+              badge={pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+              image={pp.image}
+              question={pp.instruction}
+            >
+              {dragUi}
+              {dragChecked && pp.explanation ? (
+                <div className="rounded-2xl border border-border bg-surface2/90 p-4 text-sm text-text-muted">
+                  <RichText text={pp.explanation} />
+                </div>
+              ) : null}
+            </QuestionLayout>
+          );
+        }
+
+        return (
+          <PageShell>
+            {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
+            <LessonImageSlot image={pp.image} />
+            <LessonPrompt text={pp.instruction} className="text-lg font-semibold text-text-primary" />
+            {dragUi}
+          </PageShell>
+        );
+      }
       case "chart_tap": {
         const pp = p as ChartTapPage;
         const chart = (
@@ -1043,7 +1552,7 @@ export function LessonPlayer({
           <PageShell>
             {pp.challengeBadge ? <GamifiedBadge label={pp.challengeBadge} /> : null}
             <LessonImageSlot image={pp.image} />
-            <p className="text-xl font-semibold text-text-primary">{pp.question}</p>
+            <LessonPrompt text={pp.question} className="text-xl font-semibold text-text-primary" />
             {chart}
             {explanationBlock}
           </PageShell>
@@ -1144,7 +1653,441 @@ export function LessonPlayer({
         <PageShell>
           {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
           <LessonImageSlot image={q.image} />
-          <p className="text-lg font-semibold text-text-primary">{q.question}</p>
+          <LessonPrompt text={q.question} className="text-lg font-semibold text-text-primary" />
+          {grid}
+          {actions}
+        </PageShell>
+      );
+    }
+    if (q.type === "time_bracket_drag") {
+      const dragUi = (
+        <TimeBracketDragQuestion
+          correctCandleIndex={q.correctCandleIndex}
+          explanation={q.explanation}
+          onCheckResult={(ok) => {
+            setPrDragOk(true);
+            if (ok) {
+              sound.correct();
+              setPracticeCorrect((c) => c + 1);
+              awardXp(15);
+            } else {
+              sound.wrong();
+              handleWrongAttemptCoach();
+            }
+          }}
+        />
+      );
+      const actions = prDragOk ? (
+        <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+          Next →
+        </button>
+      ) : null;
+      return (
+        <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} image={q.image} question={q.instruction}>
+          {dragUi}
+          {actions}
+        </QuestionLayout>
+      );
+    }
+    if (q.type === "chart_compare") {
+      const grid = (
+        <ChartCompareQuestion
+          variants={q.variants}
+          selectedIndex={prTap}
+          checked={prTapOk}
+          correctIndex={q.correctIndex}
+          onSelect={(i) => !prTapOk && setPrTap(i)}
+          disabled={prTapOk}
+        />
+      );
+      const actions = !prTapOk ? (
+        <button
+          type="button"
+          disabled={prTap == null}
+          className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white disabled:opacity-40"
+          onClick={() => {
+            setPrTapOk(true);
+            if (prTap === q.correctIndex) {
+              sound.correct();
+              setPracticeCorrect((c) => c + 1);
+              awardXp(12);
+            } else {
+              sound.wrong();
+              handleWrongAttemptCoach();
+            }
+          }}
+        >
+          Check
+        </button>
+      ) : (
+        <>
+          <p className="text-sm leading-relaxed text-text-muted">
+            <RichText text={q.explanation} />
+          </p>
+          <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+            Next →
+          </button>
+        </>
+      );
+      return (
+        <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} image={q.image} question={q.question}>
+          {grid}
+          {actions}
+        </QuestionLayout>
+      );
+    }
+    if (q.type === "candle_fuse") {
+      const fuseUi = (
+        <CandleFuseQuestion
+          correctResultIndex={q.correctResultIndex}
+          onCheckResult={(ok) => {
+            setPrDragOk(true);
+            if (ok) {
+              sound.correct();
+              setPracticeCorrect((c) => c + 1);
+              awardXp(15);
+            } else {
+              sound.wrong();
+              handleWrongAttemptCoach();
+            }
+          }}
+        />
+      );
+      const actions = prDragOk ? (
+        <>
+          <p className="text-sm leading-relaxed text-text-muted">
+            <RichText text={q.explanation} />
+          </p>
+          <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+            Next →
+          </button>
+        </>
+      ) : null;
+      return (
+        <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} question={q.instruction}>
+          {fuseUi}
+          {actions}
+        </QuestionLayout>
+      );
+    }
+    if (q.type === "fold_connect") {
+      const dragUi = (
+        <FoldConnectQuestion
+          onCheckResult={(ok) => {
+            setPrDragOk(true);
+            if (ok) {
+              sound.correct();
+              setPracticeCorrect((c) => c + 1);
+              awardXp(15);
+            } else {
+              sound.wrong();
+              handleWrongAttemptCoach();
+            }
+          }}
+        />
+      );
+      const actions = prDragOk ? (
+        <>
+          <p className="text-sm leading-relaxed text-text-muted">
+            <RichText text={q.explanation} />
+          </p>
+          <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+            Next →
+          </button>
+        </>
+      ) : null;
+      return (
+        <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} question={q.instruction}>
+          {dragUi}
+          {actions}
+        </QuestionLayout>
+      );
+    }
+    if (q.type === "tap_choice") {
+      const tapUi = (
+        <ChartReadingTapQuestion
+          diagram={q.diagram}
+          selectedIndex={prTap}
+          checked={prTapOk}
+          correctIndex={q.correctIndex}
+          onSelect={(i) => !prTapOk && setPrTap(i)}
+          disabled={prTapOk}
+        />
+      );
+      const actions = !prTapOk ? (
+        <button
+          type="button"
+          disabled={prTap == null}
+          className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white disabled:opacity-40"
+          onClick={() => {
+            setPrTapOk(true);
+            if (prTap === q.correctIndex) {
+              sound.correct();
+              setPracticeCorrect((c) => c + 1);
+              awardXp(12);
+            } else {
+              sound.wrong();
+              handleWrongAttemptCoach();
+            }
+          }}
+        >
+          Check
+        </button>
+      ) : (
+        <>
+          <p className="text-sm leading-relaxed text-text-muted">
+            <RichText text={q.explanation} />
+          </p>
+          <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+            Next →
+          </button>
+        </>
+      );
+
+      if (splitQuestionLayout) {
+        return (
+          <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} image={q.image} question={q.question}>
+            {tapUi}
+            {actions}
+          </QuestionLayout>
+        );
+      }
+
+      return (
+        <PageShell>
+          {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
+          <LessonImageSlot image={q.image} />
+          <LessonPrompt text={q.question} className="text-lg font-semibold text-text-primary" />
+          {tapUi}
+          {actions}
+        </PageShell>
+      );
+    }
+    if (q.type === "fold_ohlc_drag") {
+      const dragUi = (
+        <FoldOhlcDragQuestion
+          onCheckResult={(ok) => {
+            setPrDragOk(true);
+            if (ok) {
+              sound.correct();
+              setPracticeCorrect((c) => c + 1);
+              awardXp(15);
+            } else {
+              sound.wrong();
+              handleWrongAttemptCoach();
+            }
+          }}
+        />
+      );
+      const actions = prDragOk ? (
+        <>
+          <p className="text-sm leading-relaxed text-text-muted">
+            <RichText text={q.explanation} />
+          </p>
+          <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+            Next →
+          </button>
+        </>
+      ) : null;
+
+      if (splitQuestionLayout) {
+        return (
+          <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} image={q.image} question={q.instruction}>
+            {dragUi}
+            {actions}
+          </QuestionLayout>
+        );
+      }
+
+      return (
+        <PageShell>
+          {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
+          <LessonPrompt text={q.instruction} className="text-lg font-semibold text-text-primary" />
+          {dragUi}
+          {actions}
+        </PageShell>
+      );
+    }
+    if (q.type === "drag_order") {
+      const dragUi = (
+        <TimeframeOrderDrag
+          items={q.items}
+          correctOrder={q.correctOrder}
+          onCheckResult={(ok) => {
+            setPrDragOk(true);
+            if (ok) {
+              sound.correct();
+              setPracticeCorrect((c) => c + 1);
+              awardXp(15);
+            } else {
+              sound.wrong();
+              handleWrongAttemptCoach();
+            }
+          }}
+        />
+      );
+      const actions = prDragOk ? (
+        <>
+          <p className="text-sm leading-relaxed text-text-muted">
+            <RichText text={q.explanation} />
+          </p>
+          <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+            Next →
+          </button>
+        </>
+      ) : null;
+
+      if (splitQuestionLayout) {
+        return (
+          <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} image={q.image} question={q.instruction}>
+            {dragUi}
+            {actions}
+          </QuestionLayout>
+        );
+      }
+
+      return (
+        <PageShell>
+          {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
+          <LessonPrompt text={q.instruction} className="text-lg font-semibold text-text-primary" />
+          {dragUi}
+          {actions}
+        </PageShell>
+      );
+    }
+    if (q.type === "ui_choice") {
+      const grid = (
+        <ChartReadingChoiceGrid
+          options={q.options}
+          columns={q.columns}
+          selectedIndex={prMc}
+          checked={prMcOk}
+          correctIndex={q.correctIndex}
+          onSelect={(i) => !prMcOk && setPrMc(i)}
+        />
+      );
+      const actions = !prMcOk ? (
+        <button
+          type="button"
+          disabled={prMc == null}
+          className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white disabled:opacity-40"
+          onClick={() => {
+            setPrMcOk(true);
+            if (prMc === q.correctIndex) {
+              sound.correct();
+              setPracticeCorrect((c) => c + 1);
+              awardXp(12);
+            } else {
+              sound.wrong();
+              handleWrongAttemptCoach();
+            }
+          }}
+        >
+          Check
+        </button>
+      ) : (
+        <>
+          <p className="text-sm leading-relaxed text-text-muted">
+            <RichText text={q.explanation} />
+          </p>
+          <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+            Next →
+          </button>
+        </>
+      );
+
+      if (splitQuestionLayout) {
+        return (
+          <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} image={q.image} question={q.question}>
+            {grid}
+            {actions}
+          </QuestionLayout>
+        );
+      }
+
+      return (
+        <PageShell>
+          {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
+          <LessonImageSlot image={q.image} />
+          <LessonPrompt text={q.question} className="text-lg font-semibold text-text-primary" />
+          {grid}
+          {actions}
+        </PageShell>
+      );
+    }
+    if (q.type === "fold_chart_choice") {
+      const variant = q.variant ?? "15m_fuse";
+      const isTextOptions = variant === "text_options";
+      const is4h = variant === "4h_fold";
+      const grid = isTextOptions ? (
+        <TextOptionChoiceGrid
+          selectedIndex={prMc}
+          checked={prMcOk}
+          correctIndex={q.correctIndex}
+          onSelect={(i) => !prMcOk && setPrMc(i)}
+          disabled={prMcOk}
+        />
+      ) : is4h ? (
+        <FourHourFoldChoiceGrid
+          selectedIndex={prMc}
+          checked={prMcOk}
+          correctIndex={q.correctIndex}
+          onSelect={(i) => !prMcOk && setPrMc(i)}
+          disabled={prMcOk}
+        />
+      ) : (
+        <FifteenMinChoiceGrid
+          selectedIndex={prMc}
+          checked={prMcOk}
+          correctIndex={q.correctIndex}
+          onSelect={(i) => !prMcOk && setPrMc(i)}
+          disabled={prMcOk}
+        />
+      );
+      const actions = !prMcOk ? (
+        <button
+          type="button"
+          disabled={prMc == null}
+          className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white disabled:opacity-40"
+          onClick={() => {
+            setPrMcOk(true);
+            if (prMc === q.correctIndex) {
+              sound.correct();
+              setPracticeCorrect((c) => c + 1);
+              awardXp(12);
+            } else {
+              sound.wrong();
+              handleWrongAttemptCoach();
+            }
+          }}
+        >
+          Check
+        </button>
+      ) : (
+        <>
+          <p className="text-sm leading-relaxed text-text-muted">
+            <RichText text={q.explanation} />
+          </p>
+          <button type="button" className="h-12 w-full rounded-2xl bg-[#456DFF] font-semibold text-white" onClick={advancePractice}>
+            Next →
+          </button>
+        </>
+      );
+
+      if (splitQuestionLayout) {
+        return (
+          <QuestionLayout badge={q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null} image={q.image} question={q.question}>
+            {grid}
+            {actions}
+          </QuestionLayout>
+        );
+      }
+
+      return (
+        <PageShell>
+          {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
+          <LessonImageSlot image={q.image} />
+          <LessonPrompt text={q.question} className="text-lg font-semibold text-text-primary" />
           {grid}
           {actions}
         </PageShell>
@@ -1209,7 +2152,7 @@ export function LessonPlayer({
         <PageShell>
           {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
           <LessonImageSlot image={q.image} />
-          <p className="text-lg font-semibold">{q.question}</p>
+          <LessonPrompt text={q.question} className="text-lg font-semibold" />
           {optionsGrid}
           {actions}
         </PageShell>
@@ -1403,7 +2346,7 @@ export function LessonPlayer({
         <div>
           {q.challengeBadge ? <GamifiedBadge label={q.challengeBadge} /> : null}
           <LessonImageSlot image={q.image} />
-          <p className="text-lg font-semibold">{q.question}</p>
+          <LessonPrompt text={q.question} className="text-lg font-semibold" />
           {chart}
           {actions}
         </div>
@@ -1786,14 +2729,14 @@ export function LessonPlayer({
                   </button>
                 )
               ) : null}
-              {page.type === "multiple_choice" || page.type === "visual_choice" ? (
+              {page.type === "multiple_choice" || page.type === "visual_choice" || page.type === "fold_chart_choice" || page.type === "ui_choice" ? (
                 !mcChecked ? (
                   <button
                     type="button"
                     disabled={mcPick == null}
                     className="h-14 w-full rounded-2xl bg-[#456DFF] text-lg font-semibold text-white disabled:opacity-40"
                     onClick={() => {
-                      const pp = page as MultipleChoicePage | VisualChoicePage;
+                      const pp = page as MultipleChoicePage | VisualChoicePage | FoldChartChoicePage | UiChoicePage;
                       const ok = mcPick === pp.correctIndex;
                       setMcChecked(true);
                       if (ok) {
@@ -1809,7 +2752,7 @@ export function LessonPlayer({
                   >
                     Check Answer
                   </button>
-                ) : mcPick === (page as MultipleChoicePage | VisualChoicePage).correctIndex ? (
+                ) : mcPick === (page as MultipleChoicePage | VisualChoicePage | FoldChartChoicePage | UiChoicePage).correctIndex ? (
                   <button
                     type="button"
                     className="animate-continue-pulse h-14 w-full rounded-2xl bg-[#456DFF] text-lg font-semibold text-white"
@@ -1872,20 +2815,28 @@ export function LessonPlayer({
                   </div>
                 )
               ) : null}
-              {page.type === "drag_label" && dragChecked ? (
-                <button type="button" className="h-14 w-full rounded-2xl bg-[#456DFF] text-lg font-semibold text-white" onClick={goNextPage}>
-                  Continue →
-                </button>
+              {page.type === "drag_label" || page.type === "fold_ohlc_drag" || page.type === "drag_order" || page.type === "fold_connect" || page.type === "time_bracket_drag" || page.type === "candle_fuse" ? (
+                dragChecked ? (
+                  <button type="button" className="h-14 w-full rounded-2xl bg-[#456DFF] text-lg font-semibold text-white" onClick={goNextPage}>
+                    Continue →
+                  </button>
+                ) : null
               ) : null}
-              {page.type === "chart_tap" ? (
+              {page.type === "chart_tap" || page.type === "tap_choice" || page.type === "chart_compare" ? (
                 !tapChecked ? (
                   <button
                     type="button"
                     disabled={tapPick == null}
                     className="h-14 w-full rounded-2xl bg-[#456DFF] text-lg font-semibold text-white disabled:opacity-40"
                     onClick={() => {
+                      const correctIdx =
+                        page.type === "chart_tap"
+                          ? (page as ChartTapPage).correctCandleIndex
+                          : page.type === "chart_compare"
+                            ? (page as ChartComparePage).correctIndex
+                            : (page as TapChoicePage).correctIndex;
                       setTapChecked(true);
-                      if (tapPick === (page as ChartTapPage).correctCandleIndex) {
+                      if (tapPick === correctIdx) {
                         sound.correct();
                         awardXp(25);
                       } else {

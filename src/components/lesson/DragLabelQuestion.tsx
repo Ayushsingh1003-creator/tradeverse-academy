@@ -460,7 +460,9 @@ export function DragLabelQuestion({
   return (
     <div className={`flex w-full flex-col items-center ${compact ? "gap-5" : "max-w-xl gap-7"}`}>
       {!hideInstruction ? (
-        <p className="w-full text-center text-sm font-medium leading-snug text-text-primary">{instruction}</p>
+        <p className="w-full text-center text-sm font-medium leading-snug text-text-primary">
+          <RichText text={instruction} />
+        </p>
       ) : null}
 
       <div className="flex w-full min-h-[2rem] flex-col items-center justify-center gap-2">

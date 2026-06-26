@@ -24,6 +24,11 @@ import {
   OhlcPriceChart,
   ShadowLabels,
 } from "@/components/lesson/visuals/CandlestickBasicsVisuals";
+import {
+  CandleFoldExplainer,
+  ChartAxesExplainer,
+  TimeframeTable,
+} from "@/components/lesson/visuals/ChartReadingVisuals";
 import { ChargesBreakdown } from "@/components/lesson/visuals/ChargesBreakdown";
 import { DematAccountFlow } from "@/components/lesson/visuals/DematAccountFlow";
 import { DojiExplainer } from "@/components/lesson/visuals/DojiExplainer";
@@ -77,6 +82,12 @@ export function LessonVisual({ visualId, onHammerPlaybackActiveChange }: LessonV
       return <CandleForms />;
     case "OhlcPriceChart":
       return <OhlcPriceChart />;
+    case "ChartAxesExplainer":
+      return <ChartAxesExplainer />;
+    case "TimeframeTable":
+      return <TimeframeTable />;
+    case "CandleFoldExplainer":
+      return <CandleFoldExplainer />;
     case "SupportResistanceMap":
       return <SupportResistanceMap />;
     case "TrendLines":
