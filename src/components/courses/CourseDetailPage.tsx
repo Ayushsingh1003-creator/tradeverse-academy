@@ -109,18 +109,10 @@ export function CourseDetailPage({ course, allLessons }: Props) {
   );
 }
 
-/** A lesson is unlocked if it's first in the course, or the previous lesson is completed. */
+/** All lessons are unlocked regardless of completion order or premium status. */
 function computeUnlockedSlugs(course: Course, completed: string[]): Set<string> {
-  const unlocked = new Set<string>();
-  for (let i = 0; i < course.lessonSlugs.length; i++) {
-    const slug = course.lessonSlugs[i]!;
-    const prev = i > 0 ? course.lessonSlugs[i - 1]! : null;
-    if (i === 0 || (prev && completed.includes(prev))) {
-      unlocked.add(slug);
-    }
-    if (completed.includes(slug)) unlocked.add(slug);
-  }
-  return unlocked;
+  void completed;
+  return new Set(course.lessonSlugs);
 }
 
 function LessonNode({

@@ -40,7 +40,6 @@ import {
 } from "@/lib/libraryLearnResume";
 import { postLibraryLearnProgress } from "@/lib/libraryProgressClient";
 import { readLocalLibraryProgress } from "@/lib/libraryProgressLocal";
-import { useSubscription } from "@/lib/hooks/useSubscription";
 import { suggestedChipsForPage } from "@/lib/lessonAiResponses";
 import { useUserStore } from "@/lib/store";
 import type {
@@ -245,7 +244,6 @@ export function LessonPlayer({
   const router = useRouter();
   const { push } = useToast();
   const { trigger } = useXPFloat();
-  const { isPremium } = useSubscription();
   const completeLesson = useUserStore((s) => s.completeLesson);
   const unlockAchievement = useUserStore((s) => s.unlockAchievement);
   const lessonsCompleted = useUserStore((s) => s.lessonsCompleted);
@@ -289,7 +287,6 @@ export function LessonPlayer({
   const [dragCheckCorrect, setDragCheckCorrect] = useState<boolean | null>(null);
   const [tapPick, setTapPick] = useState<number | null>(null);
   const [tapChecked, setTapChecked] = useState(false);
-  const [blockedPremium, setBlockedPremium] = useState(false);
 
   const [prMc, setPrMc] = useState<number | null>(null);
   const [prMcOk, setPrMcOk] = useState(false);
@@ -352,8 +349,6 @@ export function LessonPlayer({
   const showPretestOverlay = phase === "lesson" && pageIndex === 0 && firstIsPretest;
   const showMainContent = phase === "lesson" && (pageIndex > 0 || !firstIsPretest);
   const hideLessonFooter = pageIndex === 0 && firstIsPretest;
-
-  const isPremiumLocked = !lesson.isFree && !isPremium && blockedPremium;
 
   useEffect(() => {
     aiHistoryRef.current = aiHistory;
@@ -658,10 +653,6 @@ export function LessonPlayer({
 
   const goNextPage = () => {
     if (!isCurrentStepComplete()) return;
-    if (!lesson.isFree && !isPremium && pageIndex >= 1) {
-      setBlockedPremium(true);
-      return;
-    }
     if (pageIndex >= pages.length - 1) {
       persistLessonIfNeeded();
       setSplashFromResume(false);
@@ -2594,17 +2585,6 @@ export function LessonPlayer({
   return (
     <div className="fixed inset-0 z-[120] flex flex-col bg-[#141414] text-text-primary">
       <Confetti active={lessonConfetti} count={28} />
-      {isPremiumLocked ? (
-        <div className="absolute inset-0 z-[300] flex items-center justify-center bg-slate-950/90 p-6">
-          <div className="max-w-md rounded-2xl border border-accent/50 bg-surface p-6 text-center">
-            <p className="text-accent">🔒 Premium lesson</p>
-            <h3 className="mt-3 text-2xl font-bold">Unlock on Premium</h3>
-            <Link href="/settings" className="mt-6 inline-block rounded-2xl bg-[#456DFF] px-6 py-3 font-semibold text-white">
-              Upgrade in settings
-            </Link>
-          </div>
-        </div>
-      ) : null}
 
       {showPretestOverlay && pre0 ? (
         <div className="absolute inset-0 z-[160] flex flex-col items-center justify-center bg-slate-950/95 px-6">
@@ -2727,13 +2707,7 @@ export function LessonPlayer({
                 <button
                   type="button"
                   className="h-14 w-full rounded-2xl bg-[#456DFF] text-lg font-semibold text-white"
-                  onClick={() => {
-                    if (!lesson.isFree && !isPremium && pageIndex >= 1) {
-                      setBlockedPremium(true);
-                      return;
-                    }
-                    goNextPage();
-                  }}
+                  onClick={goNextPage}
                 >
                   {page.type === "intro" ? (page.startLabel ?? "Start") : "Continue →"}
                 </button>
@@ -2743,13 +2717,7 @@ export function LessonPlayer({
                   <button
                     type="button"
                     className="h-14 w-full rounded-2xl bg-[#456DFF] text-lg font-semibold text-white"
-                    onClick={() => {
-                      if (!lesson.isFree && !isPremium && pageIndex >= 1) {
-                        setBlockedPremium(true);
-                        return;
-                      }
-                      goNextPage();
-                    }}
+                    onClick={goNextPage}
                   >
                     Continue →
                   </button>
