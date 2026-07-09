@@ -63,6 +63,11 @@ export const COURSES: Course[] = [
       "bid-ask-spread-cost",
       "financial-markets-101-review",
     ],
+    levels: [
+      { id: "fm1-l1", number: 1, title: "Market Basics", lessonSlugs: ["what-is-the-market", "market-participants", "indian-markets-101"] },
+      { id: "fm1-l2", number: 2, title: "How Markets Run", lessonSlugs: ["market-hours-india", "asset-classes-india", "how-prices-form"] },
+      { id: "fm1-l3", number: 3, title: "Pricing & Review", lessonSlugs: ["bid-ask-spread-cost", "financial-markets-101-review"] },
+    ],
   },
   {
     id: "fm2",
@@ -84,6 +89,11 @@ export const COURSES: Course[] = [
       "execution-and-slippage",
       "first-trade-walkthrough",
       "how-to-trade-review",
+    ],
+    levels: [
+      { id: "fm2-l1", number: 1, title: "Getting Set Up", lessonSlugs: ["demat-and-trading-account", "picking-a-broker", "order-types-explained"] },
+      { id: "fm2-l2", number: 2, title: "Placing Trades", lessonSlugs: ["anatomy-of-trade", "brokerage-and-taxes-india", "execution-and-slippage"] },
+      { id: "fm2-l3", number: 3, title: "Live Practice", lessonSlugs: ["first-trade-walkthrough", "how-to-trade-review"] },
     ],
   },
   {
@@ -107,6 +117,11 @@ export const COURSES: Course[] = [
       "beginner-guardrails",
       "risk-mindset-review",
     ],
+    levels: [
+      { id: "fm3-l1", number: 1, title: "Why Traders Lose", lessonSlugs: ["why-traders-lose", "position-sizing-rule", "stop-loss-discipline"] },
+      { id: "fm3-l2", number: 2, title: "Managing Risk", lessonSlugs: ["risk-reward-ratio", "journaling-your-trades", "emotional-traps"] },
+      { id: "fm3-l3", number: 3, title: "Staying Disciplined", lessonSlugs: ["beginner-guardrails", "risk-mindset-review"] },
+    ],
   },
   {
     id: "c1",
@@ -126,6 +141,11 @@ export const COURSES: Course[] = [
       "trend-lines",
       "support-resistance",
     ],
+    levels: [
+      { id: "c1-l1", number: 1, title: "Reading Candles", lessonSlugs: ["what-is-a-candlestick", "how-to-read-a-chart"] },
+      { id: "c1-l2", number: 2, title: "Chart Patterns", lessonSlugs: ["meaning-of-patterns"] },
+      { id: "c1-l3", number: 3, title: "Price Structure", lessonSlugs: ["trend-lines", "support-resistance"] },
+    ],
   },
   {
     id: "c2",
@@ -138,5 +158,6 @@ export const COURSES: Course[] = [
     illustrationEmoji: "📊",
     totalExercises: 120,
     lessonSlugs: ["rsi-basics", "moving-averages"],
+    levels: [{ id: "c2-l1", number: 1, title: "Core Indicators", lessonSlugs: ["rsi-basics", "moving-averages"] }],
   },
 ];

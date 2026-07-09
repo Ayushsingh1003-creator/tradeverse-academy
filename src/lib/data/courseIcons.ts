@@ -35,4 +35,8 @@ export const LESSON_ICON_BY_SLUG: Record<string, string> = {
   "meaning-of-patterns": "🔨",
   "trend-lines": "📈",
   "support-resistance": "🎯",
+
+  // Indicator Starter Kit
+  "rsi-basics": "📉",
+  "moving-averages": "〰️",
 };
