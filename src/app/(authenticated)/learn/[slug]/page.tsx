@@ -3,9 +3,33 @@ import { db } from "@/lib/db";
 import { getLessonBySlug } from "@/lib/data/lessonLookup";
 import { fetchLessonImageConfigMap } from "@/lib/lessonImageOverrides.server";
 import { PageLoader } from "@/components/ui/Loader";
+import { ANATOMY_LESSON_SLUG } from "@/components/lesson/anatomy-of-a-candle/constants";
+import { INTRO_LESSON_SLUG } from "@/components/lesson/candlestick-intro-essentials/constants";
+import { PRICE_CHARTS_LESSON_SLUG } from "@/components/lesson/understanding-price-charts/constants";
+import { MEANING_LESSON_SLUG } from "@/components/lesson/what-candles-tell-you/constants";
 
 const LessonPlayer = dynamic(
   () => import("@/components/lesson/LessonPlayer").then((m) => m.LessonPlayer),
+  { loading: () => <PageLoader className="min-h-screen" label="Loading lesson…" /> },
+);
+
+const AnatomyOfACandleLesson = dynamic(
+  () => import("@/components/lesson/anatomy-of-a-candle").then((m) => m.AnatomyOfACandleLesson),
+  { loading: () => <PageLoader className="min-h-screen" label="Loading lesson…" /> },
+);
+
+const IntroductionToCandlestickEssentialsLesson = dynamic(
+  () => import("@/components/lesson/candlestick-intro-essentials").then((m) => m.IntroductionToCandlestickEssentialsLesson),
+  { loading: () => <PageLoader className="min-h-screen" label="Loading lesson…" /> },
+);
+
+const UnderstandingPriceChartsLesson = dynamic(
+  () => import("@/components/lesson/understanding-price-charts").then((m) => m.UnderstandingPriceChartsLesson),
+  { loading: () => <PageLoader className="min-h-screen" label="Loading lesson…" /> },
+);
+
+const WhatCandlesTellYouLesson = dynamic(
+  () => import("@/components/lesson/what-candles-tell-you").then((m) => m.WhatCandlesTellYouLesson),
   { loading: () => <PageLoader className="min-h-screen" label="Loading lesson…" /> },
 );
 
@@ -15,6 +39,19 @@ type PageProps = {
 };
 
 export default async function LearnPage({ params, searchParams }: PageProps) {
+  if (params.slug === ANATOMY_LESSON_SLUG) {
+    return <AnatomyOfACandleLesson />;
+  }
+  if (params.slug === INTRO_LESSON_SLUG) {
+    return <IntroductionToCandlestickEssentialsLesson />;
+  }
+  if (params.slug === PRICE_CHARTS_LESSON_SLUG) {
+    return <UnderstandingPriceChartsLesson />;
+  }
+  if (params.slug === MEANING_LESSON_SLUG) {
+    return <WhatCandlesTellYouLesson />;
+  }
+
   const baseLesson = getLessonBySlug(params.slug);
   if (!baseLesson) return <main className="mx-auto max-w-3xl p-8">Lesson not found.</main>;
 

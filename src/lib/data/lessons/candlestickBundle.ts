@@ -126,7 +126,10 @@ export const CANDLESTICK_LESSONS: Lesson[] = [
     slug: "candlestick-intro",
     title: "Introduction to Candlestick Essentials",
     courseId: "c1",
-    xpReward: 40,
+    // Rendered by the standalone IntroductionToCandlestickEssentialsLesson
+    // component (see src/components/lesson/candlestick-intro-essentials), not
+    // LessonPlayer — keep this in sync with that component's INTRO_LESSON_XP.
+    xpReward: 435,
     isFree: true,
     pages: introPages,
     practice: stubPractice("intro"),
@@ -136,7 +139,10 @@ export const CANDLESTICK_LESSONS: Lesson[] = [
     slug: "how-to-read-a-chart",
     title: "Understanding Price Charts",
     courseId: "c1",
-    xpReward: 70,
+    // Rendered by the standalone UnderstandingPriceChartsLesson component (see
+    // src/components/lesson/understanding-price-charts), not LessonPlayer —
+    // keep this in sync with that component's PRICE_CHARTS_LESSON_XP.
+    xpReward: 405,
     isFree: true,
     pages: howToReadAChartPages,
     practice: howToReadAChartPractice,
@@ -146,7 +152,10 @@ export const CANDLESTICK_LESSONS: Lesson[] = [
     slug: "what-is-a-candlestick",
     title: "Anatomy of a Candlestick",
     courseId: "c1",
-    xpReward: 60,
+    // Rendered by the standalone AnatomyOfACandleLesson component (see
+    // src/components/lesson/anatomy-of-a-candle), not LessonPlayer — keep this
+    // in sync with that component's ANATOMY_LESSON_XP constant.
+    xpReward: 120,
     isFree: true,
     pages: whatIsCandlestickPages,
     practice: whatIsCandlestickPractice,
@@ -156,7 +165,10 @@ export const CANDLESTICK_LESSONS: Lesson[] = [
     slug: "meaning-of-patterns",
     title: "What Candles Tell You",
     courseId: "c1",
-    xpReward: 80,
+    // Rendered by the standalone WhatCandlesTellYouLesson component (see
+    // src/components/lesson/what-candles-tell-you), not LessonPlayer — keep
+    // this in sync with that component's MEANING_LESSON_XP.
+    xpReward: 400,
     isFree: true,
     pages: meaningOfPatternsPages,
     practice: meaningOfPatternsPractice,
