@@ -50,11 +50,16 @@ type IconKey =
 /** Line-art glyph per lesson slug — every course renders bespoke SVGs, never emoji. */
 const SVG_ICON_BY_SLUG: Record<string, IconKey> = {
   // Candlestick Essentials
+  "candlestick-intro": "candle",
   "what-is-a-candlestick": "candle",
   "how-to-read-a-chart": "bars",
   "meaning-of-patterns": "hammer",
-  "trend-lines": "trend",
+  "candle-psychology": "brain",
+  "timeframes-explained": "clock",
+  "understanding-trends": "trend",
+  "swing-structure-bos": "arrows",
   "support-resistance": "sr",
+  "trend-lines": "trend",
 
   // Financial Markets 101
   "what-is-the-market": "building",
