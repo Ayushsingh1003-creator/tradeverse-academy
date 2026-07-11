@@ -7,6 +7,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Confetti } from "@/components/ui/Confetti";
 import { useUserStore } from "@/lib/store";
 import { sound } from "@/lib/sounds";
+import { useScrollCtaIntoView } from "@/lib/hooks/useScrollCtaIntoView";
 import { geo, shuffle, seriesX, lineChartGeo, type CandleGeo } from "./geometry";
 import { PRICE_CHARTS_LESSON_SLUG, PRICE_CHARTS_LESSON_XP } from "./constants";
 import {
@@ -186,6 +187,7 @@ export function UnderstandingPriceChartsLesson() {
   const [burst, setBurst] = useState<{ id: number; count: number }>({ id: 0, count: 0 });
   const floaterId = useRef(0);
   const matchOrderRef = useRef<MatchId[] | null>(null);
+  const ctaRef = useRef<HTMLButtonElement>(null);
 
   const step = state.step;
   const meta = SECTION_META[step]!;
@@ -232,6 +234,11 @@ export function UnderstandingPriceChartsLesson() {
       return;
     }
     setState((s) => ({ ...s, step: Math.max(0, s.step - 1) }));
+  }
+
+  function exitLesson() {
+    sound.tick();
+    router.push(BACK_HREF);
   }
 
   function goNext() {
@@ -459,6 +466,7 @@ export function UnderstandingPriceChartsLesson() {
   const spRound = SP_ROUNDS[Math.min(state.sp.round, SP_ROUNDS.length - 1)]!;
 
   const ctaDisabled = !canContinue();
+  useScrollCtaIntoView(ctaRef, ctaDisabled);
   const ctaLabel = step === 0 ? "Start lesson" : step === TOTAL_STEPS ? "Restart lesson" : step === 12 ? "Finish" : "Continue";
   const progress = Math.round((step / TOTAL_STEPS) * 100);
 
@@ -528,6 +536,14 @@ export function UnderstandingPriceChartsLesson() {
           </svg>
           <span className="text-sm font-extrabold tabular-nums text-gold">{state.xp}</span>
         </div>
+        <button
+          type="button"
+          onClick={exitLesson}
+          aria-label="Exit lesson"
+          className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] border border-border bg-brill-700 text-white transition-colors hover:border-wrong/40 hover:bg-wrong-bg"
+        >
+          <XIcon size={18} />
+        </button>
       </header>
 
       {/* STAGE */}
@@ -1211,16 +1227,28 @@ export function UnderstandingPriceChartsLesson() {
         <div className="text-[13px] font-semibold text-text-muted">
           {step === TOTAL_STEPS ? "Lesson complete" : `Section ${step + 1} of ${TOTAL_STEPS + 1}`}
         </div>
-        <button
-          type="button"
-          onClick={goNext}
-          disabled={ctaDisabled}
-          className={`min-w-[150px] rounded-full px-7 py-3 text-[15px] font-extrabold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
-            step === TOTAL_STEPS ? "bg-gradient-to-r from-gold to-gold-dark shadow-gold-glow" : "bg-blue hover:bg-blue-dark"
-          }`}
-        >
-          {ctaLabel}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            ref={ctaRef}
+            type="button"
+            onClick={goNext}
+            disabled={ctaDisabled}
+            className={`min-w-[150px] rounded-full px-7 py-3 text-[15px] font-extrabold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
+              step === TOTAL_STEPS ? "bg-gradient-to-r from-gold to-gold-dark shadow-gold-glow" : "bg-blue hover:bg-blue-dark"
+            }`}
+          >
+            {ctaLabel}
+          </button>
+          {step === TOTAL_STEPS && (
+            <button
+              type="button"
+              onClick={exitLesson}
+              className="rounded-full border border-border-strong bg-brill-700 px-6 py-3 text-[15px] font-bold text-white transition-colors hover:bg-brill-600"
+            >
+              Back to course
+            </button>
+          )}
+        </div>
       </footer>
     </div>
   );
