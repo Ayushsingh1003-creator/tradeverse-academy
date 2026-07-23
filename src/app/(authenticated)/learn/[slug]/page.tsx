@@ -7,6 +7,7 @@ import { ANATOMY_LESSON_SLUG } from "@/components/lesson/anatomy-of-a-candle/con
 import { INTRO_LESSON_SLUG } from "@/components/lesson/candlestick-intro-essentials/constants";
 import { PRICE_CHARTS_LESSON_SLUG } from "@/components/lesson/understanding-price-charts/constants";
 import { MEANING_LESSON_SLUG } from "@/components/lesson/what-candles-tell-you/constants";
+import { SUPPORT_RESISTANCE_LESSON_SLUG } from "@/components/lesson/support-resistance/constants";
 
 const LessonPlayer = dynamic(
   () => import("@/components/lesson/LessonPlayer").then((m) => m.LessonPlayer),
@@ -33,6 +34,11 @@ const WhatCandlesTellYouLesson = dynamic(
   { loading: () => <PageLoader className="min-h-screen" label="Loading lesson…" /> },
 );
 
+const SupportResistanceLesson = dynamic(
+  () => import("@/components/lesson/support-resistance").then((m) => m.SupportResistanceLesson),
+  { loading: () => <PageLoader className="min-h-screen" label="Loading lesson…" /> },
+);
+
 type PageProps = {
   params: { slug: string };
   searchParams: { library?: string };
@@ -50,6 +56,9 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   }
   if (params.slug === MEANING_LESSON_SLUG) {
     return <WhatCandlesTellYouLesson />;
+  }
+  if (params.slug === SUPPORT_RESISTANCE_LESSON_SLUG) {
+    return <SupportResistanceLesson />;
   }
 
   const baseLesson = getLessonBySlug(params.slug);

@@ -218,7 +218,10 @@ export const CANDLESTICK_LESSONS: Lesson[] = [
     slug: "support-resistance",
     title: "Support & Resistance",
     courseId: "c1",
-    xpReward: 80,
+    // Rendered by the standalone SupportResistanceLesson component (see
+    // src/components/lesson/support-resistance), not LessonPlayer — keep this
+    // in sync with that component's SUPPORT_RESISTANCE_LESSON_XP.
+    xpReward: 330,
     isFree: false,
     pages: supportResistancePages,
     practice: supportResistancePractice,
