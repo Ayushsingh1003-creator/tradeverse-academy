@@ -1,6 +1,7 @@
 import {
   boolean,
   integer,
+  jsonb,
   pgTable,
   primaryKey,
   real,
@@ -88,6 +89,10 @@ export const courses = pgTable("Course", {
   isFree: boolean("isFree").notNull().default(false),
   thumbnail: text("thumbnail"),
   xpReward: integer("xpReward").notNull().default(100),
+  // Keyed by lesson slug: { [lessonSlug]: { scenes: InteractiveScene[] } }. Nullable — only
+  // lessons that have been converted to the rich interactive scene player populate this; every
+  // other lesson keeps rendering through the plain paginated Lesson.content flow.
+  interactiveContent: jsonb("interactiveContent"),
 });
 
 export const lessons = pgTable("Lesson", {
