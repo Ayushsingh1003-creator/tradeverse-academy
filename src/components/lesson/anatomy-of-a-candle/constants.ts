@@ -6,4 +6,6 @@
  * from server code under Turbopack, so this lives in its own plain module.
  */
 export const ANATOMY_LESSON_SLUG = "what-is-a-candlestick";
-export const ANATOMY_LESSON_XP = 120;
+// 10 interactive scenes × 30 XP first-try award (see AnatomyOfACandleLesson's
+// checkAnswer()) = 300. Keep in sync if the scoring model changes.
+export const ANATOMY_LESSON_XP = 300;

@@ -156,7 +156,7 @@ export const CANDLESTICK_LESSONS: Lesson[] = [
     // Rendered by the standalone AnatomyOfACandleLesson component (see
     // src/components/lesson/anatomy-of-a-candle), not LessonPlayer — keep this
     // in sync with that component's ANATOMY_LESSON_XP constant.
-    xpReward: 120,
+    xpReward: 300,
     isFree: true,
     pages: whatIsCandlestickPages,
     practice: whatIsCandlestickPractice,

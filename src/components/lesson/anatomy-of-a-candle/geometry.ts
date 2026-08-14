@@ -1,71 +1,64 @@
-import { candleBodyColor } from "@/lib/candleColors";
-
 /**
- * Percent-based candle geometry (0-100 scale for o/h/l/c, matching slider inputs)
- * mapped to pixel coordinates inside an SVG viewBox. Mirrors the Claude Design
- * prototype's `geo()` helper so every section can share one mental model.
+ * Absolute-price, single-candle chart scale — mirrors the design prototype's
+ * `sScale()`. Every scene in this lesson shows one (or two, side-by-side)
+ * fixed candles rather than a scrolling multi-bar series, so unlike the
+ * trend-lines/support-resistance lessons' `barChartScale`, x is not
+ * index-driven — callers place candles at whatever cx they choose.
  */
-export type CandleGeo = {
+export type SingleCandleScale = {
   W: number;
   H: number;
-  cx: number;
-  bw: number;
-  bull: boolean;
-  o: number;
-  h: number;
-  l: number;
-  c: number;
-  bodyX: number;
-  bodyY: number;
-  bodyH: number;
-  upY1: number;
-  upY2: number;
-  loY1: number;
-  loY2: number;
-  hy: number;
-  ly: number;
-  openY: number;
-  closeY: number;
-  color: string;
+  padX: number;
+  padTop: number;
+  padBot: number;
+  min: number;
+  max: number;
+  y: (price: number) => number;
 };
 
-export function geo(o: number, h: number, l: number, c: number, W = 240, H = 300, bw = 64, pad = 22): CandleGeo {
-  const dh = H - pad * 2;
-  const cx = W / 2;
-  const y = (p: number) => +(pad + (1 - p / 100) * dh).toFixed(1);
-  const bull = c >= o;
-  const bt = y(Math.max(o, c));
-  const bb = y(Math.min(o, c));
+export function singleCandleScale(
+  min: number,
+  max: number,
+  W = 840,
+  H = 380,
+  padX = 60,
+  padTop = 34,
+  padBot = 30,
+): SingleCandleScale {
   return {
     W,
     H,
-    cx,
-    bw,
-    bull,
-    o,
-    h,
-    l,
-    c,
-    bodyX: +(cx - bw / 2).toFixed(1),
-    bodyY: bt,
-    bodyH: +Math.max(3, bb - bt).toFixed(1),
-    upY1: y(h),
-    upY2: bt,
-    loY1: bb,
-    loY2: y(l),
-    hy: y(h),
-    ly: y(l),
-    openY: y(o),
-    closeY: y(c),
-    color: candleBodyColor(bull),
+    padX,
+    padTop,
+    padBot,
+    min,
+    max,
+    y: (price: number) => padTop + (H - padTop - padBot) * (1 - (price - min) / (max - min)),
   };
 }
 
-export function shuffle<T>(arr: T[]): T[] {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j] as T, a[i] as T];
-  }
-  return a;
+/** A located tap point, in price + pixel space (no candle index — single-candle scenes). */
+export type PricePoint = { price: number; x: number; y: number };
+
+/**
+ * Converts a pointer's client position (given the chart SVG's bounding rect)
+ * into a price, mirroring the design's `locate()`.
+ */
+export function locatePoint(
+  clientX: number,
+  clientY: number,
+  rect: { left: number; top: number; width: number; height: number },
+  sc: SingleCandleScale,
+): PricePoint {
+  const ly = ((clientY - rect.top) / rect.height) * sc.H;
+  const u = (ly - sc.padTop) / (sc.H - sc.padTop - sc.padBot);
+  const lx = ((clientX - rect.left) / rect.width) * sc.W;
+  return { price: sc.min + (1 - u) * (sc.max - sc.min), x: lx, y: ly };
 }
+
+/** ₹-formats a price with Indian digit grouping, matching the design's fmt(). */
+export function formatPrice(n: number): string {
+  return "₹" + Math.round(n).toLocaleString("en-IN");
+}
+
+export type CandleBar = { o: number; h: number; l: number; c: number };
