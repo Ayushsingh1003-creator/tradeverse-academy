@@ -3,6 +3,7 @@ import { howToReadAChartPages, howToReadAChartPractice } from "@/lib/data/lesson
 import { meaningOfPatternsPages, meaningOfPatternsPractice } from "@/lib/data/lessons/lessonMeaningOfPatterns";
 import { supportResistancePages, supportResistancePractice } from "@/lib/data/lessons/lessonSupportResistance";
 import { trendLinesPages, trendLinesPractice } from "@/lib/data/lessons/lessonTrendAnalysis";
+import { TREND_LINES_LESSON_XP } from "@/components/lesson/trend-lines/constants";
 import { whatIsCandlestickPages, whatIsCandlestickPractice } from "@/lib/data/lessons/lessonWhatIsCandlestick";
 import type { LessonPage } from "@/types/lessonPage";
 
@@ -231,7 +232,10 @@ export const CANDLESTICK_LESSONS: Lesson[] = [
     slug: "trend-lines",
     title: "Trendlines",
     courseId: "c1",
-    xpReward: 80,
+    // Rendered by the standalone TrendLinesLesson component (see
+    // src/components/lesson/trend-lines), not LessonPlayer — keep this in
+    // sync with that component's TREND_LINES_LESSON_XP.
+    xpReward: TREND_LINES_LESSON_XP,
     isFree: false,
     pages: trendLinesPages,
     practice: trendLinesPractice,
