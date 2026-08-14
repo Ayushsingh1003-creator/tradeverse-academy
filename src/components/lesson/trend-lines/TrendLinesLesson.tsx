@@ -967,7 +967,7 @@ export function TrendLinesLesson() {
       </header>
 
       {/* STAGE */}
-      <main className="relative z-10 flex flex-1 items-center justify-center px-5 py-8">
+      <main className="relative z-10 flex flex-1 items-center justify-center px-5 py-8 pb-28">
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
@@ -1710,7 +1710,7 @@ export function TrendLinesLesson() {
       </main>
 
       {/* FOOTER */}
-      <footer className="relative z-10 flex items-center justify-between border-t border-border-subtle bg-brill-800/70 px-4 py-4 backdrop-blur-md md:px-6">
+      <footer className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-border-subtle bg-brill-800/70 px-4 py-4 backdrop-blur-md md:px-6">
         <div className="text-[13px] font-semibold text-text-muted">{step === TOTAL_STEPS ? "Lesson complete" : `Section ${step + 1} of ${TOTAL_STEPS + 1}`}</div>
         <div className="flex items-center gap-3">
           <button

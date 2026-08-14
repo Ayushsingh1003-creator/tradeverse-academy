@@ -8,6 +8,7 @@ import { INTRO_LESSON_SLUG } from "@/components/lesson/candlestick-intro-essenti
 import { PRICE_CHARTS_LESSON_SLUG } from "@/components/lesson/understanding-price-charts/constants";
 import { MEANING_LESSON_SLUG } from "@/components/lesson/what-candles-tell-you/constants";
 import { SUPPORT_RESISTANCE_LESSON_SLUG } from "@/components/lesson/support-resistance/constants";
+import { TIME_FRAMES_LESSON_SLUG } from "@/components/lesson/timeframes/constants";
 import { TREND_LINES_LESSON_SLUG } from "@/components/lesson/trend-lines/constants";
 
 const LessonPlayer = dynamic(
@@ -45,6 +46,11 @@ const TrendLinesLesson = dynamic(
   { loading: () => <PageLoader className="min-h-screen" label="Loading lesson…" /> },
 );
 
+const TimeFramesLesson = dynamic(
+  () => import("@/components/lesson/timeframes").then((m) => m.TimeFramesLesson),
+  { loading: () => <PageLoader className="min-h-screen" label="Loading lesson…" /> },
+);
+
 type PageProps = {
   params: { slug: string };
   searchParams: { library?: string };
@@ -68,6 +74,9 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   }
   if (params.slug === TREND_LINES_LESSON_SLUG) {
     return <TrendLinesLesson />;
+  }
+  if (params.slug === TIME_FRAMES_LESSON_SLUG) {
+    return <TimeFramesLesson />;
   }
 
   const baseLesson = getLessonBySlug(params.slug);
