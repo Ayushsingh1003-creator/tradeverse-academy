@@ -242,6 +242,11 @@ const KEYWORD_HINTS: Array<{
     lessonSlug: "trend-lines",
   },
   {
+    terms: ["chart pattern", "double top", "head and shoulders", "triangle", "flag", "pennant"],
+    courseSlug: "candlestick-essentials",
+    lessonSlug: "chart-patterns",
+  },
+  {
     terms: ["rsi", "overbought", "oversold", "momentum"],
     courseSlug: "indicator-starter-kit",
     lessonSlug: "rsi-basics",

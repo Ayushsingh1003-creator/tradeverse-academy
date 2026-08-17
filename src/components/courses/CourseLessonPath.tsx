@@ -45,7 +45,8 @@ type IconKey =
   | "brain"
   | "guardrail"
   | "oscillator"
-  | "maLine";
+  | "maLine"
+  | "peaks";
 
 /** Line-art glyph per lesson slug — every course renders bespoke SVGs, never emoji. */
 const SVG_ICON_BY_SLUG: Record<string, IconKey> = {
@@ -60,6 +61,7 @@ const SVG_ICON_BY_SLUG: Record<string, IconKey> = {
   "swing-structure-bos": "arrows",
   "support-resistance": "sr",
   "trend-lines": "trend",
+  "chart-patterns": "peaks",
 
   // Financial Markets 101
   "what-is-the-market": "building",
@@ -638,6 +640,13 @@ function IconGlyph({ icon, size, muted }: { icon: IconKey; size: number; muted?:
         <svg width={size} height={size} viewBox="0 0 40 40" fill="none" className="block">
           <polyline points="5,31 15,22 22,27 34,9" fill="none" stroke={g} strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" />
           <polyline points="26,9 34,9 34,17" fill="none" stroke={g} strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+      );
+    case "peaks":
+      return (
+        <svg width={size} height={size} viewBox="0 0 40 40" fill="none" className="block">
+          <polyline points="5,28 12,18 16,24 20,8 24,24 28,16 35,28" fill="none" stroke={w} strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+          <line x1="5" y1="28" x2="35" y2="28" stroke={b} strokeWidth="1.6" strokeDasharray="3 3" strokeLinecap="round" />
         </svg>
       );
     case "building":

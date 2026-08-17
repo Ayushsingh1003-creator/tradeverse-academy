@@ -41,7 +41,7 @@ const CARDS = [
     accentDark: "#4A2E00",
     emoji: "🎯",
     recommended: true,
-    lessonSlugs: ["trend-lines", "support-resistance"],
+    lessonSlugs: ["trend-lines", "support-resistance", "chart-patterns"],
     startHref: "/learn/trend-lines",
   },
   {

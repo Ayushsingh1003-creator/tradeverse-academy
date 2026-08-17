@@ -4,6 +4,7 @@ import { getLessonBySlug } from "@/lib/data/lessonLookup";
 import { fetchLessonImageConfigMap } from "@/lib/lessonImageOverrides.server";
 import { PageLoader } from "@/components/ui/Loader";
 import { ANATOMY_LESSON_SLUG } from "@/components/lesson/anatomy-of-a-candle/constants";
+import { CHART_PATTERNS_LESSON_SLUG } from "@/components/lesson/chart-patterns/constants";
 import { INTRO_LESSON_SLUG } from "@/components/lesson/candlestick-intro-essentials/constants";
 import { PRICE_CHARTS_LESSON_SLUG } from "@/components/lesson/understanding-price-charts/constants";
 import { MEANING_LESSON_SLUG } from "@/components/lesson/what-candles-tell-you/constants";
@@ -51,6 +52,11 @@ const TimeFramesLesson = dynamic(
   { loading: () => <PageLoader className="min-h-screen" label="Loading lesson…" /> },
 );
 
+const ChartPatternsLesson = dynamic(
+  () => import("@/components/lesson/chart-patterns").then((m) => m.ChartPatternsLesson),
+  { loading: () => <PageLoader className="min-h-screen" label="Loading lesson…" /> },
+);
+
 type PageProps = {
   params: { slug: string };
   searchParams: { library?: string };
@@ -77,6 +83,9 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   }
   if (params.slug === TIME_FRAMES_LESSON_SLUG) {
     return <TimeFramesLesson />;
+  }
+  if (params.slug === CHART_PATTERNS_LESSON_SLUG) {
+    return <ChartPatternsLesson />;
   }
 
   const baseLesson = getLessonBySlug(params.slug);

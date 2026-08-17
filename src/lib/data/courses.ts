@@ -145,6 +145,7 @@ export const COURSES: Course[] = [
       "swing-structure-bos",
       "support-resistance",
       "trend-lines",
+      "chart-patterns",
     ],
     levels: [
       {
@@ -163,7 +164,7 @@ export const COURSES: Course[] = [
         id: "c1-l3",
         number: 3,
         title: "Key Price Levels",
-        lessonSlugs: ["support-resistance", "trend-lines"],
+        lessonSlugs: ["support-resistance", "trend-lines", "chart-patterns"],
       },
     ],
   },

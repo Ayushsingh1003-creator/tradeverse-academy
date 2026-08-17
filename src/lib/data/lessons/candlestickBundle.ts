@@ -3,6 +3,7 @@ import { howToReadAChartPages, howToReadAChartPractice } from "@/lib/data/lesson
 import { meaningOfPatternsPages, meaningOfPatternsPractice } from "@/lib/data/lessons/lessonMeaningOfPatterns";
 import { supportResistancePages, supportResistancePractice } from "@/lib/data/lessons/lessonSupportResistance";
 import { trendLinesPages, trendLinesPractice } from "@/lib/data/lessons/lessonTrendAnalysis";
+import { CHART_PATTERNS_LESSON_SLUG, CHART_PATTERNS_LESSON_XP } from "@/components/lesson/chart-patterns/constants";
 import { TIME_FRAMES_LESSON_XP } from "@/components/lesson/timeframes/constants";
 import { TREND_LINES_LESSON_XP } from "@/components/lesson/trend-lines/constants";
 import { whatIsCandlestickPages, whatIsCandlestickPractice } from "@/lib/data/lessons/lessonWhatIsCandlestick";
@@ -102,6 +103,23 @@ const understandingTrendsPages: LessonPage[] = [
     variant: "rule",
     title: "No trend? It's a range",
     content: "When price bounces between a ceiling and a floor without making new highs or lows, it's **ranging**, not trending.",
+  },
+];
+
+const chartPatternsPages: LessonPage[] = [
+  {
+    id: "cpt1",
+    type: "text",
+    badge: "Chart Patterns",
+    title: "Shapes buyers and sellers leave behind",
+    body: "Price repeats the same **shapes** — double tops, head & shoulders, triangles, flags — because the same crowd behaviour keeps producing them. Learn the shape, wait for the confirmed break, then trade it with a defined invalidation.",
+  },
+  {
+    id: "cpt2",
+    type: "callout",
+    variant: "rule",
+    title: "A pattern is a probability, never a prediction",
+    content: "No pattern is guaranteed. Always wait for a **confirmed close** beyond the neckline or trendline before acting, and always define the price that proves you wrong.",
   },
 ];
 
@@ -243,5 +261,18 @@ export const CANDLESTICK_LESSONS: Lesson[] = [
     isFree: false,
     pages: trendLinesPages,
     practice: trendLinesPractice,
+  },
+  {
+    id: "l10",
+    slug: CHART_PATTERNS_LESSON_SLUG,
+    title: "Chart Patterns",
+    courseId: "c1",
+    // Rendered by the standalone ChartPatternsLesson component (see
+    // src/components/lesson/chart-patterns), not LessonPlayer — keep this
+    // in sync with that component's CHART_PATTERNS_LESSON_XP.
+    xpReward: CHART_PATTERNS_LESSON_XP,
+    isFree: false,
+    pages: chartPatternsPages,
+    practice: stubPractice("chart-patterns"),
   },
 ];

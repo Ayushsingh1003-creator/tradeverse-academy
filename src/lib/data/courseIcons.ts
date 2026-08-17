@@ -34,6 +34,7 @@ export const LESSON_ICON_BY_SLUG: Record<string, string> = {
   "how-to-read-a-chart": "📖",
   "meaning-of-patterns": "🔨",
   "trend-lines": "📈",
+  "chart-patterns": "📐",
   "support-resistance": "🎯",
 
   // Indicator Starter Kit
