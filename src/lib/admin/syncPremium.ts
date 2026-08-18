@@ -8,7 +8,7 @@ export async function setUserPremium(
 ) {
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: { id: true, clerkUserId: true },
+    select: { id: true, authUserId: true },
   });
   if (!user) return;
 
@@ -25,13 +25,13 @@ export async function setUserPremium(
     data: { isPremium: premium, premiumUntil },
   });
 
-  if (!user.clerkUserId) return;
+  if (!user.authUserId) return;
 
   if (premium) {
     await db.subscription.upsert({
-      where: { clerkUserId: user.clerkUserId },
+      where: { authUserId: user.authUserId },
       create: {
-        clerkUserId: user.clerkUserId,
+        authUserId: user.authUserId,
         plan: "monthly",
         status: "active",
         currentPeriodEnd: premiumUntil,
@@ -46,9 +46,9 @@ export async function setUserPremium(
     });
   } else {
     await db.subscription.upsert({
-      where: { clerkUserId: user.clerkUserId },
+      where: { authUserId: user.authUserId },
       create: {
-        clerkUserId: user.clerkUserId,
+        authUserId: user.authUserId,
         plan: "free",
         status: "inactive",
       },

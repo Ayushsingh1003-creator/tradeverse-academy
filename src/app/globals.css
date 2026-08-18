@@ -268,6 +268,22 @@ main[class*="bg-[#141414]"] {
   animation: fade-in-soft 0.4s ease-out forwards;
 }
 
+@keyframes ask-card-expand {
+  from {
+    opacity: 0;
+    transform: scale(0.9, 0.94) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1, 1) translateY(0);
+  }
+}
+
+.animate-ask-card-expand {
+  transform-origin: center top;
+  animation: ask-card-expand 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 .animate-hammer-ring {
   stroke-dasharray: 8 6;
   animation: hammer-ring-in 0.55s ease-out forwards;
@@ -360,31 +376,88 @@ main[class*="bg-[#141414]"] {
 }
 
 /* ── Swiper card deck (dashboard) ── */
+.course-card-deck-viewport {
+  isolation: isolate;
+  overflow: hidden;
+}
+
 .swiper.course-deck-swiper,
 .course-deck-swiper.swiper {
   width: 100% !important;
   max-width: 100%;
   overflow: visible !important;
   box-sizing: border-box;
+  padding: 0 0 4px;
 }
 
 .course-deck-swiper .swiper-wrapper {
-  align-items: stretch;
+  align-items: flex-end;
   box-sizing: border-box;
 }
 
-.course-deck-swiper .swiper-slide {
-  height: auto !important;
+.course-deck-swiper .course-deck-slide {
+  width: min(460px, 88vw) !important;
+  height: 472px !important;
   box-sizing: border-box;
+  transition: filter 0.45s ease, opacity 0.45s ease;
+}
+
+.course-deck-slide-shell,
+.course-deck-swiper .course-deck-card {
+  height: 472px;
+}
+
+.course-deck-swiper .swiper-slide:not(.swiper-slide-active):not(.swiper-slide-prev):not(.swiper-slide-next) {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.course-deck-swiper .swiper-slide-prev,
+.course-deck-swiper .swiper-slide-next {
+  filter: brightness(0.78);
+  opacity: 0.92;
+  z-index: 1;
 }
 
 .course-deck-swiper .swiper-slide-active {
-  filter: none !important;
+  filter: none;
+  opacity: 1;
+  z-index: 3;
 }
 
-.course-deck-swiper .swiper-slide:not(.swiper-slide-active) {
-  filter: brightness(0.85) !important;
-  transition: filter 0.35s ease !important;
+.course-deck-swiper .swiper-slide-active .course-deck-card {
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.45);
+}
+
+.deck-slide-num {
+  position: absolute;
+  top: 50%;
+  z-index: 6;
+  transform: translateY(-50%);
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.22);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  user-select: none;
+}
+
+.deck-slide-num-left {
+  left: 10px;
+}
+
+.deck-slide-num-right {
+  right: 10px;
+}
+
+.course-deck-swiper .swiper-slide-prev .deck-slide-num-left {
+  opacity: 1;
+}
+
+.course-deck-swiper .swiper-slide-next .deck-slide-num-right {
+  opacity: 1;
 }
 
 

@@ -1,5 +1,5 @@
 import type { LiveClassCourse, LiveClassCurriculumModule } from "@/lib/data/liveClasses";
-import type { LiveCohort } from "@prisma/client";
+import type { LiveCohort } from "@/lib/db/schema";
 
 export function mapLiveCohortRow(row: LiveCohort): LiveClassCourse {
   let curriculum: LiveClassCurriculumModule[] = [];

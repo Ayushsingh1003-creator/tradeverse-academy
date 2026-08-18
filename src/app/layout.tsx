@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
 import Script from "next/script";
-import { isClerkConfigured } from "@/lib/clerkEnabled";
-import {
-  CLERK_AFTER_SIGN_IN_URL,
-  CLERK_AFTER_SIGN_OUT_URL,
-  CLERK_AFTER_SIGN_UP_URL,
-  CLERK_SIGN_IN_URL,
-  CLERK_SIGN_UP_URL,
-} from "@/lib/clerkUrls";
+import { isAuthConfigured } from "@/lib/auth/enabled";
+import { getSession } from "@/lib/auth/session";
+import { AuthSessionHydration } from "@/components/providers/AuthSessionHydration";
+import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
 import { AppBackground } from "@/components/layout/AppBackground";
-import { ClerkUserHydration } from "@/components/providers/ClerkUserHydration";
 import { LiquidGlassFilter } from "@/components/ui/LiquidGlassFilter";
 import "./globals.css";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://academy.tradeverse.io"),
   manifest: "/manifest.json",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png", sizes: "32x32" }],
+    apple: [{ url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" }],
+  },
   title: { default: "Tradeverse Academy", template: "%s | Tradeverse Academy" },
   description: "Master trading one concept at a time. Interactive lessons on candlesticks, technical analysis, risk management, and more.",
   keywords: ["trading education", "technical analysis", "candlestick patterns", "trading course", "learn trading"],
@@ -32,11 +32,22 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "Tradeverse Academy", description: "Master trading, one concept at a time." },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const authEnabled = isAuthConfigured();
+  const session = authEnabled ? await getSession() : null;
+  const initialUser = session?.user
+    ? {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email,
+        image: session.user.image,
+      }
+    : null;
+
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body className="min-h-full bg-background font-sans text-text-primary">
@@ -53,20 +64,11 @@ export default function RootLayout({
         `}</Script>
         <AppBackground />
         <div className="relative z-10">
-          {isClerkConfigured() ? (
-            <ClerkProvider
-              publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}
-              signInUrl={CLERK_SIGN_IN_URL}
-              signUpUrl={CLERK_SIGN_UP_URL}
-              afterSignInUrl={CLERK_AFTER_SIGN_IN_URL}
-              afterSignUpUrl={CLERK_AFTER_SIGN_UP_URL}
-              signInFallbackRedirectUrl={CLERK_AFTER_SIGN_IN_URL}
-              signUpFallbackRedirectUrl={CLERK_AFTER_SIGN_UP_URL}
-              signOutFallbackRedirectUrl={CLERK_AFTER_SIGN_OUT_URL}
-            >
-              <ClerkUserHydration />
+          {authEnabled ? (
+            <AuthSessionProvider key={initialUser?.id ?? "guest"} initialUser={initialUser}>
+              <AuthSessionHydration />
               {children}
-            </ClerkProvider>
+            </AuthSessionProvider>
           ) : (
             children
           )}

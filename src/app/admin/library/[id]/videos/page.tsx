@@ -2,8 +2,10 @@ import Link from "next/link";
 import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import type { LibraryVideo } from "@/lib/db/schema";
 import { addLibraryVideo, deleteLibraryVideo, moveLibraryVideo } from "../../actions";
 import { LibraryVideoEditRow } from "./LibraryVideoEditRow";
+import { LibraryVideoFormFields } from "./LibraryVideoFormFields";
 
 function tagsDisplay(tagsJson: string) {
   try {
@@ -38,27 +40,12 @@ export default async function AdminLibraryVideosPage({ params }: { params: { id:
       </div>
 
       <div className="mb-8 rounded-2xl border border-white/[0.08] bg-[#1E1E1E] p-6">
-        <h2 className="mb-4 font-bold">Add video</h2>
+        <h2 className="mb-4 font-bold">Add item</h2>
         <form action={addLibraryVideo.bind(null, course.id)} className="grid gap-3 md:grid-cols-2">
-          <input
-            name="youtubeVideoId"
-            placeholder="YouTube video ID"
-            required
-            className="rounded-xl border border-white/10 bg-[#141414] px-3 py-2 text-sm"
-          />
-          <input name="title" placeholder="Title" className="rounded-xl border border-white/10 bg-[#141414] px-3 py-2 text-sm" />
-          <input
-            name="description"
-            placeholder="Description"
-            className="md:col-span-2 rounded-xl border border-white/10 bg-[#141414] px-3 py-2 text-sm"
-          />
-          <input name="thumbnailUrl" placeholder="Thumbnail URL (optional)" className="rounded-xl border border-white/10 bg-[#141414] px-3 py-2 text-sm" />
-          <input name="duration" placeholder="Duration e.g. 14:20" className="rounded-xl border border-white/10 bg-[#141414] px-3 py-2 text-sm" />
-          <input name="publishedAt" placeholder="Published date YYYY-MM-DD" className="rounded-xl border border-white/10 bg-[#141414] px-3 py-2 text-sm" />
-          <input name="tags" placeholder="Tags, comma-separated" className="rounded-xl border border-white/10 bg-[#141414] px-3 py-2 text-sm" />
+          <LibraryVideoFormFields variant="add" />
           <div className="md:col-span-2">
             <button type="submit" className="rounded-xl bg-[#456DFF] px-4 py-2 text-sm font-semibold text-white">
-              Add video
+              Add item
             </button>
           </div>
         </form>
@@ -70,19 +57,23 @@ export default async function AdminLibraryVideosPage({ params }: { params: { id:
             <tr>
               <th className="px-4 py-3">Order</th>
               <th className="py-3">Title</th>
-              <th className="py-3">YouTube</th>
+              <th className="py-3">Type</th>
+              <th className="py-3">Link</th>
               <th className="py-3">Duration</th>
               <th className="py-3">Tags</th>
               <th className="py-3">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {course.videos.map((v, idx) => (
+            {(course.videos as LibraryVideo[]).map((v, idx) => (
               <Fragment key={v.id}>
                 <tr className="border-b border-white/[0.04]">
                   <td className="px-4 py-3 text-[#666]">{idx + 1}</td>
                   <td className="py-3 font-medium">{v.title}</td>
-                  <td className="py-3 text-[#888]">{v.youtubeVideoId}</td>
+                  <td className="py-3 capitalize text-[#888]">{v.type === "learn" ? "Learn" : "Video"}</td>
+                  <td className="py-3 text-[#888]">
+                    {v.type === "learn" && v.learnSlug ? `/learn/${v.learnSlug}` : v.youtubeVideoId || "—"}
+                  </td>
                   <td className="py-3">{v.duration}</td>
                   <td className="py-3 text-xs text-[#666]">{tagsDisplay(v.tags)}</td>
                   <td className="py-3">

@@ -5,9 +5,23 @@ import { useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
+import { LibraryCourseProgressTracker } from "@/components/library/LibraryCourseProgressTracker";
 import type { LibraryCourse } from "@/lib/data/library";
+import {
+  computeLibraryCourseCardProgress,
+  type LibraryCourseCardProgress,
+} from "@/lib/libraryCourseProgress";
 
-export function LibraryCourseCard({ course }: { course: LibraryCourse }) {
+export function LibraryCourseCard({
+  course,
+  progress,
+  index = 0,
+}: {
+  course: LibraryCourse;
+  progress?: LibraryCourseCardProgress;
+  index?: number;
+}) {
+  const cardProgress = progress ?? computeLibraryCourseCardProgress(course);
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const hasVideos = course.videos.length > 0;
@@ -47,6 +61,7 @@ export function LibraryCourseCard({ course }: { course: LibraryCourse }) {
           </div>
           <p className="text-base font-semibold text-white">{course.title}</p>
           <p className="mt-1 line-clamp-2 text-xs text-text-muted">{course.description}</p>
+          <LibraryCourseProgressTracker progress={cardProgress} index={index} />
           <div className="mt-3 flex flex-wrap gap-1">
             {course.tags.slice(0, 4).map((tag) => (
               <span

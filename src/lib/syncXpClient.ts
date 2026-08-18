@@ -1,7 +1,14 @@
 "use client";
 
-import { isClerkConfigured } from "@/lib/clerkEnabled";
+import { isAuthConfigured } from "@/lib/auth/enabled";
 import type { XpEarnReason } from "@/lib/xpEarnPolicy";
+
+export type SyncXpEarnResult = {
+  xp: number;
+  level: number;
+  streak?: number;
+  streakLocalDate?: string | null;
+};
 
 export async function syncXpEarn(payload: {
   amount: number;
@@ -12,8 +19,8 @@ export async function syncXpEarn(payload: {
   activityLocalDate?: string;
   /** From `Intl.DateTimeFormat().resolvedOptions().timeZone` for server streak reminders. */
   ianaTimezone?: string;
-}) {
-  if (!isClerkConfigured()) return;
+}): Promise<SyncXpEarnResult | null> {
+  if (!isAuthConfigured()) return null;
   const body: Record<string, unknown> = {
     amount: payload.amount,
     reason: payload.reason,
@@ -34,8 +41,26 @@ export async function syncXpEarn(payload: {
     });
     if (!res.ok) {
       console.warn("syncXpEarn", res.status, await res.text());
+      return null;
     }
+    const data = (await res.json()) as {
+      ok?: boolean;
+      xp?: number;
+      level?: number;
+      streak?: number;
+      streakLocalDate?: string | null;
+    };
+    if (data.ok && typeof data.xp === "number" && typeof data.level === "number") {
+      return {
+        xp: data.xp,
+        level: data.level,
+        streak: data.streak,
+        streakLocalDate: data.streakLocalDate,
+      };
+    }
+    return null;
   } catch (e) {
     console.warn("syncXpEarn failed", e);
+    return null;
   }
 }

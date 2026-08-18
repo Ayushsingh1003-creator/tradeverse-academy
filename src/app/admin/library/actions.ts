@@ -3,7 +3,26 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { guardAdmin } from "@/lib/admin/guardAdmin";
+import { getLearnPageTitle } from "@/lib/data/learnPageOptions";
 import { db } from "@/lib/db";
+import type { LibraryItemType } from "@/lib/libraryItemType";
+import { parseYoutubeVideoId, youtubeThumbnailUrl } from "@/lib/youtubeEmbed";
+
+const LEARN_THUMBNAIL =
+  "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=640&h=360&fit=crop";
+
+function parseLibraryItemType(formData: FormData): LibraryItemType {
+  const raw = String(formData.get("type") ?? "video").trim();
+  return raw === "learn" ? "learn" : "video";
+}
+
+function parseLearnSlug(formData: FormData): string {
+  const learnSlug = String(formData.get("learnSlug") ?? "").trim();
+  if (!learnSlug) throw new Error("Select a learn lesson");
+  const title = getLearnPageTitle(learnSlug);
+  if (!title) throw new Error("Unknown learn lesson slug");
+  return learnSlug;
+}
 
 function tagsToJson(raw: string): string {
   const parts = raw
@@ -11,6 +30,26 @@ function tagsToJson(raw: string): string {
     .map((t) => t.trim())
     .filter(Boolean);
   return JSON.stringify(parts);
+}
+
+function parseYoutubeUrls(formData: FormData) {
+  const enRaw = String(formData.get("youtubeUrlEn") ?? formData.get("youtubeVideoId") ?? "").trim();
+  const hiRaw = String(formData.get("youtubeUrlHi") ?? "").trim();
+
+  const youtubeVideoId = parseYoutubeVideoId(enRaw);
+  if (!youtubeVideoId) {
+    throw new Error("Invalid English YouTube URL");
+  }
+
+  let youtubeVideoIdHi: string | null = null;
+  if (hiRaw) {
+    youtubeVideoIdHi = parseYoutubeVideoId(hiRaw);
+    if (!youtubeVideoIdHi) {
+      throw new Error("Invalid Hindi YouTube URL");
+    }
+  }
+
+  return { youtubeVideoId, youtubeVideoIdHi };
 }
 
 export async function saveLibraryCourse(formData: FormData) {
@@ -25,6 +64,10 @@ export async function saveLibraryCourse(formData: FormData) {
   const estimatedDurationMin = Number(formData.get("estimatedDurationMin") ?? 0) || 0;
   const order = Number(formData.get("order") ?? 0) || 0;
   const published = formData.get("published") === "true";
+
+  if (!slug || !title || !thumbnailUrl) {
+    throw new Error("Title, slug, and thumbnail URL are required");
+  }
 
   const data = {
     slug,
@@ -45,6 +88,7 @@ export async function saveLibraryCourse(formData: FormData) {
   }
   revalidatePath("/admin/library");
   revalidatePath("/library");
+  revalidatePath(`/library/${slug}`);
   redirect("/admin/library");
 }
 
@@ -58,13 +102,9 @@ export async function deleteLibraryCourse(id: string) {
 
 export async function addLibraryVideo(courseId: string, formData: FormData) {
   await guardAdmin();
-  const youtubeVideoId = String(formData.get("youtubeVideoId") ?? "").trim();
-  const title = String(formData.get("title") ?? "").trim();
+  const itemType = parseLibraryItemType(formData);
   const description = String(formData.get("description") ?? "").trim();
-  const thumbnailUrl =
-    String(formData.get("thumbnailUrl") ?? "").trim() ||
-    `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`;
-  const duration = String(formData.get("duration") ?? "").trim() || "0:00";
+  const duration = String(formData.get("duration") ?? "").trim() || (itemType === "learn" ? "Lesson" : "0:00");
   const publishedAt = String(formData.get("publishedAt") ?? "").trim() || new Date().toISOString().slice(0, 10);
   const tagsRaw = String(formData.get("tags") ?? "");
   const maxOrder = await db.libraryVideo.aggregate({
@@ -72,45 +112,101 @@ export async function addLibraryVideo(courseId: string, formData: FormData) {
     _max: { order: true },
   });
   const order = (maxOrder._max.order ?? -1) + 1;
-  await db.libraryVideo.create({
-    data: {
-      courseId,
-      youtubeVideoId,
-      title: title || youtubeVideoId,
-      description,
-      thumbnailUrl,
-      duration,
-      publishedAt,
-      tags: tagsToJson(tagsRaw),
-      order,
-    },
-  });
+
+  if (itemType === "learn") {
+    const learnSlug = parseLearnSlug(formData);
+    const title = getLearnPageTitle(learnSlug)!;
+    const thumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim() || LEARN_THUMBNAIL;
+    await db.libraryVideo.create({
+      data: {
+        courseId,
+        type: "learn",
+        learnSlug,
+        youtubeVideoId: "",
+        youtubeVideoIdHi: null,
+        title,
+        description: description || `Interactive lesson: ${title}`,
+        thumbnailUrl,
+        duration,
+        publishedAt,
+        tags: tagsToJson(tagsRaw),
+        order,
+      },
+    });
+  } else {
+    const { youtubeVideoId, youtubeVideoIdHi } = parseYoutubeUrls(formData);
+    const title = String(formData.get("title") ?? "").trim();
+    const thumbnailUrl =
+      String(formData.get("thumbnailUrl") ?? "").trim() || youtubeThumbnailUrl(youtubeVideoId);
+    await db.libraryVideo.create({
+      data: {
+        courseId,
+        type: "video",
+        learnSlug: null,
+        youtubeVideoId,
+        youtubeVideoIdHi,
+        title: title || youtubeVideoId,
+        description,
+        thumbnailUrl,
+        duration,
+        publishedAt,
+        tags: tagsToJson(tagsRaw),
+        order,
+      },
+    });
+  }
+
   revalidatePath(`/admin/library/${courseId}/videos`);
   revalidatePath("/library");
 }
 
 export async function updateLibraryVideo(videoId: string, courseId: string, formData: FormData) {
   await guardAdmin();
-  const youtubeVideoId = String(formData.get("youtubeVideoId") ?? "").trim();
-  const title = String(formData.get("title") ?? "").trim();
+  const itemType = parseLibraryItemType(formData);
   const description = String(formData.get("description") ?? "").trim();
   const thumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
-  const duration = String(formData.get("duration") ?? "").trim() || "0:00";
+  const duration = String(formData.get("duration") ?? "").trim() || (itemType === "learn" ? "Lesson" : "0:00");
   const publishedAt = String(formData.get("publishedAt") ?? "").trim();
   const tagsRaw = String(formData.get("tags") ?? "");
 
-  await db.libraryVideo.update({
-    where: { id: videoId },
-    data: {
-      youtubeVideoId,
-      title,
-      description,
-      thumbnailUrl: thumbnailUrl || `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`,
-      duration,
-      publishedAt: publishedAt || undefined,
-      tags: tagsToJson(tagsRaw),
-    },
-  });
+  if (itemType === "learn") {
+    const learnSlug = parseLearnSlug(formData);
+    const title = getLearnPageTitle(learnSlug)!;
+    await db.libraryVideo.update({
+      where: { id: videoId },
+      data: {
+        type: "learn",
+        learnSlug,
+        youtubeVideoId: "",
+        youtubeVideoIdHi: null,
+        title,
+        description,
+        thumbnailUrl: thumbnailUrl || LEARN_THUMBNAIL,
+        duration,
+        publishedAt: publishedAt || undefined,
+        tags: tagsToJson(tagsRaw),
+      },
+    });
+  } else {
+    const { youtubeVideoId, youtubeVideoIdHi } = parseYoutubeUrls(formData);
+    const title = String(formData.get("title") ?? "").trim();
+    await db.libraryVideo.update({
+      where: { id: videoId },
+      data: {
+        type: "video",
+        learnSlug: null,
+        youtubeVideoId,
+        youtubeVideoIdHi,
+        title,
+        description,
+        thumbnailUrl: thumbnailUrl || youtubeThumbnailUrl(youtubeVideoId),
+        duration,
+        publishedAt: publishedAt || undefined,
+        tags: tagsToJson(tagsRaw),
+      },
+    });
+  }
+
   revalidatePath(`/admin/library/${courseId}/videos`);
   revalidatePath("/library");
 }
@@ -135,5 +231,89 @@ export async function moveLibraryVideo(videoId: string, courseId: string, delta:
     db.libraryVideo.update({ where: { id: swap.id }, data: { order: v.order } }),
   ]);
   revalidatePath(`/admin/library/${courseId}/videos`);
+  revalidatePath("/library");
+}
+
+export async function addStandaloneVideo(formData: FormData) {
+  await guardAdmin();
+  const { youtubeVideoId, youtubeVideoIdHi } = parseYoutubeUrls(formData);
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const thumbnailUrl =
+    String(formData.get("thumbnailUrl") ?? "").trim() || youtubeThumbnailUrl(youtubeVideoId);
+  const duration = String(formData.get("duration") ?? "").trim() || "0:00";
+  const publishedAt = String(formData.get("publishedAt") ?? "").trim() || new Date().toISOString().slice(0, 10);
+  const tagsRaw = String(formData.get("tags") ?? "");
+  const published = formData.get("published") === "true";
+  const latest = await db.libraryStandaloneVideo.findMany({ orderBy: { order: "desc" }, take: 1 });
+  const order = (latest[0]?.order ?? -1) + 1;
+
+  await db.libraryStandaloneVideo.create({
+    data: {
+      youtubeVideoId,
+      youtubeVideoIdHi,
+      title: title || youtubeVideoId,
+      description,
+      thumbnailUrl,
+      duration,
+      publishedAt,
+      tags: tagsToJson(tagsRaw),
+      published,
+      order,
+    },
+  });
+  revalidatePath("/admin/library/standalone");
+  revalidatePath("/library");
+}
+
+export async function updateStandaloneVideo(videoId: string, formData: FormData) {
+  await guardAdmin();
+  const { youtubeVideoId, youtubeVideoIdHi } = parseYoutubeUrls(formData);
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const thumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
+  const duration = String(formData.get("duration") ?? "").trim() || "0:00";
+  const publishedAt = String(formData.get("publishedAt") ?? "").trim();
+  const tagsRaw = String(formData.get("tags") ?? "");
+  const published = formData.get("published") === "true";
+
+  await db.libraryStandaloneVideo.update({
+    where: { id: videoId },
+    data: {
+      youtubeVideoId,
+      youtubeVideoIdHi,
+      title,
+      description,
+      thumbnailUrl: thumbnailUrl || youtubeThumbnailUrl(youtubeVideoId),
+      duration,
+      publishedAt: publishedAt || undefined,
+      tags: tagsToJson(tagsRaw),
+      published,
+    },
+  });
+  revalidatePath("/admin/library/standalone");
+  revalidatePath("/library");
+}
+
+export async function deleteStandaloneVideo(videoId: string) {
+  await guardAdmin();
+  await db.libraryStandaloneVideo.delete({ where: { id: videoId } });
+  revalidatePath("/admin/library/standalone");
+  revalidatePath("/library");
+}
+
+export async function moveStandaloneVideo(videoId: string, delta: number) {
+  await guardAdmin();
+  const v = await db.libraryStandaloneVideo.findUnique({ where: { id: videoId } });
+  if (!v) return;
+  const swap = await db.libraryStandaloneVideo.findFirst({
+    where: { order: v.order + delta },
+  });
+  if (!swap) return;
+  await db.$transaction([
+    db.libraryStandaloneVideo.update({ where: { id: v.id }, data: { order: swap.order } }),
+    db.libraryStandaloneVideo.update({ where: { id: swap.id }, data: { order: v.order } }),
+  ]);
+  revalidatePath("/admin/library/standalone");
   revalidatePath("/library");
 }

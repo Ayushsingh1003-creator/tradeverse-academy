@@ -1,12 +1,12 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { requireDbUser } from "@/lib/auth/api";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { resolveUserForClerk } from "@/lib/server/resolveDbUser";
 import { getLibraryCourseBySlugFromDb } from "@/lib/queries/contentFromDb";
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authResult = await requireDbUser();
+  if (authResult.error) return authResult.error;
+  const { dbUser } = authResult;
 
   let body: { slug?: string; lastVideoId?: string | null };
   try {
@@ -28,11 +28,7 @@ export async function POST(req: NextRequest) {
           ? lastVideoIdRaw.trim().slice(0, 128) || null
           : null;
 
-  const clerk = await currentUser();
-  const email = clerk?.primaryEmailAddress?.emailAddress ?? null;
-  const dbUser = await resolveUserForClerk(userId, email);
-  if (!dbUser) return NextResponse.json({ error: "No account" }, { status: 404 });
-
+  
   const course = await getLibraryCourseBySlugFromDb(slug);
   if (!course?.videos?.length) {
     return NextResponse.json({ error: "Course not found" }, { status: 404 });
@@ -43,23 +39,40 @@ export async function POST(req: NextRequest) {
     if (!valid) return NextResponse.json({ error: "Invalid video" }, { status: 400 });
   }
 
-  const existing = await db.libraryCourseEnrollment.findUnique({
-    where: {
-      userId_courseSlug: { userId: dbUser.id, courseSlug: slug },
-    },
+  const existing = await db.libraryCourseEnrollment.findFirst({
+    where: { userId: dbUser.id, courseSlug: slug },
   });
+
   if (!existing) {
-    await db.libraryCourseEnrollment.create({
-      data: {
-        userId: dbUser.id,
-        courseSlug: slug,
-        lastVideoId: lastVideoId ?? null,
-      },
-    });
+    try {
+      await db.libraryCourseEnrollment.create({
+        data: {
+          userId: dbUser.id,
+          courseSlug: slug,
+          lastVideoId: lastVideoId ?? null,
+        },
+      });
+    } catch (err) {
+      const code =
+        err && typeof err === "object" && "cause" in err
+          ? (err.cause as { code?: string } | undefined)?.code
+          : undefined;
+      if (code !== "23505") throw err;
+
+      const raced = await db.libraryCourseEnrollment.findFirst({
+        where: { userId: dbUser.id, courseSlug: slug },
+      });
+      if (raced && lastVideoId !== undefined) {
+        await db.libraryCourseEnrollment.update({
+          where: { id: raced.id },
+          data: { lastVideoId, updatedAt: new Date() },
+        });
+      }
+    }
   } else if (lastVideoId !== undefined) {
     await db.libraryCourseEnrollment.update({
       where: { id: existing.id },
-      data: { lastVideoId },
+      data: { lastVideoId, updatedAt: new Date() },
     });
   }
 

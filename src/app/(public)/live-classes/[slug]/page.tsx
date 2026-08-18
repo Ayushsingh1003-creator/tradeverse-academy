@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { PublicNav } from "@/components/layout/PublicNav";
 import { EnrollButton } from "@/components/live-classes/EnrollButton";
+import { LiveClassesPageShell } from "@/components/live-classes/LiveClassesPageShell";
 import { LiveClassCurriculum } from "@/components/live-classes/LiveClassCurriculum";
 import { LiveClassSamplePlayer } from "@/components/live-classes/LiveClassSamplePlayer";
 import { Card } from "@/components/ui/Card";
@@ -13,9 +13,8 @@ export default async function LiveClassDetailPage({ params }: { params: { slug: 
   if (!course) notFound();
 
   return (
-    <main className="min-h-screen bg-background">
-      <PublicNav />
-      <section className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+    <LiveClassesPageShell>
+      <div className="space-y-6">
         <Card>
           <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
@@ -61,7 +60,7 @@ export default async function LiveClassDetailPage({ params }: { params: { slug: 
           <p className="mt-2 text-sm text-text-muted">{course.instructorBio}</p>
           <EnrollButton courseSlug={course.slug} className="mt-4" />
         </Card>
-      </section>
-    </main>
+      </div>
+    </LiveClassesPageShell>
   );
 }

@@ -76,7 +76,7 @@ const CARDS = [
 function MiniChart({ accent }: { accent: string }) {
   const id = accent.replace("#", "sg");
   return (
-    <div className="relative flex h-[160px] w-full items-center justify-center overflow-hidden">
+    <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
       <svg viewBox="0 0 260 120" className="w-full max-w-[260px] overflow-visible">
         <defs>
           <linearGradient id={`area-${id}`} x1="0" y1="0" x2="0" y2="1">
@@ -207,12 +207,10 @@ export default function CourseCardStack() {
   };
 
   return (
-    <div className="min-w-0 w-full max-w-full">
-      <p className="mb-4 text-[15px] font-semibold text-[rgba(255,255,255,0.5)]">Jump back in</p>
-
+    <div className="course-card-deck min-w-0 w-full max-w-full">
       <div
-        className="min-w-0 max-w-full overflow-x-clip"
-        style={{ perspective: "1200px", WebkitPerspective: "1200px" }}
+        className="course-card-deck-viewport min-w-0 max-w-full"
+        style={{ perspective: "1400px", WebkitPerspective: "1400px" }}
       >
         <Swiper
           onSwiper={(swiper) => {
@@ -221,103 +219,120 @@ export default function CourseCardStack() {
           onSlideChange={(swiper) => setActiveIdx(swiper.activeIndex)}
           modules={[EffectCoverflow]}
           effect="coverflow"
-          grabCursor
+          // grabCursor
           centeredSlides
-          slidesPerView={1}
-          breakpoints={{
-            640: { slidesPerView: 1.06 },
-            900: { slidesPerView: 1.08 },
-          }}
-          speed={400}
+          slideToClickedSlide
+          slidesPerView={1.3}
+          speed={520}
           coverflowEffect={{
             rotate: 0,
-            stretch: 0,
-            depth: 100,
-            modifier: 2,
-            scale: 1,
+            // stretch: -18,
+            // depth: 160,
+            // modifier: 1.35,
+            scale: 0.9,
             slideShadows: false,
           }}
-          className="course-deck-swiper"
-          style={{ overflow: "visible" }}
+          // className="course-deck-swiper"
         >
-          {CARDS.map((card) => {
+          {CARDS.map((card, slideIndex) => {
             const cardLessons: Lesson[] = card.lessonSlugs
               .map((slug) => LESSONS.find((l) => l.slug === slug))
               .filter((l): l is Lesson => Boolean(l));
             const nextLesson = cardLessons.find((l) => !lessonsCompleted.includes(l.slug));
-            const allDone = cardLessons.length > 0 && cardLessons.every((l) => lessonsCompleted.includes(l.slug));
+            const allDone =
+              cardLessons.length > 0 && cardLessons.every((l) => lessonsCompleted.includes(l.slug));
 
             return (
-              <SwiperSlide key={card.id}>
-                <div
-                  className="mx-auto w-full max-w-[556px] overflow-hidden rounded-[20px]"
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.10)",
-                    background: "#1A1A1A",
-                  }}
-                >
+              <SwiperSlide key={card.id} className="course-deck-slide">
+                <div className="course-deck-slide-shell relative mx-auto w-full max-w-[460px]">
+                  <span className="deck-slide-num deck-slide-num-left" aria-hidden>
+                    {slideIndex + 1}
+                  </span>
+                  <span className="deck-slide-num deck-slide-num-right" aria-hidden>
+                    {slideIndex + 1}
+                  </span>
+
                   <div
+                    className="course-deck-card flex h-[472px] w-full flex-col overflow-hidden rounded-[20px]"
                     style={{
-                      background: `linear-gradient(180deg, ${card.accentDark} 0%, #111 100%)`,
-                      position: "relative",
-                      padding: 0,
+                      border: "1px solid rgba(255,255,255,0.10)",
+                      background: "#1A1A1A",
                     }}
                   >
-                    {card.recommended ? (
-                      <div
-                        className="absolute left-1/2 top-3 z-10 -translate-x-1/2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white"
-                        style={{ background: card.accentColor, opacity: 0.9 }}
-                      >
-                        Recommended
-                      </div>
-                    ) : null}
-
-                    <div className="relative h-[160px] w-full">
-                      <MiniChart accent={card.accentColor} />
-                      <div
-                        className="animate-float absolute left-5 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-xl text-2xl shadow-lg"
-                        style={{
-                          background: `linear-gradient(135deg, ${card.accentColor}33, ${card.accentColor}11)`,
-                          border: `1.5px solid ${card.accentColor}44`,
-                        }}
-                      >
-                        {card.emoji}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="px-6 pb-6 pt-4">
-                    <p
-                      className="mb-1 text-[11px] font-bold uppercase tracking-widest"
-                      style={{ color: card.accentColor }}
-                    >
-                      {card.levelLabel} · {card.levelTitle}
-                    </p>
-
-                    <h3 className="mb-4 text-[22px] font-black leading-tight text-white">{card.title}</h3>
-
-                    <div className="mb-5">
-                      {cardLessons.slice(0, 2).map((lesson) => (
-                        <LessonRow
-                          key={lesson.slug}
-                          title={lesson.title}
-                          isNext={lesson === nextLesson}
-                          accent={card.accentColor}
-                          done={lessonsCompleted.includes(lesson.slug)}
-                        />
-                      ))}
-                    </div>
-
-                    <Link
-                      href={nextLesson ? `/learn/${nextLesson.slug}` : card.startHref}
-                      className="block w-full rounded-[60px] py-[13px] text-center text-[15px] font-bold text-white transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+                    <div
+                      className="shrink-0"
                       style={{
-                        background: card.accentColor,
-                        boxShadow: `0 4px 20px ${card.accentColor}44`,
+                        background: `linear-gradient(180deg, ${card.accentDark} 0%, #111 100%)`,
+                        position: "relative",
+                        padding: 0,
                       }}
                     >
-                      {allDone ? "Review" : nextLesson ? "Start" : "Continue →"}
-                    </Link>
+                      <div className="flex h-6 items-center justify-center pt-3">
+                        {card.recommended ? (
+                          <span
+                            className="rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
+                            style={{ background: card.accentColor, opacity: 0.9 }}
+                          >
+                            Recommended
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="relative h-[148px] w-full">
+                        <MiniChart accent={card.accentColor} />
+                        <div
+                          className="animate-float absolute left-5 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-xl text-2xl shadow-lg"
+                          style={{
+                            background: `linear-gradient(135deg, ${card.accentColor}33, ${card.accentColor}11)`,
+                            border: `1.5px solid ${card.accentColor}44`,
+                          }}
+                        >
+                          {card.emoji}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex min-h-0 flex-1 flex-col px-5 pb-5 pt-3">
+                      <p
+                        className="mb-1 line-clamp-1 text-[10px] font-bold uppercase tracking-widest"
+                        style={{ color: card.accentColor }}
+                      >
+                        {card.levelLabel} · {card.levelTitle}
+                      </p>
+
+                      <h3 className="mb-3 line-clamp-2 min-h-[2.75rem] text-[20px] font-black leading-tight text-white">
+                        {card.title}
+                      </h3>
+
+                      <div className="mb-4 min-h-[6.5rem] flex-1">
+                        {[0, 1].map((slot) => {
+                          const lesson = cardLessons[slot];
+                          if (!lesson) {
+                            return <div key={`empty-${slot}`} className="h-[52px]" aria-hidden />;
+                          }
+                          return (
+                            <LessonRow
+                              key={lesson.slug}
+                              title={lesson.title}
+                              isNext={lesson === nextLesson}
+                              accent={card.accentColor}
+                              done={lessonsCompleted.includes(lesson.slug)}
+                            />
+                          );
+                        })}
+                      </div>
+
+                      <Link
+                        href={nextLesson ? `/learn/${nextLesson.slug}` : card.startHref}
+                        className="block w-full rounded-[60px] py-[13px] text-center text-[15px] font-bold text-white transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+                        style={{
+                          background: card.accentColor,
+                          boxShadow: `0 4px 20px ${card.accentColor}44`,
+                        }}
+                      >
+                        {allDone ? "Review" : nextLesson ? "Start" : "Continue →"}
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </SwiperSlide>
@@ -326,7 +341,7 @@ export default function CourseCardStack() {
         </Swiper>
       </div>
 
-      <div className="mt-5 flex min-w-0 gap-1.5 sm:gap-2">
+      <div className="mt-5 flex items-center justify-center gap-2 sm:gap-2.5">
         {CARDS.map((card, i) => {
           const isActive = i === activeIdx;
           return (
@@ -334,25 +349,17 @@ export default function CourseCardStack() {
               key={card.id}
               type="button"
               onClick={() => goTo(i)}
-              className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[14px] px-0.5 py-2.5 transition-all duration-200 sm:gap-1.5 sm:py-3"
+              aria-label={card.title}
+              aria-current={isActive ? "true" : undefined}
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] bg-[rgba(255,255,255,0.04)] transition-all duration-200 sm:h-[52px] sm:w-[52px]"
               style={{
-                background: isActive ? `${card.accentColor}18` : "rgba(255,255,255,0.04)",
-                border: isActive ? `2px solid ${card.accentColor}88` : "1px solid rgba(255,255,255,0.08)",
-                cursor: "pointer",
-                boxShadow: isActive ? `inset 0 0 12px ${card.accentColor}15` : "none",
+                border: isActive
+                  ? `2px solid ${card.accentColor}`
+                  : "1px solid rgba(255,255,255,0.10)",
+                boxShadow: isActive ? `0 0 0 1px ${card.accentColor}22` : "none",
               }}
             >
-              <span className="text-xl">{card.emoji}</span>
-              <span
-                className="line-clamp-2 w-full max-w-full break-words text-center text-[9px] leading-tight sm:text-[10px]"
-                style={{
-                  color: isActive ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.35)",
-                  fontWeight: isActive ? 600 : 400,
-                }}
-                title={card.title}
-              >
-                {card.title.split(" ").slice(0, 2).join(" ")}
-              </span>
+              <span className="text-xl leading-none sm:text-[22px]">{card.emoji}</span>
             </button>
           );
         })}

@@ -22,6 +22,25 @@ export function SettingsClient({ fullName, email }: { fullName: string; email: s
   const [dailyGoal, setDailyGoal] = useState("1 lesson");
   const [tradingStyle, setTradingStyle] = useState("All");
   const { isPremium, plan } = useSubscription();
+  const [upgrading, setUpgrading] = useState(false);
+
+  async function startCheckout() {
+    setUpgrading(true);
+    try {
+      const response = await fetch("/api/stripe/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          priceId: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID ?? "",
+          returnUrl: window.location.origin,
+        }),
+      });
+      const data = (await response.json()) as { url?: string };
+      if (data.url) window.location.href = data.url;
+    } finally {
+      setUpgrading(false);
+    }
+  }
 
   useEffect(() => {
     setSounds(readBool("tv_sounds"));
@@ -43,7 +62,7 @@ export function SettingsClient({ fullName, email }: { fullName: string; email: s
           <h2 className="text-xl font-semibold">Account</h2>
           <p className="mt-2 text-sm text-text-muted">{fullName}</p>
           <p className="text-sm text-text-muted">{email}</p>
-          <Link href="/user-profile" className="mt-4 inline-block rounded-2xl border border-border px-4 py-2">
+          <Link href="/profile" className="mt-4 inline-block rounded-2xl border border-border px-4 py-2">
             Manage Account
           </Link>
         </Card>
@@ -137,9 +156,14 @@ export function SettingsClient({ fullName, email }: { fullName: string; email: s
               Manage subscription
             </button>
           ) : (
-            <Link href="/pricing" className="mt-4 inline-block rounded-2xl bg-accent px-6 py-3 font-semibold text-slate-900">
-              Upgrade to Premium
-            </Link>
+            <button
+              type="button"
+              onClick={() => void startCheckout()}
+              disabled={upgrading}
+              className="mt-4 rounded-2xl bg-accent px-6 py-3 font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {upgrading ? "Redirecting…" : "Upgrade to Premium"}
+            </button>
           )}
         </Card>
       </section>

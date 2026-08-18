@@ -1,17 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { FreeMode } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/free-mode";
 import { AppNav } from "@/components/layout/AppNav";
+import { PAGE_SHELL_CLASSES } from "@/components/layout/pageShell";
 import { Button } from "@/components/ui/Button";
 import { LibraryCourseCard } from "@/components/library/LibraryCourseCard";
 import { LibraryVideoCard } from "@/components/library/LibraryVideoCard";
 import { YouTubePlayerModal } from "@/components/library/YouTubePlayerModal";
 import type { LibraryCourse, LibraryResumeItem, LibraryVideo } from "@/lib/data/library";
+import {
+  computeLibraryCourseCardProgress,
+  type LibraryCourseCardProgress,
+} from "@/lib/libraryCourseProgress";
+import { buildLibraryCoursePracticeSummary } from "@/lib/libraryProgress";
+import { readLocalLibraryProgress } from "@/lib/libraryProgressLocal";
 
 type FilterMode = "all" | "courses" | "videos";
 
@@ -29,16 +37,54 @@ export function LibraryPageClient({
   standaloneVideos,
   tags,
   resumeItems,
+  courseProgressBySlug: initialCourseProgressBySlug,
 }: {
   courses: LibraryCourse[];
   standaloneVideos: LibraryVideo[];
   tags: string[];
   resumeItems: LibraryResumeItem[];
+  courseProgressBySlug: Record<string, LibraryCourseCardProgress>;
 }) {
+  const router = useRouter();
+  const [courseProgressBySlug, setCourseProgressBySlug] = useState(initialCourseProgressBySlug);
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<FilterMode>("all");
   const [selectedTag, setSelectedTag] = useState<string>("All");
   const [playingVideo, setPlayingVideo] = useState<LibraryVideo | null>(null);
+
+  useEffect(() => {
+    setCourseProgressBySlug(initialCourseProgressBySlug);
+  }, [initialCourseProgressBySlug]);
+
+  useEffect(() => {
+    const merged = { ...initialCourseProgressBySlug };
+    let changed = false;
+    for (const course of courses) {
+      const localRows = readLocalLibraryProgress(course.slug);
+      if (!localRows.length) continue;
+      const summary = buildLibraryCoursePracticeSummary(course, localRows);
+      const localProgress = computeLibraryCourseCardProgress(course, {
+        lastVideoId: null,
+        practiceSummary: summary,
+      });
+      const current = merged[course.slug];
+      if (!current || localProgress.completedCount > current.completedCount) {
+        merged[course.slug] = localProgress;
+        changed = true;
+      }
+    }
+    if (changed) setCourseProgressBySlug(merged);
+  }, [courses, initialCourseProgressBySlug]);
+
+  useEffect(() => {
+    const refresh = () => router.refresh();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("tv-library-progress", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("tv-library-progress", refresh);
+    };
+  }, [router]);
 
   const allTags = useMemo(() => ["All", ...tags], [tags]);
 
@@ -70,7 +116,7 @@ export function LibraryPageClient({
   }
 
   const swiperCommon = {
-    modules: [FreeMode] as const,
+    modules: [FreeMode],
     freeMode: true,
     slidesPerView: "auto" as const,
     spaceBetween: 16,
@@ -80,7 +126,7 @@ export function LibraryPageClient({
   return (
     <main className="min-h-screen bg-[#141414]">
       <AppNav />
-      <section className="mx-auto max-w-6xl px-4 py-8">
+      <section className={`${PAGE_SHELL_CLASSES} py-8`}>
         {resumeItems.length > 0 ? (
           <section className="mb-10">
             <h2 className="mb-1 text-xl font-bold text-white">Resume learning</h2>
@@ -164,9 +210,13 @@ export function LibraryPageClient({
           <section className="mb-10">
             <h2 className="mb-3 text-xl font-bold text-white">Courses</h2>
             <Swiper {...swiperCommon}>
-              {filteredCourses.map((course) => (
+              {filteredCourses.map((course, index) => (
                 <SwiperSlide key={course.id} className={slideClass}>
-                  <LibraryCourseCard course={course} />
+                  <LibraryCourseCard
+                    course={course}
+                    index={index}
+                    progress={courseProgressBySlug[course.slug]}
+                  />
                 </SwiperSlide>
               ))}
             </Swiper>

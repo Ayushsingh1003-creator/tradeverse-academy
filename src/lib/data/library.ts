@@ -1,6 +1,9 @@
 export type LibraryVideo = {
   id: string;
+  type?: "video" | "learn";
+  learnSlug?: string | null;
   youtubeVideoId: string;
+  youtubeVideoIdHi?: string | null;
   title: string;
   description: string;
   thumbnailUrl: string;

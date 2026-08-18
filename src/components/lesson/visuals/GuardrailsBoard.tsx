@@ -24,7 +24,7 @@ export function GuardrailsBoard() {
     <div className="mx-auto max-w-2xl space-y-4">
       <div className="rounded-2xl border border-border bg-surface p-4">
         <p className="text-sm font-semibold text-white">My Trading Guardrails</p>
-        <p className="text-xs text-text-muted">Tick the rules you'll commit to right now.</p>
+        <p className="text-xs text-text-muted">Tick the rules you&apos;ll commit to right now.</p>
         <div className="mt-3 space-y-2">
           {state.map((r) => (
             <button

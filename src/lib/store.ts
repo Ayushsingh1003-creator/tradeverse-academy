@@ -57,11 +57,14 @@ export type CompleteLessonResult = {
 
 type UserState = {
   hydrated: boolean;
+  /** Active Clerk user id used for localStorage isolation (`null` = signed out / anonymous). */
   activeClerkUserId: string | null;
   xp: number;
   level: number;
   /** Competitive league tier id (bronze, silver, …) synced from server when signed in. */
   league: string;
+  /** From server `User.role` / admin check — controls Admin nav link. */
+  isAdmin: boolean;
   streak: number;
   lastActiveDate: string | null;
   streakHistory: string[];
@@ -76,8 +79,6 @@ type UserState = {
   /** Set only when the user levels up via earned XP (not hydrate / server sync). */
   pendingLevelUp: number | null;
   clearLevelUp: () => void;
-  /** Active Clerk user id used for localStorage isolation (`null` = signed out / anonymous). */
-  activeClerkUserId: string | null;
   hydrate: () => void;
   /** Load persisted progress for the signed-in Clerk account (or anonymous when signed out). */
   switchUserStore: (clerkUserId: string | null) => void;
@@ -88,6 +89,7 @@ type UserState = {
       league?: string;
       streak?: number;
       streakLocalDate?: string | null;
+      isAdmin?: boolean;
     },
     opts?: { replace?: boolean },
   ) => void;
@@ -148,8 +150,7 @@ function applyParsedPersisted(
     return {};
   }
   return {
-    xp: parsed.xp,
-    level: parsed.level,
+    ...(clerkUserId ? {} : { xp: parsed.xp, level: parsed.level }),
     league: parsed.league ?? defaultState.league,
     streak: parsed.streak,
     lastActiveDate: parsed.lastActiveDate,
@@ -167,9 +168,10 @@ function applyParsedPersisted(
 const defaultState = {
   hydrated: false,
   activeClerkUserId: null as string | null,
-  xp: 120,
+  xp: 0,
   level: 1,
   league: "bronze",
+  isAdmin: false,
   streak: 0,
   lastActiveDate: null as string | null,
   streakHistory: [] as string[],
@@ -202,17 +204,26 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     const parsed = readPersistedUserStore(activeStorageKey);
     if (!parsed) {
-      set({ ...defaultState, activeClerkUserId: clerkUserId, hydrated: true });
+      set({
+        ...defaultState,
+        activeClerkUserId: clerkUserId,
+        hydrated: true,
+        ...(clerkUserId ? {} : { xp: 0 }),
+      });
       persistEnabled = true;
       return;
     }
 
     const partial = applyParsedPersisted(parsed, clerkUserId);
-    if (!("lastActiveDate" in parsed) && typeof parsed.streak === "number" && parsed.streak > 0) {
+    const legacyParsed = parsed as Partial<PersistedUserStore>;
+    if (
+      legacyParsed.lastActiveDate === undefined &&
+      typeof legacyParsed.streak === "number" &&
+      legacyParsed.streak > 0
+    ) {
       partial.streak = 0;
     }
     const lastActive = partial.lastActiveDate ?? null;
-    const today = todayLocalISO();
 
     if (isStreakBroken(lastActive)) {
       const freezeCount = partial.streakFreezeCount ?? 0;
@@ -247,13 +258,14 @@ export const useUserStore = create<UserState>((set, get) => ({
       ...partial,
       activeClerkUserId: clerkUserId,
       hydrated: true,
+      ...(clerkUserId ? {} : { xp: 0 }),
     });
     persistEnabled = true;
   },
   applyServerProfile: (data, opts) => {
-    const replace = opts?.replace ?? false;
+    const replace = opts?.replace ?? true;
     set((state) => {
-      const nextXp = replace ? data.xp : Math.max(state.xp, data.xp);
+      const nextXp = replace ? data.xp : Math.min(state.xp, data.xp);
       const { level } = getLevelFromTotalXp(nextXp);
       const streakFields =
         data.streak !== undefined || data.streakLocalDate !== undefined
@@ -276,6 +288,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         ...(streakFields
           ? { streak: streakFields.streak, lastActiveDate: streakFields.lastActiveDate }
           : {}),
+        ...(data.isAdmin !== undefined ? { isAdmin: data.isAdmin } : {}),
       };
     });
   },
@@ -305,6 +318,20 @@ export const useUserStore = create<UserState>((set, get) => ({
         ...(streakReasons.has(opts.reason)
           ? { activityLocalDate: todayLocalISO(), ...(tz ? { ianaTimezone: tz } : {}) }
           : {}),
+      }).then((server) => {
+        if (!server) return;
+        set((state) => {
+          const leveledUp = server.level > state.level;
+          return {
+            xp: server.xp,
+            level: server.level,
+            ...(leveledUp ? { pendingLevelUp: server.level } : {}),
+            ...(server.streak !== undefined ? { streak: server.streak } : {}),
+            ...(server.streakLocalDate !== undefined
+              ? { lastActiveDate: server.streakLocalDate ?? state.lastActiveDate }
+              : {}),
+          };
+        });
       });
     }
     return { leveledUp };

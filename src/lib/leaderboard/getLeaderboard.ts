@@ -1,12 +1,10 @@
 import { db } from "@/lib/db";
 import { ensureActiveSeason, getActiveSeason } from "@/lib/league/season";
 import type { LeaderboardResult, LeaderboardRow, LeaderboardTab } from "@/lib/leaderboard/types";
-
-const TAB_SET = new Set<LeaderboardTab>(["weekly", "all-time", "friends", "country"]);
+import { parseLeaderboardTabParam } from "@/lib/leaderboard/types";
 
 export function parseLeaderboardTab(raw: string | null): LeaderboardTab {
-  if (raw && TAB_SET.has(raw as LeaderboardTab)) return raw as LeaderboardTab;
-  return "weekly";
+  return parseLeaderboardTabParam(raw);
 }
 
 function rankRows(
@@ -108,11 +106,12 @@ export async function getLeaderboard(tab: LeaderboardTab, meId: string): Promise
   }
 
   if (tab === "all-time") {
-    const users = await db.user.findMany({
+    type LbUser = { id: string; name: string; avatar: string | null; xp: number; level: number; league: string };
+    const users = (await db.user.findMany({
       select: { id: true, name: true, avatar: true, xp: true, level: true, league: true },
-      orderBy: [{ xp: "desc" }, { name: "asc" }],
+      orderBy: { xp: "desc" },
       take: 50,
-    });
+    })) as LbUser[];
 
     const rows: LeaderboardRow[] = users.map((u, i) => ({
       rank: i + 1,
@@ -143,7 +142,9 @@ export async function getLeaderboard(tab: LeaderboardTab, meId: string): Promise
       select: { followingId: true },
     });
 
-    const friendIds = [...new Set([meId, ...follows.map((f) => f.followingId)])];
+    const friendIds = [
+      ...new Set([meId, ...follows.map((f: { followingId: string }) => f.followingId)]),
+    ];
 
     if (follows.length === 0) {
       const self = await db.user.findUnique({
@@ -203,12 +204,13 @@ export async function getLeaderboard(tab: LeaderboardTab, meId: string): Promise
     };
   }
 
-  const users = await db.user.findMany({
+  type LbUser = { id: string; name: string; avatar: string | null; xp: number; level: number; league: string };
+  const users = (await db.user.findMany({
     where: { country: me.country },
     select: { id: true, name: true, avatar: true, xp: true, level: true, league: true },
     orderBy: [{ xp: "desc" }, { name: "asc" }],
     take: 50,
-  });
+  })) as LbUser[];
 
   const rows: LeaderboardRow[] = users.map((u, i) => ({
     rank: i + 1,

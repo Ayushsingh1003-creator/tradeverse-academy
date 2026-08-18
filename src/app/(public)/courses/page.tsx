@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect } from "react";
+import { PAGE_SHELL_CLASSES } from "@/components/layout/pageShell";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { COURSES, LEARNING_PATHS } from "@/lib/data/courses";
 import { useUserStore } from "@/lib/store";
@@ -24,7 +25,7 @@ export default function CoursesPage() {
   return (
     <div className="course-design-cards min-h-screen bg-[#232228] text-white">
       <PublicNav />
-      <div className="mx-auto max-w-[1240px] px-4 py-8 md:px-8 md:py-10">
+      <div className={`${PAGE_SHELL_CLASSES} py-8 md:py-10`}>
         <div className="mb-8 border-b border-white/10 pb-6">
           <h1 className="text-3xl font-black tracking-tight md:text-4xl">Courses</h1>
           <p className="mt-1 text-sm text-white/45 md:text-base">Pick a course and track your progress</p>

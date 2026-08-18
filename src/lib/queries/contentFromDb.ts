@@ -1,10 +1,12 @@
 import { db } from "@/lib/db";
-import { getLibraryCourseBySlug, getLibraryCourses, getStandaloneVideos } from "@/lib/data/library";
-import { getLiveClassBySlug, getLiveClasses } from "@/lib/data/liveClasses";
-import { mapDbLibraryCourse } from "@/lib/libraryDbMapper";
+import { getLibraryCourseBySlug } from "@/lib/data/library";
+import { getLiveClassBySlug } from "@/lib/data/liveClasses";
+import type { LibraryCourse, LibraryVideo } from "@/lib/data/library";
+import type { LiveClassCourse } from "@/lib/data/liveClasses";
+import { mapDbLibraryCourse, mapDbStandaloneVideo } from "@/lib/libraryDbMapper";
 import { mapLiveCohortRow } from "@/lib/liveCohortMapper";
 
-export async function getLibraryCoursesFromDb(): Promise<ReturnType<typeof getLibraryCourses>> {
+export async function getLibraryCoursesFromDb(): Promise<LibraryCourse[]> {
   try {
     const rows = await db.libraryCourse.findMany({
       where: { published: true },
@@ -15,7 +17,7 @@ export async function getLibraryCoursesFromDb(): Promise<ReturnType<typeof getLi
   } catch {
     /* DB unavailable */
   }
-  return getLibraryCourses();
+  return [];
 }
 
 export async function getLibraryCourseBySlugFromDb(slug: string) {
@@ -31,7 +33,20 @@ export async function getLibraryCourseBySlugFromDb(slug: string) {
   return getLibraryCourseBySlug(slug);
 }
 
-export async function getLiveClassesFromDb() {
+export async function getStandaloneVideosFromDb(): Promise<LibraryVideo[]> {
+  try {
+    const rows = await db.libraryStandaloneVideo.findMany({
+      where: { published: true },
+      orderBy: { order: "asc" },
+    });
+    if (rows.length > 0) return rows.map(mapDbStandaloneVideo);
+  } catch {
+    /* DB unavailable */
+  }
+  return [];
+}
+
+export async function getLiveClassesFromDb(): Promise<LiveClassCourse[]> {
   try {
     const rows = await db.liveCohort.findMany({
       where: { status: "published" },
@@ -41,7 +56,7 @@ export async function getLiveClassesFromDb() {
   } catch {
     /* DB unavailable */
   }
-  return getLiveClasses();
+  return [];
 }
 
 export async function getLiveClassBySlugFromDb(slug: string) {

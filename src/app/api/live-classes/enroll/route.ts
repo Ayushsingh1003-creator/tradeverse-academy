@@ -1,18 +1,17 @@
+import { requireDbUser } from "@/lib/auth/api";
 import { NextRequest, NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { isClerkConfigured } from "@/lib/clerkEnabled";
+import { isAuthConfigured } from "@/lib/auth/enabled";
 import { stripe } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
-  if (!isClerkConfigured()) {
+  if (!isAuthConfigured()) {
     return NextResponse.json({ error: "Sign-in is unavailable in this environment" }, { status: 401 });
   }
 
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authResult = await requireDbUser();
+  if (authResult.error) return authResult.error;
+  const { authUserId: userId, dbUser } = authResult;
 
   const body = (await req.json()) as { courseSlug?: string; returnUrl?: string };
   const courseSlug = String(body.courseSlug ?? "");
@@ -29,10 +28,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Enrollment is unavailable for this class" }, { status: 400 });
   }
 
-  const user = await currentUser();
   const customer = await stripe.customers.create({
-    email: user?.emailAddresses?.[0]?.emailAddress,
-    metadata: { clerkUserId: userId, liveClassSlug: courseRow.slug },
+    email: dbUser.email,
+    metadata: { authUserId: userId, liveClassSlug: courseRow.slug },
   });
 
   const origin = returnUrl || req.nextUrl.origin;
@@ -42,7 +40,7 @@ export async function POST(req: NextRequest) {
     line_items: [{ price: courseRow.stripePriceId, quantity: 1 }],
     success_url: `${origin}/live-classes/${courseRow.slug}?enrolled=1`,
     cancel_url: `${origin}/live-classes/${courseRow.slug}?enrolled=0`,
-    metadata: { clerkUserId: userId, liveClassSlug: courseRow.slug },
+    metadata: { authUserId: userId, liveClassSlug: courseRow.slug },
   });
 
   return NextResponse.json({ url: session.url });

@@ -1,10 +1,10 @@
 import { db } from "@/lib/db";
+import type { User } from "@/lib/db/schema";
 import { UserRowActions } from "./UserRowActions";
 
 export default async function AdminUsersPage({ searchParams }: { searchParams: { q?: string } }) {
   const q = searchParams.q ?? "";
-  const users = await db.user.findMany({
-    where: q ? { OR: [{ email: { contains: q } }, { name: { contains: q } }] } : {},
+  const users = (await db.user.findMany({
     orderBy: { createdAt: "desc" },
     take: 100,
     select: {
@@ -12,14 +12,14 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: {
       name: true,
       email: true,
       isPremium: true,
-      clerkUserId: true,
+      authUserId: true,
       xp: true,
       streak: true,
       streakLocalDate: true,
       lastActiveDate: true,
       createdAt: true,
     },
-  });
+  })) as User[];
 
   return (
     <div>
@@ -55,8 +55,8 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: {
                   <span className={u.isPremium ? "text-[#88C9F7]" : "text-[#666]"}>
                     {u.isPremium ? "Premium" : "Free"}
                   </span>
-                  {!u.clerkUserId ? (
-                    <span className="ml-1 text-[10px] text-amber-400" title="No Clerk ID — premium sync may be limited">
+                  {!u.authUserId ? (
+                    <span className="ml-1 text-[10px] text-amber-400" title="No auth account linked">
                       ⚠
                     </span>
                   ) : null}

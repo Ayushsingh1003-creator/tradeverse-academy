@@ -18,8 +18,14 @@ import { getCoachReply } from "@/lib/aiCoach";
 import { isSoundEnabled, persistSoundPreference, resumeAudioContext, sound } from "@/lib/sounds";
 import type { Lesson } from "@/lib/data/lessons";
 import { COURSES } from "@/lib/data/courses";
+import { buildLibraryCourseHref } from "@/lib/libraryReturn";
+import {
+  readInitialLessonResumeState,
+  shouldResumeLessonToCompletionSplash,
+} from "@/lib/libraryLearnResume";
+import { postLibraryLearnProgress } from "@/lib/libraryProgressClient";
+import { readLocalLibraryProgress } from "@/lib/libraryProgressLocal";
 import { useSubscription } from "@/lib/hooks/useSubscription";
-import { MENTOR_NAME, MENTOR_TAGLINE } from "@/lib/mentorPersona";
 import { suggestedChipsForPage } from "@/lib/lessonAiResponses";
 import { useUserStore } from "@/lib/store";
 import type {
@@ -32,7 +38,7 @@ import type {
   PretestPage,
   TrueFalsePage,
 } from "@/types/lessonPage";
-import { CoachVoiceInput } from "@/components/lesson/CoachVoiceInput";
+import { LessonCoachAside, LessonCoachMobile } from "@/components/lesson/LessonCoachPanel";
 import { prepareCoachTts, speakCoachText, stopVoiceCoach } from "@/lib/voiceCoach";
 import { textForSpeech } from "@/lib/speechText";
 
@@ -70,7 +76,16 @@ const CALLOUT_STYLES = {
   rule: { border: "border-purple-500/40 bg-purple-500/10", icon: "📌", label: "Trading Rule:" },
 } as const;
 
-export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPlaybackId?: string | null }) {
+export function LessonPlayer({
+  lesson,
+  muxPlaybackId,
+  libraryCourseSlug,
+}: {
+  lesson: Lesson;
+  muxPlaybackId?: string | null;
+  /** Library course slug from `?library=` when opened from `/library/[slug]`. */
+  libraryCourseSlug?: string;
+}) {
   const router = useRouter();
   const { push } = useToast();
   const { trigger } = useXPFloat();
@@ -78,12 +93,19 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
   const completeLesson = useUserStore((s) => s.completeLesson);
   const unlockAchievement = useUserStore((s) => s.unlockAchievement);
   const lessonsCompleted = useUserStore((s) => s.lessonsCompleted);
+  const initialResume = readInitialLessonResumeState(
+    libraryCourseSlug,
+    lesson.slug,
+    useUserStore.getState().lessonsCompleted,
+  );
 
   const pages = lesson.pages;
   const [pageIndex, setPageIndex] = useState(0);
   const [pretestReveal, setPretestReveal] = useState(false);
   const [pretestPick, setPretestPick] = useState<number | null>(null);
-  const [phase, setPhase] = useState<"lesson" | "splash" | "practice" | "practiceSummary">("lesson");
+  const [phase, setPhase] = useState<"lesson" | "splash" | "practice" | "practiceSummary">(
+    initialResume.phase,
+  );
   const [videoSkip, setVideoSkip] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiInput, setAiInput] = useState("");
@@ -91,10 +113,11 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
   const [aiLoading, setAiLoading] = useState(false);
   const [aiLoadingPhase, setAiLoadingPhase] = useState<"thinking" | "voice" | null>(null);
   const [voiceOn, setVoiceOn] = useState(true);
-  const [coachSpeaking, setCoachSpeaking] = useState(false);
+  const [, setCoachSpeaking] = useState(false);
   const [practiceIx, setPracticeIx] = useState(0);
   const [practiceCorrect, setPracticeCorrect] = useState(0);
-  const [lessonPersisted, setLessonPersisted] = useState(false);
+  const [lessonPersisted, setLessonPersisted] = useState(initialResume.lessonPersisted);
+  const [splashFromResume, setSplashFromResume] = useState(initialResume.splashFromResume);
 
   const [mcPick, setMcPick] = useState<number | null>(null);
   const [mcChecked, setMcChecked] = useState(false);
@@ -125,14 +148,32 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
 
   const page = pages[pageIndex]!;
   const course = COURSES.find((c) => c.id === lesson.courseId);
-  const backToCourseHref = course ? `/courses/${course.slug}` : "/courses";
+  const fromLibrary = Boolean(libraryCourseSlug?.trim());
+  const libraryBackHref = fromLibrary ? buildLibraryCourseHref(libraryCourseSlug!) : null;
+  const backToCourseHref = libraryBackHref ?? (course ? `/courses/${course.slug}` : "/courses");
   // Final review = the last lesson of the course (or any level-review slug).
   const isFinalReview = course
     ? course.lessonSlugs[course.lessonSlugs.length - 1] === lesson.slug ||
       course.levels.some((l) => l.reviewSlug === lesson.slug)
     : false;
   // Where to send the user AFTER they fully complete the lesson (and any practice).
-  const postCompletionHref = isFinalReview ? "/courses" : backToCourseHref;
+  const postCompletionHref = fromLibrary
+    ? libraryBackHref!
+    : isFinalReview
+      ? "/courses"
+      : backToCourseHref;
+  const completionExitLabel = fromLibrary
+    ? "Back to course"
+    : isFinalReview
+      ? "Continue to all paths →"
+      : lesson.practice?.length
+        ? "I'll practice later"
+        : "Back to course";
+  const practiceSummaryExitLabel = fromLibrary
+    ? "Back to course"
+    : isFinalReview
+      ? "Continue to all paths →"
+      : "Next Lesson →";
   const firstIsPretest = pages[0]?.type === "pretest";
   const showPretestOverlay = phase === "lesson" && pageIndex === 0 && firstIsPretest;
   const showMainContent = phase === "lesson" && (pageIndex > 0 || !firstIsPretest);
@@ -169,12 +210,53 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
   }, []);
 
   useEffect(() => {
-    if (phase !== "splash") return;
+    if (phase !== "splash" || splashFromResume) return;
     sound.lessonComplete();
     setSplashConfetti(true);
     const t = window.setTimeout(() => setSplashConfetti(false), 2000);
     return () => window.clearTimeout(t);
-  }, [phase]);
+  }, [phase, splashFromResume]);
+
+  useEffect(() => {
+    if (!libraryCourseSlug?.trim()) return;
+
+    const localEntry = readLocalLibraryProgress(libraryCourseSlug.trim()).find(
+      (row) => row.learnSlug === lesson.slug,
+    );
+
+    const applyResume = (entry?: { lessonCompleted: boolean }) => {
+      if (!shouldResumeLessonToCompletionSplash(entry, lesson.slug, lessonsCompleted)) return;
+      setSplashFromResume(true);
+      setLessonPersisted(true);
+      setPhase("splash");
+    };
+
+    if (localEntry) {
+      applyResume(localEntry);
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/library/progress?slug=${encodeURIComponent(libraryCourseSlug.trim())}`,
+          { credentials: "include", cache: "no-store" },
+        );
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as {
+          summary?: { entries: { learnSlug: string; lessonCompleted: boolean; practiceTotal: number }[] };
+        };
+        const serverEntry = data.summary?.entries.find((e) => e.learnSlug === lesson.slug);
+        if (serverEntry) applyResume(serverEntry);
+      } catch {
+        /* keep local resume */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [libraryCourseSlug, lesson.slug, lessonsCompleted]);
 
   useEffect(() => {
     setMcPick(null);
@@ -232,10 +314,15 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
 
     setAiLoading(true);
     setAiLoadingPhase("thinking");
+    const lessonTopic =
+      phase === "practice"
+        ? `practice-${lesson.practice?.[practiceIx]?.type ?? "question"}`
+        : String(currentLessonTopic);
+
     const result = await getCoachReply({
       prompt,
       lessonTitle: lesson.title,
-      lessonTopic: String(currentLessonTopic),
+      lessonTopic,
       history: historyForRequest,
       isWrongAttempt,
     });
@@ -264,9 +351,38 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
     });
   };
 
+  const saveLibraryLearnProgress = (opts: {
+    practiceCorrect?: number;
+    practiceTotal?: number;
+    lessonCompleted?: boolean;
+  }) => {
+    if (!libraryCourseSlug?.trim()) return;
+    void postLibraryLearnProgress({
+      courseSlug: libraryCourseSlug.trim(),
+      learnSlug: lesson.slug,
+      practiceCorrect: opts.practiceCorrect ?? 0,
+      practiceTotal: opts.practiceTotal ?? 0,
+      lessonCompleted: opts.lessonCompleted ?? true,
+    });
+  };
+
+  useEffect(() => {
+    if (!libraryCourseSlug?.trim() || phase !== "practiceSummary") return;
+    const total = lesson.practice?.length ?? 0;
+    if (total === 0) return;
+    saveLibraryLearnProgress({
+      practiceCorrect,
+      practiceTotal: total,
+      lessonCompleted: true,
+    });
+  }, [phase, libraryCourseSlug, practiceCorrect, lesson.practice?.length, lesson.slug]);
+
   const persistLessonIfNeeded = () => {
     if (lessonPersisted) return;
     setLessonPersisted(true);
+    if (libraryCourseSlug?.trim()) {
+      saveLibraryLearnProgress({ lessonCompleted: true });
+    }
     const result = completeLesson({ lessonSlug: lesson.slug, score: 100, xpEarned: lesson.xpReward });
     if (typeof window !== "undefined") {
       window.localStorage.setItem("tv_first_lesson_done", "1");
@@ -290,6 +406,18 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
     if (u) push(`🏆 ${u.title}`, "success");
   };
 
+  const restartLesson = () => {
+    setSplashFromResume(false);
+    setSplashConfetti(false);
+    setPhase("lesson");
+    setPageIndex(0);
+    setPretestReveal(false);
+    setPretestPick(null);
+    setPracticeIx(0);
+    setPracticeCorrect(0);
+    setVideoSkip(false);
+  };
+
   const goNextPage = () => {
     if (!lesson.isFree && !isPremium && pageIndex >= 1) {
       setBlockedPremium(true);
@@ -297,6 +425,7 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
     }
     if (pageIndex >= pages.length - 1) {
       persistLessonIfNeeded();
+      setSplashFromResume(false);
       setPhase("splash");
       return;
     }
@@ -551,6 +680,25 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
 
   const practiceQ = lesson.practice?.[practiceIx];
 
+  const coachSuggestedChips =
+    phase === "practice"
+      ? suggestedChipsForPage("practice")
+      : suggestedChipsForPage(page.type, page.type === "visual" ? page.visualId : undefined);
+
+  const coachPanelProps = {
+    aiHistory,
+    aiLoading,
+    aiLoadingPhase,
+    aiInput,
+    voiceOn,
+    suggestedChips: coachSuggestedChips,
+    onChipClick: (text: string) => void submitCoachPrompt({ text, appendUser: true }),
+    onInputChange: setAiInput,
+    onToggleVoice: () => setVoiceOn((v) => !v),
+    onSubmit: () => void submitCoachPrompt({ text: aiInput, appendUser: true }),
+    onTranscript: (text: string) => void submitCoachPrompt({ text, appendUser: true }),
+  };
+
   const advancePractice = () => {
     sound.pageTurn();
     if (!lesson.practice) return;
@@ -786,25 +934,44 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
             {course.title}: {course.lessonSlugs.filter((s) => lessonsCompleted.includes(s)).length}/{course.lessonSlugs.length} lessons in path
           </p>
         ) : null}
-        <div className="mt-10 flex w-full max-w-sm flex-col gap-3 sm:flex-row sm:justify-center">
-          {lesson.practice?.length ? (
-            <button
-              type="button"
-              className="rounded-2xl bg-[#456DFF] px-8 py-4 text-lg font-black text-white shadow-md transition hover:brightness-110"
-              onClick={() => {
-                sound.pageTurn();
-                setPhase("practice");
-              }}
-            >
-              Practice now ⚡
-            </button>
-          ) : null}
-          <Link
-            href={postCompletionHref}
-            className="rounded-2xl border border-border px-8 py-4 font-bold transition hover:bg-surface2"
+        <div className="mt-10 flex w-full max-w-sm flex-col gap-3">
+          <button
+            type="button"
+            className="rounded-2xl border border-border px-8 py-3.5 font-semibold transition hover:bg-surface2"
+            onClick={restartLesson}
           >
-            {isFinalReview ? "Continue to all paths →" : lesson.practice?.length ? "I'll practice later" : "Back to course"}
-          </Link>
+            Restart lesson
+          </button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+            {lesson.practice?.length ? (
+              <button
+                type="button"
+                className="rounded-2xl bg-[#456DFF] px-8 py-4 text-lg font-black text-white shadow-md transition hover:brightness-110"
+                onClick={() => {
+                  sound.pageTurn();
+                  setSplashFromResume(false);
+                  setPhase("practice");
+                }}
+              >
+                Practice now ⚡
+              </button>
+            ) : null}
+            <Link
+              href={postCompletionHref}
+              onClick={() => {
+                if (libraryCourseSlug?.trim() && lesson.practice?.length) {
+                  saveLibraryLearnProgress({
+                    practiceCorrect: 0,
+                    practiceTotal: 0,
+                    lessonCompleted: true,
+                  });
+                }
+              }}
+              className="rounded-2xl border border-border px-8 py-4 font-bold transition hover:bg-surface2"
+            >
+              {completionExitLabel}
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -825,7 +992,7 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
           href={postCompletionHref}
           className="mt-10 rounded-2xl bg-accent px-8 py-4 font-semibold text-slate-900"
         >
-          {isFinalReview ? "Continue to all paths →" : "Next Lesson →"}
+          {practiceSummaryExitLabel}
         </Link>
       </div>
     );
@@ -834,20 +1001,27 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
   if (phase === "practice" && practiceQ) {
     return (
       <div className="fixed inset-0 z-[200] flex flex-col bg-[#141414] text-text-primary">
-        <header className="flex items-center justify-between border-b border-border px-4 py-3">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4 py-3">
           <span className="text-sm font-semibold text-purple-300">PRACTICE MODE</span>
           <button type="button" className="text-text-muted" onClick={() => router.push(backToCourseHref)}>
             Exit
           </button>
         </header>
-        <div className="flex flex-1 flex-col items-center overflow-y-auto px-4 py-8">
-          <div className="mb-4 flex gap-1">
-            {lesson.practice!.map((_, i) => (
-              <span key={i} className={`h-2 w-2 rounded-full ${i < practiceIx ? "bg-accent" : i === practiceIx ? "bg-white" : "bg-slate-600"}`} />
-            ))}
-          </div>
-          <div className="w-full max-w-xl">{renderPracticeQuestion(practiceQ)}</div>
+        <div className="flex min-h-0 flex-1">
+          <LessonCoachAside {...coachPanelProps} />
+          <main className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8">
+            <div className="mb-4 flex gap-1">
+              {lesson.practice!.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-2 w-2 rounded-full ${i < practiceIx ? "bg-accent" : i === practiceIx ? "bg-white" : "bg-slate-600"}`}
+                />
+              ))}
+            </div>
+            <div className="w-full max-w-xl">{renderPracticeQuestion(practiceQ)}</div>
+          </main>
         </div>
+        <LessonCoachMobile {...coachPanelProps} aiOpen={aiOpen} onOpenChange={setAiOpen} />
       </div>
     );
   }
@@ -862,8 +1036,8 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
           <div className="max-w-md rounded-2xl border border-accent/50 bg-surface p-6 text-center">
             <p className="text-accent">🔒 Premium lesson</p>
             <h3 className="mt-3 text-2xl font-bold">Unlock on Premium</h3>
-            <Link href="/pricing" className="mt-6 inline-block rounded-2xl bg-[#456DFF] px-6 py-3 font-semibold text-white">
-              View plans
+            <Link href="/settings" className="mt-6 inline-block rounded-2xl bg-[#456DFF] px-6 py-3 font-semibold text-white">
+              Upgrade in settings
             </Link>
           </div>
         </div>
@@ -947,50 +1121,7 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-[280px] shrink-0 flex-col border-r border-border bg-[#1E1E1E] md:flex">
-          <div className="border-b border-border p-4">
-            <p className="text-sm font-semibold">{MENTOR_NAME}</p>
-            <p className="mt-0.5 text-xs text-slate-400">{MENTOR_TAGLINE}</p>
-            <p className="mt-1 text-[11px] leading-snug text-slate-500">No direct quiz answers — hints only.</p>
-          </div>
-          <div className="flex-1 space-y-2 overflow-y-auto p-3 text-sm">
-            {aiHistory.map((m, i) => (
-              <div key={i} className={`rounded-xl px-3 py-2 ${m.role === "coach" ? "bg-slate-700/80" : "bg-accent/15"}`}>
-                {m.text}
-              </div>
-            ))}
-            {aiLoading ? (
-              <div className="rounded-xl bg-slate-700/50 px-3 py-2 text-slate-400">
-                {aiLoadingPhase === "voice" ? "Preparing voice…" : "Thinking…"}
-              </div>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap gap-2 border-t border-border p-3">
-            {suggestedChipsForPage(page.type, page.type === "visual" ? page.visualId : undefined).map((c) => (
-              <button
-                key={c}
-                type="button"
-                disabled={aiLoading}
-                className="rounded-full border border-slate-600 px-2 py-1 text-xs text-slate-200 transition hover:border-[#456DFF]/50 hover:bg-[#456DFF]/10 disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={() => void submitCoachPrompt({ text: c, appendUser: true })}
-              >
-                💡 {c}
-              </button>
-            ))}
-          </div>
-          <div className="border-t border-border p-3">
-            <CoachVoiceInput
-              aiInput={aiInput}
-              aiLoading={aiLoading}
-              aiLoadingLabel={aiLoadingPhase === "voice" ? "Preparing voice…" : "Thinking…"}
-              voiceOn={voiceOn}
-              onInputChange={setAiInput}
-              onToggleVoice={() => setVoiceOn((v) => !v)}
-              onSubmit={() => submitCoachPrompt({ text: aiInput, appendUser: true })}
-              onTranscript={(text) => submitCoachPrompt({ text, appendUser: true })}
-            />
-          </div>
-        </aside>
+        <LessonCoachAside {...coachPanelProps} />
 
         <main {...bindSwipe()} className="relative flex min-h-0 flex-1 flex-col">
           {muxPlaybackId && !videoSkip ? (
@@ -1166,29 +1297,7 @@ export function LessonPlayer({ lesson, muxPlaybackId }: { lesson: Lesson; muxPla
         </div>
       </footer>
 
-      <button type="button" className="fixed bottom-24 right-4 z-[130] flex h-14 w-14 items-center justify-center rounded-full bg-accent text-2xl shadow-lg md:hidden" onClick={() => setAiOpen(true)}>
-        💬
-      </button>
-      {aiOpen ? (
-        <div className="fixed inset-x-0 bottom-0 z-[170] max-h-[70vh] rounded-t-2xl border border-border bg-[#1E1E1E] p-4 md:hidden">
-          <div className="mb-2 flex justify-between">
-            <span className="font-semibold">{MENTOR_NAME}</span>
-            <button type="button" onClick={() => setAiOpen(false)}>
-              ✕
-            </button>
-          </div>
-          <CoachVoiceInput
-            aiInput={aiInput}
-            aiLoading={aiLoading}
-            aiLoadingLabel={aiLoadingPhase === "voice" ? "Preparing voice…" : "Thinking…"}
-            voiceOn={voiceOn}
-            onInputChange={setAiInput}
-            onToggleVoice={() => setVoiceOn((v) => !v)}
-            onSubmit={() => submitCoachPrompt({ text: aiInput, appendUser: true })}
-            onTranscript={(text) => submitCoachPrompt({ text, appendUser: true })}
-          />
-        </div>
-      ) : null}
+      <LessonCoachMobile {...coachPanelProps} aiOpen={aiOpen} onOpenChange={setAiOpen} />
     </div>
   );
 }

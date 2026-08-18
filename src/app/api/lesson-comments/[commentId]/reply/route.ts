@@ -1,12 +1,12 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { requireDbUser } from "@/lib/auth/api";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 export async function POST(request: Request, { params }: { params: { commentId: string } }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authResult = await requireDbUser();
+  if (authResult.error) return authResult.error;
+  const { authUserId: userId, dbUser } = authResult;
 
-  const user = await currentUser();
   const body = (await request.json()) as { body?: string };
   const text = (body.body ?? "").trim();
   if (!text || text.length > 500) {
@@ -20,7 +20,7 @@ export async function POST(request: Request, { params }: { params: { commentId: 
     data: {
       commentId: parent.id,
       clerkUserId: userId,
-      userName: user?.firstName || user?.username || "Trader",
+      userName: dbUser.name?.split(/\s+/)[0] || dbUser.name || "Trader",
       body: text,
     },
   });

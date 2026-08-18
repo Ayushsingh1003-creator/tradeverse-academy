@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { XPFloatProvider } from "@/components/ui/XPFloatManager";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
-import { isClerkConfigured } from "@/lib/clerkEnabled";
+import { isAuthConfigured } from "@/lib/auth/enabled";
 import { todayLocalISO } from "@/lib/streak";
 import { useUserStore } from "@/lib/store";
 
@@ -29,7 +29,7 @@ function AppEvents() {
 
   useEffect(() => {
     // With Clerk, ClerkUserHydration loads the correct per-account store.
-    if (!isClerkConfigured()) hydrate();
+    if (!isAuthConfigured()) hydrate();
   }, [hydrate]);
 
   useEffect(() => {

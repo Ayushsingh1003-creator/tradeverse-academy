@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthUserId } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 
 export async function POST() {
-  const { userId } = await auth();
+  const userId = await getAuthUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const sub = await db.subscription.findUnique({ where: { clerkUserId: userId } });
@@ -17,3 +17,4 @@ export async function POST() {
 
   return NextResponse.json({ url: session.url });
 }
+

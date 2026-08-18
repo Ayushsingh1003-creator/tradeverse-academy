@@ -1,22 +1,30 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import type { LibraryCourse } from "@/lib/db/schema";
 
 export default async function AdminLibraryPage() {
-  const courses = await db.libraryCourse.findMany({
+  const courses = (await db.libraryCourse.findMany({
     orderBy: { order: "asc" },
-    include: { _count: { select: { videos: true } } },
-  });
+  })) as LibraryCourse[];
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-black">Library</h1>
-        <Link
-          href="/admin/library/new"
-          className="rounded-xl bg-[#456DFF] px-4 py-2.5 text-sm font-semibold text-white"
-        >
-          + Add Course
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/library/standalone"
+            className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-white/[0.05]"
+          >
+            Independent videos
+          </Link>
+          <Link
+            href="/admin/library/new"
+            className="rounded-xl bg-[#456DFF] px-4 py-2.5 text-sm font-semibold text-white"
+          >
+            + Add Course
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -38,7 +46,7 @@ export default async function AdminLibraryPage() {
               <div>
                 <h3 className="font-bold">{course.title}</h3>
                 <p className="mt-1 text-xs text-[#666]">
-                  {course._count.videos} videos · {course.level}
+                  {course.level}
                 </p>
               </div>
               <span
@@ -60,7 +68,7 @@ export default async function AdminLibraryPage() {
                 href={`/admin/library/${course.id}/videos`}
                 className="flex-1 rounded-xl border border-white/10 py-2 text-center text-xs font-semibold hover:bg-white/[0.05]"
               >
-                Videos ({course._count.videos})
+                Videos
               </Link>
             </div>
           </div>

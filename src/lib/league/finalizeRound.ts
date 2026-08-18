@@ -17,15 +17,21 @@ export async function finalizeSeasonIfDue(): Promise<FinalizeResult> {
 
   let promotions = 0;
 
-  await db.$transaction(async (tx) => {
-    const allUsers = await tx.user.findMany({ select: { id: true, league: true } });
-    const leagueAtStart = new Map(allUsers.map((u) => [u.id, u.league]));
+  await db.$transaction(async (tx: typeof db) => {
+    const allUsers = (await tx.user.findMany({
+      select: { id: true, league: true },
+    })) as { id: string; league: string }[];
+    const leagueAtStart = new Map(
+      allUsers.map((u: { id: string; league: string }) => [u.id, u.league] as const),
+    );
 
     for (const tierId of COMPETITIVE_LEAGUE_IDS) {
       const nextId = nextLeagueTier(tierId);
       if (!nextId) continue;
 
-      const ids = allUsers.filter((u) => leagueAtStart.get(u.id) === tierId).map((u) => u.id);
+      const ids = allUsers
+        .filter((u: { id: string; league: string }) => leagueAtStart.get(u.id) === tierId)
+        .map((u: { id: string }) => u.id);
       if (ids.length === 0) continue;
 
       const sums = await tx.xpLedger.groupBy({

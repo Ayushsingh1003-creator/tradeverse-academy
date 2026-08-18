@@ -17,7 +17,7 @@ export default function MarketplacePage() {
               <button type="button" className="rounded-2xl border border-border px-3 py-2 text-sm">
                 Preview
               </button>
-              <Link href="/pricing" className="rounded-2xl bg-accent px-3 py-2 text-sm font-semibold text-slate-900">
+              <Link href="/settings" className="rounded-2xl bg-accent px-3 py-2 text-sm font-semibold text-slate-900">
                 Buy
               </Link>
             </div>

@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 export function StreakNavLink({ streak }: { streak: number }) {
-  const pathname = usePathname();
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
   const onDashboard = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
 
   return (

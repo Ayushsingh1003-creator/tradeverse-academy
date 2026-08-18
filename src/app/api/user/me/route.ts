@@ -1,19 +1,19 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+export { dynamic } from "@/lib/route-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
+import { resolveIsAdmin } from "@/lib/admin/checkAdmin";
+import { requireDbUser } from "@/lib/auth/api";
 import { db } from "@/lib/db";
-import { resolveUserForClerk } from "@/lib/server/resolveDbUser";
+import { reconcileUserXpFromLedger } from "@/lib/xp/reconcileUserXpFromLedger";
 
 const LOCAL_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const clerk = await currentUser();
-  const email = clerk?.primaryEmailAddress?.emailAddress ?? null;
-  const name = clerk?.fullName ?? clerk?.firstName ?? null;
-  const dbUser = await resolveUserForClerk(userId, email, { name });
-  if (!dbUser) return NextResponse.json({ error: "No account" }, { status: 404 });
+  const authResult = await requireDbUser();
+  if (authResult.error) return authResult.error;
+  const { dbUser, authUserId } = authResult;
+  const synced = await reconcileUserXpFromLedger(dbUser.id);
+  const isAdmin = await resolveIsAdmin(dbUser.email, authUserId);
 
   const localDate = req.nextUrl.searchParams.get("localDate")?.trim() ?? "";
   let dailyChallengeCompletedToday = false;
@@ -26,8 +26,8 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    xp: dbUser.xp,
-    level: dbUser.level,
+    xp: synced.xp,
+    level: synced.level,
     league: dbUser.league,
     name: dbUser.name,
     avatar: dbUser.avatar,
@@ -35,5 +35,9 @@ export async function GET(req: NextRequest) {
     streakLocalDate: dbUser.streakLocalDate,
     ianaTimezone: dbUser.ianaTimezone,
     dailyChallengeCompletedToday,
+    role: dbUser.role,
+    isAdmin,
+    onboardingCompleted: Boolean(dbUser.onboardingAssessmentCompletedAt),
+    traderPersona: dbUser.traderPersona ?? null,
   });
 }

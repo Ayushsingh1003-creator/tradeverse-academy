@@ -51,11 +51,14 @@ export async function getCoachReply({
       source?: "cerebras" | "fallback";
     };
 
-    if (data.fallback || !data.reply?.trim()) {
+    const reply = data.reply?.trim() ?? "";
+    const offTopicPhrase = "outside what Tradeverse Academy covers";
+
+    if (data.fallback || !reply || (isWrongAttempt && reply.includes(offTopicPhrase))) {
       return { text: fallbackCoachReply(prompt, isWrongAttempt), source: "fallback" };
     }
 
-    return { text: data.reply.trim(), source: data.source === "cerebras" ? "cerebras" : "fallback" };
+    return { text: reply, source: data.source === "cerebras" ? "cerebras" : "fallback" };
   } catch {
     return { text: fallbackCoachReply(prompt, isWrongAttempt), source: "fallback" };
   }

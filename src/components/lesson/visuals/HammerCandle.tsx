@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CandlestickSvg } from "@/components/lesson/CandlestickSvg";
-import { CANDLE_BEAR, CANDLE_BULL } from "@/lib/candleColors";
+import { CANDLE_BEAR } from "@/lib/candleColors";
 import { sound } from "@/lib/sounds";
 
 const NARRATION: Record<number, string> = {

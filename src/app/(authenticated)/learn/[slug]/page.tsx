@@ -8,9 +8,17 @@ const LessonPlayer = dynamic(
   { loading: () => <PageLoader className="min-h-screen" label="Loading lesson…" /> },
 );
 
-export default async function LearnPage({ params }: { params: { slug: string } }) {
+type PageProps = {
+  params: { slug: string };
+  searchParams: { library?: string };
+};
+
+export default async function LearnPage({ params, searchParams }: PageProps) {
   const lesson = getLessonBySlug(params.slug);
   if (!lesson) return <main className="mx-auto max-w-3xl p-8">Lesson not found.</main>;
+
+  const libraryCourseSlug =
+    typeof searchParams.library === "string" ? searchParams.library.trim() : undefined;
 
   let playbackId: string | null = null;
   try {
@@ -20,5 +28,11 @@ export default async function LearnPage({ params }: { params: { slug: string } }
     playbackId = null;
   }
 
-  return <LessonPlayer lesson={lesson} muxPlaybackId={playbackId} />;
+  return (
+    <LessonPlayer
+      lesson={lesson}
+      muxPlaybackId={playbackId}
+      libraryCourseSlug={libraryCourseSlug || undefined}
+    />
+  );
 }

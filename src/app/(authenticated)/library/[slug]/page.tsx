@@ -2,7 +2,11 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LibraryCoursePlayerClient } from "@/components/library/LibraryCoursePlayerClient";
+import { isAuthConfigured } from "@/lib/auth/enabled";
+import { getAuthUserEmail, getAuthUserId } from "@/lib/auth/session";
 import { getLibraryCourseBySlugFromDb } from "@/lib/queries/contentFromDb";
+import { getLibraryCoursePracticeSummaryForUser } from "@/lib/queries/libraryProgress";
+import { resolveUserForAuth } from "@/lib/server/resolveDbUser";
 
 type PageProps = {
   params: { slug: string };
@@ -28,13 +32,32 @@ function CoursePlayerFallback() {
   );
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function LibraryCoursePage({ params, searchParams }: PageProps) {
   const course = await getLibraryCourseBySlugFromDb(params.slug);
   if (!course) notFound();
   const v = typeof searchParams.v === "string" ? searchParams.v : null;
+
+  let initialPracticeSummary = null;
+  if (isAuthConfigured()) {
+    const userId = await getAuthUserId();
+    if (userId) {
+      const email = await getAuthUserEmail();
+      const dbUser = await resolveUserForAuth(userId, email);
+      if (dbUser) {
+        initialPracticeSummary = await getLibraryCoursePracticeSummaryForUser(dbUser.id, course);
+      }
+    }
+  }
+
   return (
     <Suspense fallback={<CoursePlayerFallback />}>
-      <LibraryCoursePlayerClient course={course} initialVideoId={v} />
+      <LibraryCoursePlayerClient
+        course={course}
+        initialVideoId={v}
+        initialPracticeSummary={initialPracticeSummary}
+      />
     </Suspense>
   );
 }

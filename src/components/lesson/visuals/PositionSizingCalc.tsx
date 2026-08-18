@@ -69,7 +69,7 @@ export function PositionSizingCalc() {
       </div>
 
       <p className="rounded-2xl border border-border bg-surface px-4 py-3 text-center text-xs text-text-muted">
-        Rule of thumb: never risk more than 1% of your account on a single trade. Position size adjusts automatically — don't force a fixed share count.
+        Rule of thumb: never risk more than 1% of your account on a single trade. Position size adjusts automatically — don&apos;t force a fixed share count.
       </p>
     </div>
   );

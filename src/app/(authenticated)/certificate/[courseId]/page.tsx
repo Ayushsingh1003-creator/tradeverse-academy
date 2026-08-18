@@ -1,9 +1,11 @@
-import { currentUser } from "@clerk/nextjs/server";
 import { CertificateClient } from "@/components/certificate/CertificateClient";
-import { isClerkConfigured } from "@/lib/clerkEnabled";
+import { isAuthConfigured } from "@/lib/auth/enabled";
+import { getSession } from "@/lib/auth/session";
+
+export const dynamic = "force-dynamic";
 
 export default async function CertificatePage({ params }: { params: { courseId: string } }) {
-  const user = isClerkConfigured() ? await currentUser() : null;
-  const userName = user?.fullName ?? "Trader";
+  const session = isAuthConfigured() ? await getSession() : null;
+  const userName = session?.user?.name ?? "Trader";
   return <CertificateClient courseId={params.courseId} userName={userName} />;
 }
