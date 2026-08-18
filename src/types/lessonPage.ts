@@ -2,6 +2,26 @@
 
 export type LessonPageBase = { id: string };
 
+/** Image slot — uses fallback bar when no admin URL is set. */
+export type LessonImageAlign = "left" | "center" | "right";
+
+export type LessonImageRef = {
+  alt: string;
+  src?: string;
+  /** Display width as a percentage of the content column (admin-configurable). */
+  widthPercent?: number;
+  align?: LessonImageAlign;
+};
+
+export type ImagePage = LessonPageBase &
+  LessonImageRef & {
+    type: "image";
+    title?: string;
+    caption?: string;
+    /** Gamified section label, e.g. "Level 1 · Discovery" */
+    badge?: string;
+  };
+
 export type PretestPage = LessonPageBase & {
   type: "pretest";
   question: string;
@@ -15,6 +35,17 @@ export type TextPage = LessonPageBase & {
   title?: string;
   body: string;
   highlight?: string;
+  image?: LessonImageRef;
+  badge?: string;
+};
+
+/** Cover slide with hero image and Start CTA (Brilliant-style lesson opener). */
+export type IntroPage = LessonPageBase & {
+  type: "intro";
+  title: string;
+  subtitle?: string;
+  image?: LessonImageRef;
+  startLabel?: string;
 };
 
 export type VisualPage = LessonPageBase & {
@@ -24,6 +55,18 @@ export type VisualPage = LessonPageBase & {
     | "BullishVsBearish"
     | "WickExplainer"
     | "DojiExplainer"
+    | "CandleResearchUnit"
+    | "CandleSnapshot"
+    | "BodyShadowParts"
+    | "BodyOpenClose"
+    | "ShadowLabels"
+    | "HollowGreenExplainer"
+    | "FullBlackRedExplainer"
+    | "CandleForms"
+    | "OhlcPriceChart"
+    | "ChartAxesExplainer"
+    | "TimeframeTable"
+    | "CandleFoldExplainer"
     | "SupportResistanceMap"
     | "TrendLines"
     | "HammerCandle"
@@ -62,6 +105,110 @@ export type MultipleChoicePage = LessonPageBase & {
   correctIndex: number;
   explanation: string;
   showBearishCandle?: boolean;
+  image?: LessonImageRef;
+  challengeBadge?: string;
+};
+
+/** Visual card for chart-reading UI choices */
+export type UiChoiceCard =
+  | { variant: "timeframe"; code: string; period: string }
+  | { variant: "duration"; amount: string; unit: string }
+  | {
+      variant: "fold_source";
+      source: "first_open" | "last_close" | "high_wick" | "low_wick" | "first_only" | "middle" | "avg";
+    }
+  | { variant: "date_scope"; mode: "range" | "single" | "none"; label: string }
+  | { variant: "timeframe_bar"; code: string; barPercent: number };
+
+export type UiChoiceOption = {
+  label: string;
+  card: UiChoiceCard;
+};
+
+export type UiChoicePage = LessonPageBase & {
+  type: "ui_choice";
+  question: string;
+  options: UiChoiceOption[];
+  correctIndex: number;
+  explanation: string;
+  image?: LessonImageRef;
+  challengeBadge?: string;
+  /** Grid columns on wider screens (default 2) */
+  columns?: 2 | 3 | 4;
+};
+
+/** Visual-only tap — options have no text captions */
+export type TapChoiceDiagram =
+  | { kind: "timeframe_codes"; codes: [string, string, string, string] }
+  | { kind: "duration_clocks"; minutes: [number, number, number, number] }
+  | { kind: "date_scope" }
+  | { kind: "fold_point" };
+
+export type TapChoicePage = LessonPageBase & {
+  type: "tap_choice";
+  question: string;
+  diagram: TapChoiceDiagram;
+  correctIndex: number;
+  explanation: string;
+  image?: LessonImageRef;
+  challengeBadge?: string;
+};
+
+export type FoldOhlcDragPage = LessonPageBase & {
+  type: "fold_ohlc_drag";
+  instruction: string;
+  explanation: string;
+  image?: LessonImageRef;
+  challengeBadge?: string;
+};
+
+export type DragOrderPage = LessonPageBase & {
+  type: "drag_order";
+  instruction: string;
+  items: string[];
+  /** items[correctOrder[i]] belongs in slot i (shortest → longest) */
+  correctOrder: number[];
+  explanation: string;
+  image?: LessonImageRef;
+  challengeBadge?: string;
+};
+
+export type ChartCompareVariant = "m5" | "m15" | "h1" | "h4" | "d1";
+
+export type ChartComparePage = LessonPageBase & {
+  type: "chart_compare";
+  question: string;
+  variants: [ChartCompareVariant, ChartCompareVariant, ChartCompareVariant, ChartCompareVariant];
+  correctIndex: number;
+  explanation: string;
+  image?: LessonImageRef;
+  challengeBadge?: string;
+};
+
+export type TimeBracketDragPage = LessonPageBase & {
+  type: "time_bracket_drag";
+  instruction: string;
+  correctCandleIndex: number;
+  explanation: string;
+  image?: LessonImageRef;
+  challengeBadge?: string;
+};
+
+export type FoldConnectPage = LessonPageBase & {
+  type: "fold_connect";
+  instruction: string;
+  explanation: string;
+  image?: LessonImageRef;
+  challengeBadge?: string;
+};
+
+export type CandleFusePage = LessonPageBase & {
+  type: "candle_fuse";
+  instruction: string;
+  correctResultIndex: number;
+  explanation: string;
+  image?: LessonImageRef;
+  challengeBadge?: string;
 };
 
 export type TrueFalsePage = LessonPageBase & {
@@ -69,6 +216,10 @@ export type TrueFalsePage = LessonPageBase & {
   statement: string;
   correct: boolean;
   explanation: string;
+  image?: LessonImageRef;
+  challengeBadge?: string;
+  /** Stack TRUE / FALSE vertically (default: side-by-side grid). */
+  vertical?: boolean;
 };
 
 export type FillBlankPage = LessonPageBase & {
@@ -76,6 +227,8 @@ export type FillBlankPage = LessonPageBase & {
   sentence: string;
   correctAnswer: string;
   explanation: string;
+  image?: LessonImageRef;
+  challengeBadge?: string;
 };
 
 export type DragLabelPage = LessonPageBase & {
@@ -85,6 +238,8 @@ export type DragLabelPage = LessonPageBase & {
   zones: Array<{ id: string; title: string; correctLabel: string }>;
   /** Shown after Check when labels are wrong or as extra context when all correct */
   explanation?: string;
+  image?: LessonImageRef;
+  challengeBadge?: string;
 };
 
 export type ChartTapPage = LessonPageBase & {
@@ -95,6 +250,47 @@ export type ChartTapPage = LessonPageBase & {
   /** Which candle has distinctive shape (e.g. long lower wick) */
   highlightStyle?: "longLowerWick" | "shootingStar";
   candleCount?: number;
+  image?: LessonImageRef;
+  challengeBadge?: string;
+};
+
+/** Preset candle shapes for tap-to-pick visual quizzes */
+export type CandleChoicePreset =
+  | "bullish"
+  | "bearish"
+  | "doji"
+  | "hammer"
+  | "shootingStar"
+  | "marubozuBull"
+  | "marubozuBear";
+
+export type VisualChoiceOption = {
+  /** Omit or leave empty to show candle only (no caption under the SVG). */
+  label?: string;
+  preset: CandleChoicePreset;
+};
+
+export type VisualChoicePage = LessonPageBase & {
+  type: "visual_choice";
+  question: string;
+  options: VisualChoiceOption[];
+  correctIndex: number;
+  explanation: string;
+  image?: LessonImageRef;
+  challengeBadge?: string;
+};
+
+/** 5M→15M or 1H→4H fold — pick the correct resulting candle from A–D */
+export type FoldChartChoiceVariant = "15m_fuse" | "4h_fold" | "text_options";
+
+export type FoldChartChoicePage = LessonPageBase & {
+  type: "fold_chart_choice";
+  variant?: FoldChartChoiceVariant;
+  question: string;
+  correctIndex: number;
+  explanation: string;
+  image?: LessonImageRef;
+  challengeBadge?: string;
 };
 
 export type CalloutPage = LessonPageBase & {
@@ -102,13 +298,27 @@ export type CalloutPage = LessonPageBase & {
   variant: "tip" | "warning" | "concept" | "rule";
   title: string;
   content: string;
+  image?: LessonImageRef;
+  badge?: string;
 };
 
 export type LessonPage =
   | PretestPage
+  | IntroPage
   | TextPage
+  | ImagePage
   | VisualPage
   | MultipleChoicePage
+  | UiChoicePage
+  | TapChoicePage
+  | ChartComparePage
+  | TimeBracketDragPage
+  | FoldConnectPage
+  | CandleFusePage
+  | FoldOhlcDragPage
+  | DragOrderPage
+  | VisualChoicePage
+  | FoldChartChoicePage
   | TrueFalsePage
   | FillBlankPage
   | DragLabelPage
@@ -117,6 +327,16 @@ export type LessonPage =
 
 export type PracticeQuestion =
   | (Omit<MultipleChoicePage, "id" | "type"> & { id: string; type: "multiple_choice" })
+  | (Omit<UiChoicePage, "id" | "type"> & { id: string; type: "ui_choice" })
+  | (Omit<TapChoicePage, "id" | "type"> & { id: string; type: "tap_choice" })
+  | (Omit<ChartComparePage, "id" | "type"> & { id: string; type: "chart_compare" })
+  | (Omit<TimeBracketDragPage, "id" | "type"> & { id: string; type: "time_bracket_drag" })
+  | (Omit<FoldConnectPage, "id" | "type"> & { id: string; type: "fold_connect" })
+  | (Omit<CandleFusePage, "id" | "type"> & { id: string; type: "candle_fuse" })
+  | (Omit<FoldOhlcDragPage, "id" | "type"> & { id: string; type: "fold_ohlc_drag" })
+  | (Omit<DragOrderPage, "id" | "type"> & { id: string; type: "drag_order" })
+  | (Omit<VisualChoicePage, "id" | "type"> & { id: string; type: "visual_choice" })
+  | (Omit<FoldChartChoicePage, "id" | "type"> & { id: string; type: "fold_chart_choice" })
   | (Omit<TrueFalsePage, "id" | "type"> & { id: string; type: "true_false" })
   | (Omit<FillBlankPage, "id" | "type"> & { id: string; type: "fill_blank" })
   | (Omit<ChartTapPage, "id" | "type"> & { id: string; type: "chart_tap" })

@@ -1,6 +1,7 @@
 import {
   boolean,
   integer,
+  jsonb,
   pgTable,
   primaryKey,
   real,
@@ -88,6 +89,10 @@ export const courses = pgTable("Course", {
   isFree: boolean("isFree").notNull().default(false),
   thumbnail: text("thumbnail"),
   xpReward: integer("xpReward").notNull().default(100),
+  // Keyed by lesson slug: { [lessonSlug]: { scenes: InteractiveScene[] } }. Nullable — only
+  // lessons that have been converted to the rich interactive scene player populate this; every
+  // other lesson keeps rendering through the plain paginated Lesson.content flow.
+  interactiveContent: jsonb("interactiveContent"),
 });
 
 export const lessons = pgTable("Lesson", {
@@ -355,6 +360,22 @@ export const lessonVideos = pgTable("LessonVideo", {
   duration: integer("duration").notNull(),
   thumbnail: text("thumbnail"),
 });
+
+/** Admin overrides for lesson page / question images (PNG, JPG, GIF URLs). */
+export const lessonImages = pgTable(
+  "LessonImage",
+  {
+    id: text("id").primaryKey(),
+    lessonSlug: text("lessonSlug").notNull(),
+    pageId: text("pageId").notNull(),
+    alt: text("alt").notNull(),
+    url: text("url"),
+    widthPercent: integer("widthPercent").notNull().default(100),
+    align: text("align").notNull().default("left"),
+    updatedAt: timestamp("updatedAt", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("LessonImage_lessonSlug_pageId_key").on(t.lessonSlug, t.pageId)],
+);
 
 export const creatorApplications = pgTable("CreatorApplication", {
   id: text("id").primaryKey(),

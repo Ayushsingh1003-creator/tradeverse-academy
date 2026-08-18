@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { RichText } from "@/components/ui/RichText";
 
 export function FeedbackAnimation({ correct, explanation }: { correct: boolean; explanation: string }) {
   return (
@@ -10,7 +11,9 @@ export function FeedbackAnimation({ correct, explanation }: { correct: boolean; 
       className={`mt-4 rounded-lg border p-4 ${correct ? "border-[#456DFF]/50 bg-[rgba(69,109,255,0.15)]" : "border-error bg-red-500/10"}`}
     >
       <p className="text-sm font-semibold">{correct ? "+50 XP · Correct" : "Not quite"}</p>
-      <p className="mt-1 text-sm text-text-muted">{explanation}</p>
+      <p className="mt-1 text-sm text-text-muted">
+        <RichText text={explanation} />
+      </p>
     </motion.div>
   );
 }

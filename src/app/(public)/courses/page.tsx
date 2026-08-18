@@ -55,7 +55,7 @@ export default function CoursesPage() {
                         course={course}
                         index={index}
                         completedCount={completedCount}
-                        pathTitle={course.levels[0]?.title ?? course.description}
+                        pathTitle={course.description}
                       />
                     );
                   })}

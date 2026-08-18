@@ -23,6 +23,8 @@ export type CandlestickSvgProps = {
   bodyOpacity?: number;
   upperWickOpacity?: number;
   lowerWickOpacity?: number;
+  /** Override default green/red body fill */
+  bodyFill?: string;
   className?: string;
 };
 
@@ -43,6 +45,7 @@ export function CandlestickSvg({
   bodyOpacity = 1,
   upperWickOpacity = 1,
   lowerWickOpacity = 1,
+  bodyFill,
   className,
 }: CandlestickSvgProps) {
   const { bullish, bodyTop, bodyBottom, bodyHeight, highY, lowY } = candleLayoutFromOhlc(ohlc);
@@ -66,7 +69,7 @@ export function CandlestickSvg({
         width={bodyWidth}
         height={bodyHeight}
         rx={bodyRx}
-        fill={candleBodyColor(bullish)}
+        fill={bodyFill ?? candleBodyColor(bullish)}
         stroke={stroke}
         strokeWidth={strokeWidth}
         opacity={bodyOpacity}

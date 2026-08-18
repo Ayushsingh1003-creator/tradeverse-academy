@@ -35,10 +35,15 @@ const LESSON_BY_SLUG = new Map(LESSONS.map((l) => [l.slug, l]));
 const COURSE_BY_SLUG = new Map(COURSES.map((c) => [c.slug, c]));
 
 function levelForLesson(course: Course, lessonSlug: string) {
-  return (
-    course.levels.find((l) => l.lessonSlugs.includes(lessonSlug)) ??
-    course.levels[0]
-  );
+  const level = course.levels?.find((l) => l.lessonSlugs.includes(lessonSlug));
+  if (level) return level;
+  const index = course.lessonSlugs.indexOf(lessonSlug);
+  return {
+    id: `${course.id}-lesson-${index >= 0 ? index + 1 : 1}`,
+    number: index >= 0 ? index + 1 : 1,
+    title: course.title,
+    lessonSlugs: course.lessonSlugs,
+  };
 }
 
 export function getCourseBySlug(slug: string): Course | undefined {
@@ -75,13 +80,13 @@ export function buildCourseCatalogForAI(): string {
   for (const course of COURSES) {
     lines.push(`COURSE slug="${course.slug}" title="${course.title}"`);
     lines.push(`  description: ${course.description}`);
-    for (const level of course.levels) {
-      lines.push(`  LEVEL ${level.number}: "${level.title}"`);
-      for (const slug of level.lessonSlugs) {
-        const lesson = LESSON_BY_SLUG.get(slug);
-        if (lesson) {
-          lines.push(`    LESSON slug="${lesson.slug}" title="${lesson.title}"`);
-        }
+    const slugs = course.levels?.length
+      ? course.levels.flatMap((level) => level.lessonSlugs)
+      : course.lessonSlugs;
+    for (const slug of slugs) {
+      const lesson = LESSON_BY_SLUG.get(slug);
+      if (lesson) {
+        lines.push(`  LESSON slug="${lesson.slug}" title="${lesson.title}"`);
       }
     }
     lines.push("");
@@ -222,19 +227,24 @@ const KEYWORD_HINTS: Array<{
   {
     terms: ["bullish", "bearish", "green candle", "red candle", "marubozu"],
     courseSlug: "candlestick-essentials",
-    lessonSlug: "bullish-vs-bearish-candles",
+    lessonSlug: "how-to-read-a-chart",
     shortAnswer:
       "Bullish means you expect prices to rise — buyers are in control. Bearish means you expect prices to fall — sellers are in control.",
   },
   {
     terms: ["support", "resistance", "sr level"],
     courseSlug: "candlestick-essentials",
-    lessonSlug: "support-and-resistance",
+    lessonSlug: "support-resistance",
   },
   {
     terms: ["trend", "uptrend", "downtrend"],
     courseSlug: "candlestick-essentials",
-    lessonSlug: "trend-analysis",
+    lessonSlug: "trend-lines",
+  },
+  {
+    terms: ["chart pattern", "double top", "head and shoulders", "triangle", "flag", "pennant"],
+    courseSlug: "candlestick-essentials",
+    lessonSlug: "chart-patterns",
   },
   {
     terms: ["rsi", "overbought", "oversold", "momentum"],

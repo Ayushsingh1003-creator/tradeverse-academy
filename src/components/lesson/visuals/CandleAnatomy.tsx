@@ -11,7 +11,7 @@ export function CandleAnatomy() {
   const [hover, setHover] = useState<Part>(null);
 
   const ohlc = bullish ? TEACHING_CANDLES.anatomy : TEACHING_CANDLES.anatomyBearish;
-  const { openY, closeY } = candleLayoutFromOhlc(ohlc);
+  const { openY, closeY, highY, lowY } = candleLayoutFromOhlc(ohlc);
   const wickHighlight = (part: Part) => (hover === part ? "#F7C325" : "#94a3b8");
   const wickW = (part: Part) => (hover === part ? 5 : 3);
 
@@ -55,15 +55,15 @@ export function CandleAnatomy() {
         />
         {(
           [
-            { id: "high" as const, x: 200, y: 50, text: "HIGH" },
-            { id: "close" as const, x: 200, y: closeY + 8, text: "CLOSE" },
-            { id: "open" as const, x: 200, y: openY - 8, text: "OPEN" },
-            { id: "low" as const, x: 200, y: 300, text: "LOW" },
+            { id: "high" as const, x: 200, y: highY, text: "HIGH" },
+            { id: "close" as const, x: 200, y: closeY, text: "CLOSE" },
+            { id: "open" as const, x: 200, y: openY, text: "OPEN" },
+            { id: "low" as const, x: 200, y: lowY, text: "LOW" },
           ] as const
         ).map((L) => (
           <g key={L.id} className="cursor-pointer" onMouseEnter={() => setHover(L.id)} onMouseLeave={() => setHover(null)}>
-            <rect x={L.x - 4} y={L.y - 18} width="72" height="26" rx="6" fill={hover === L.id ? "rgba(247,195,37,0.25)" : "#1e293b"} stroke={hover === L.id ? "#F7C325" : "#475569"} />
-            <text x={L.x + 32} y={L.y - 2} textAnchor="middle" fill="#f1f5f9" fontSize="12" fontWeight="600">
+            <rect x={L.x - 4} y={L.y - 13} width="72" height="26" rx="6" fill={hover === L.id ? "rgba(247,195,37,0.25)" : "#1e293b"} stroke={hover === L.id ? "#F7C325" : "#475569"} />
+            <text x={L.x + 32} y={L.y + 4} textAnchor="middle" fill="#f1f5f9" fontSize="12" fontWeight="600">
               {L.text}
             </text>
           </g>

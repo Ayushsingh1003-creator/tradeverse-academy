@@ -26,7 +26,7 @@ export async function GET() {
     .map((l) => ({ slug: l!.slug, title: l!.title }));
 
   const nextLesson = LESSONS.find((l) => l.slug === "what-is-a-candlestick") ?? LESSONS[0];
-  const weakSlugs = ["support-and-resistance"].filter((s) => LESSONS.some((l) => l.slug === s));
+  const weakSlugs = ["support-resistance"].filter((s) => LESSONS.some((l) => l.slug === s));
   const weakAreaPractice = weakSlugs
     .map((slug) => LESSONS.find((l) => l.slug === slug))
     .filter(Boolean)

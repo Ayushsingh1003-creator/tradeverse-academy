@@ -22,7 +22,8 @@ export type Course = {
   xpReward: number;
   premium: boolean;
   lessonSlugs: string[];
-  levels: CourseLevel[];
+  /** Optional grouping for admin/AI; UI shows a flat lesson checklist from lessonSlugs. */
+  levels?: CourseLevel[];
   totalExercises?: number;
   illustrationEmoji: string;
 };
@@ -63,25 +64,9 @@ export const COURSES: Course[] = [
       "financial-markets-101-review",
     ],
     levels: [
-      {
-        id: "fm1-l1",
-        number: 1,
-        title: "The Market Game",
-        lessonSlugs: ["what-is-the-market", "market-participants", "indian-markets-101"],
-      },
-      {
-        id: "fm1-l2",
-        number: 2,
-        title: "When & What You Trade",
-        lessonSlugs: ["market-hours-india", "asset-classes-india"],
-      },
-      {
-        id: "fm1-l3",
-        number: 3,
-        title: "How Price Forms",
-        lessonSlugs: ["how-prices-form", "bid-ask-spread-cost", "financial-markets-101-review"],
-        reviewSlug: "financial-markets-101-review",
-      },
+      { id: "fm1-l1", number: 1, title: "Market Basics", lessonSlugs: ["what-is-the-market", "market-participants", "indian-markets-101"] },
+      { id: "fm1-l2", number: 2, title: "How Markets Run", lessonSlugs: ["market-hours-india", "asset-classes-india", "how-prices-form"] },
+      { id: "fm1-l3", number: 3, title: "Pricing & Review", lessonSlugs: ["bid-ask-spread-cost", "financial-markets-101-review"] },
     ],
   },
   {
@@ -106,30 +91,9 @@ export const COURSES: Course[] = [
       "how-to-trade-review",
     ],
     levels: [
-      {
-        id: "fm2-l1",
-        number: 1,
-        title: "Getting Set Up",
-        lessonSlugs: ["demat-and-trading-account", "picking-a-broker"],
-      },
-      {
-        id: "fm2-l2",
-        number: 2,
-        title: "Placing Trades",
-        lessonSlugs: ["order-types-explained", "anatomy-of-trade"],
-      },
-      {
-        id: "fm2-l3",
-        number: 3,
-        title: "Costs & Execution",
-        lessonSlugs: [
-          "brokerage-and-taxes-india",
-          "execution-and-slippage",
-          "first-trade-walkthrough",
-          "how-to-trade-review",
-        ],
-        reviewSlug: "how-to-trade-review",
-      },
+      { id: "fm2-l1", number: 1, title: "Getting Set Up", lessonSlugs: ["demat-and-trading-account", "picking-a-broker", "order-types-explained"] },
+      { id: "fm2-l2", number: 2, title: "Placing Trades", lessonSlugs: ["anatomy-of-trade", "brokerage-and-taxes-india", "execution-and-slippage"] },
+      { id: "fm2-l3", number: 3, title: "Live Practice", lessonSlugs: ["first-trade-walkthrough", "how-to-trade-review"] },
     ],
   },
   {
@@ -154,30 +118,9 @@ export const COURSES: Course[] = [
       "risk-mindset-review",
     ],
     levels: [
-      {
-        id: "fm3-l1",
-        number: 1,
-        title: "Survival First",
-        lessonSlugs: ["why-traders-lose", "position-sizing-rule"],
-      },
-      {
-        id: "fm3-l2",
-        number: 2,
-        title: "Risk Mechanics",
-        lessonSlugs: ["stop-loss-discipline", "risk-reward-ratio"],
-      },
-      {
-        id: "fm3-l3",
-        number: 3,
-        title: "The Trader's Mind",
-        lessonSlugs: [
-          "journaling-your-trades",
-          "emotional-traps",
-          "beginner-guardrails",
-          "risk-mindset-review",
-        ],
-        reviewSlug: "risk-mindset-review",
-      },
+      { id: "fm3-l1", number: 1, title: "Why Traders Lose", lessonSlugs: ["why-traders-lose", "position-sizing-rule", "stop-loss-discipline"] },
+      { id: "fm3-l2", number: 2, title: "Managing Risk", lessonSlugs: ["risk-reward-ratio", "journaling-your-trades", "emotional-traps"] },
+      { id: "fm3-l3", number: 3, title: "Staying Disciplined", lessonSlugs: ["beginner-guardrails", "risk-mindset-review"] },
     ],
   },
   {
@@ -192,30 +135,36 @@ export const COURSES: Course[] = [
     illustrationEmoji: "🕯️",
     totalExercises: 85,
     lessonSlugs: [
+      "candlestick-intro",
+      "how-to-read-a-chart",
       "what-is-a-candlestick",
-      "bullish-vs-bearish-candles",
-      "hammer-shooting-star",
-      "support-and-resistance",
-      "trend-analysis",
+      "meaning-of-patterns",
+      "candle-psychology",
+      "timeframes-explained",
+      "understanding-trends",
+      "swing-structure-bos",
+      "support-resistance",
+      "trend-lines",
+      "chart-patterns",
     ],
     levels: [
       {
         id: "c1-l1",
         number: 1,
-        title: "Reading Candles",
-        lessonSlugs: ["what-is-a-candlestick", "bullish-vs-bearish-candles"],
+        title: "Foundations",
+        lessonSlugs: ["candlestick-intro", "how-to-read-a-chart", "what-is-a-candlestick", "meaning-of-patterns"],
       },
       {
         id: "c1-l2",
         number: 2,
-        title: "Reversal Signals",
-        lessonSlugs: ["hammer-shooting-star"],
+        title: "Reading Price",
+        lessonSlugs: ["candle-psychology", "timeframes-explained", "understanding-trends", "swing-structure-bos"],
       },
       {
         id: "c1-l3",
         number: 3,
-        title: "Price Structure",
-        lessonSlugs: ["support-and-resistance", "trend-analysis"],
+        title: "Key Price Levels",
+        lessonSlugs: ["support-resistance", "trend-lines", "chart-patterns"],
       },
     ],
   },
@@ -230,19 +179,6 @@ export const COURSES: Course[] = [
     illustrationEmoji: "📊",
     totalExercises: 120,
     lessonSlugs: ["rsi-basics", "moving-averages"],
-    levels: [
-      {
-        id: "c2-l1",
-        number: 1,
-        title: "Momentum Indicators",
-        lessonSlugs: ["rsi-basics"],
-      },
-      {
-        id: "c2-l2",
-        number: 2,
-        title: "Trend Indicators",
-        lessonSlugs: ["moving-averages"],
-      },
-    ],
+    levels: [{ id: "c2-l1", number: 1, title: "Core Indicators", lessonSlugs: ["rsi-basics", "moving-averages"] }],
   },
 ];

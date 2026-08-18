@@ -4,8 +4,8 @@ import { PageLoader } from "@/components/ui/Loader";
 import { COURSES } from "@/lib/data/courses";
 import { getLessonsBySlugs } from "@/lib/data/lessonLookup";
 
-const CourseDetailPage = dynamic(
-  () => import("@/components/courses/CourseDetailPage").then((m) => m.CourseDetailPage),
+const CourseLessonPath = dynamic(
+  () => import("@/components/courses/CourseLessonPath").then((m) => m.CourseLessonPath),
   { loading: () => <PageLoader className="min-h-[60vh]" /> },
 );
 
@@ -19,5 +19,5 @@ export default function CoursePage({ params }: { params: { slug: string } }) {
   const course = COURSES.find((c) => c.slug === params.slug);
   if (!course) notFound();
   const courseLessons = getLessonsBySlugs(course.lessonSlugs);
-  return <CourseDetailPage course={course} allLessons={courseLessons} />;
+  return <CourseLessonPath course={course} allLessons={courseLessons} />;
 }

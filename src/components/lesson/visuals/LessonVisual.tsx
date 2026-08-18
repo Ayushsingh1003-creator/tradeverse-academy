@@ -13,6 +13,22 @@ import { BidAskSpreadCostDemo } from "@/components/lesson/visuals/BidAskSpreadCo
 import { BrokerCompare } from "@/components/lesson/visuals/BrokerCompare";
 import { BullishVsBearish } from "@/components/lesson/visuals/BullishVsBearish";
 import { CandleAnatomy } from "@/components/lesson/visuals/CandleAnatomy";
+import {
+  BodyOpenClose,
+  BodyShadowParts,
+  CandleForms,
+  CandleResearchUnit,
+  CandleSnapshot,
+  FullBlackRedExplainer,
+  HollowGreenExplainer,
+  OhlcPriceChart,
+  ShadowLabels,
+} from "@/components/lesson/visuals/CandlestickBasicsVisuals";
+import {
+  CandleFoldExplainer,
+  ChartAxesExplainer,
+  TimeframeTable,
+} from "@/components/lesson/visuals/ChartReadingVisuals";
 import { ChargesBreakdown } from "@/components/lesson/visuals/ChargesBreakdown";
 import { DematAccountFlow } from "@/components/lesson/visuals/DematAccountFlow";
 import { DojiExplainer } from "@/components/lesson/visuals/DojiExplainer";
@@ -48,6 +64,30 @@ export function LessonVisual({ visualId, onHammerPlaybackActiveChange }: LessonV
       return <WickExplainer />;
     case "DojiExplainer":
       return <DojiExplainer />;
+    case "CandleResearchUnit":
+      return <CandleResearchUnit />;
+    case "CandleSnapshot":
+      return <CandleSnapshot />;
+    case "BodyShadowParts":
+      return <BodyShadowParts />;
+    case "BodyOpenClose":
+      return <BodyOpenClose />;
+    case "ShadowLabels":
+      return <ShadowLabels />;
+    case "HollowGreenExplainer":
+      return <HollowGreenExplainer />;
+    case "FullBlackRedExplainer":
+      return <FullBlackRedExplainer />;
+    case "CandleForms":
+      return <CandleForms />;
+    case "OhlcPriceChart":
+      return <OhlcPriceChart />;
+    case "ChartAxesExplainer":
+      return <ChartAxesExplainer />;
+    case "TimeframeTable":
+      return <TimeframeTable />;
+    case "CandleFoldExplainer":
+      return <CandleFoldExplainer />;
     case "SupportResistanceMap":
       return <SupportResistanceMap />;
     case "TrendLines":
