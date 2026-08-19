@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ChevronDown, ChevronLeft } from "lucide-react";
 import { useEffect, useState } from "react";
-import { authClient } from "@/lib/auth/client";
+import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { PAGE_SHELL_CLASSES } from "@/components/layout/pageShell";
 import CourseCardStack from "@/components/dashboard/CourseCardStack";
 import { isAuthConfigured } from "@/lib/auth/enabled";
@@ -109,9 +109,9 @@ function StreakCard() {
 }
 
 function LeagueCardAuth({ open, onToggle }: { open: boolean; onToggle: () => void }) {
-  const { data: session, isPending } = authClient.useSession();
-  const isSignedIn = Boolean(session?.user?.id);
-  const isLoaded = !isPending;
+  const { user, isLoading } = useAuthSession();
+  const isSignedIn = Boolean(user?.id);
+  const isLoaded = !isLoading;
   const [data, setData] = useState<LeaderboardResult | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -280,9 +280,9 @@ function DailyChallengeCard() {
   const dailyChallengeSelected = useUserStore((s) => s.dailyChallengeSelected);
   const dailyChallengeDoneDate = useUserStore((s) => s.dailyChallengeDoneDate);
   const hydrated = useUserStore((s) => s.hydrated);
-  const { data: session, isPending } = authClient.useSession();
-  const isSignedIn = Boolean(session?.user?.id);
-  const isLoaded = !isPending;
+  const { user, isLoading } = useAuthSession();
+  const isSignedIn = Boolean(user?.id);
+  const isLoaded = !isLoading;
   const { push } = useToast();
   const today = todayLocalISO();
   const challenge = getDailyChallengeForDate(parseLocalISODate(today));

@@ -1,47 +1,69 @@
 "use client";
 
 import { useState } from "react";
-import { authClient } from "@/lib/auth/client";
+import { useRouter } from "next/navigation";
+import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
+import { signInWithGoogleIdToken, TradeverseIdError } from "@/lib/auth/tradeverseIdClient";
 import { AUTH_AFTER_SIGN_IN_URL, AUTH_AFTER_SIGN_UP_URL } from "@/lib/auth/urls";
 
 type GoogleSignInButtonProps = {
   variant: "sign-in" | "sign-up";
 };
 
-export function GoogleSignInButton({ variant }: GoogleSignInButtonProps) {
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
+
+export function GoogleSignInButton(props: GoogleSignInButtonProps) {
+  if (!GOOGLE_CLIENT_ID) return null;
+  return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <GoogleSignInButtonInner {...props} />
+    </GoogleOAuthProvider>
+  );
+}
+
+function GoogleSignInButtonInner({ variant }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  const callbackURL = variant === "sign-up" ? AUTH_AFTER_SIGN_UP_URL : AUTH_AFTER_SIGN_IN_URL;
+  const redirectTo = variant === "sign-up" ? AUTH_AFTER_SIGN_UP_URL : AUTH_AFTER_SIGN_IN_URL;
 
-  async function handleGoogleSignIn() {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await authClient.signIn.social({
-        provider: "google",
-        callbackURL,
-      });
-      if (result?.error) {
-        setError(result.error.message || "Google sign-in failed. Try again.");
+  // Client-side popup (Google Identity Services), same as W1 — Tradeverse ID
+  // verifies the resulting token server-side, no redirect-based OAuth flow, no
+  // state/PKCE surface to manage.
+  const login = useGoogleLogin({
+    onSuccess: async (response) => {
+      setLoading(true);
+      setError(null);
+      try {
+        await signInWithGoogleIdToken(response.access_token);
+        router.push(redirectTo);
+        router.refresh();
+      } catch (e) {
+        setError(e instanceof TradeverseIdError ? e.message : "Google sign-in failed. Try again.");
         setLoading(false);
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Google sign-in failed. Try again.");
+    },
+    onError: () => {
+      setError("Google sign-in failed. Try again.");
       setLoading(false);
-    }
-  }
+    },
+  });
 
   return (
     <div className="flex w-full flex-col gap-2">
       <button
         type="button"
-        onClick={() => void handleGoogleSignIn()}
+        onClick={() => {
+          setLoading(true);
+          setError(null);
+          login();
+        }}
         disabled={loading}
         className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.1] disabled:opacity-60"
       >
         <GoogleIcon />
-        {loading ? "Redirecting…" : "Continue with Google"}
+        {loading ? "Signing in…" : "Continue with Google"}
       </button>
       {error ? (
         <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">

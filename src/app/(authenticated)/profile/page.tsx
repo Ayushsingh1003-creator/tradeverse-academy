@@ -1,16 +1,21 @@
 import { ProfileClient } from "@/components/profile/ProfileClient";
 import { isAuthConfigured } from "@/lib/auth/enabled";
-import { getSession } from "@/lib/auth/session";
+import { getAuthUserEmail, getAuthUserId } from "@/lib/auth/session";
+import { resolveUserForAuth } from "@/lib/server/resolveDbUser";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
-  const session = isAuthConfigured() ? await getSession() : null;
-  const user = session?.user;
-  const name = user?.name ?? "Trader";
-  const email = user?.email ?? "Sign in to sync your profile";
-  const imageUrl = user?.image ?? null;
-  const joinedAt = user?.createdAt ? new Date(user.createdAt).toISOString() : new Date().toISOString();
+  // createdAt/name/avatar live on the DB2 User row, not the auth session — the
+  // Tradeverse ID token only carries identity (id/email), not profile fields.
+  const authUserId = isAuthConfigured() ? await getAuthUserId() : null;
+  const email = authUserId ? await getAuthUserEmail() : null;
+  const dbUser = authUserId ? await resolveUserForAuth(authUserId, email) : null;
 
-  return <ProfileClient name={name} email={email} imageUrl={imageUrl} joinedAt={joinedAt} />;
+  const name = dbUser?.name ?? "Trader";
+  const resolvedEmail = dbUser?.email ?? email ?? "Sign in to sync your profile";
+  const imageUrl = dbUser?.avatar ?? null;
+  const joinedAt = dbUser?.createdAt ? new Date(dbUser.createdAt).toISOString() : new Date().toISOString();
+
+  return <ProfileClient name={name} email={resolvedEmail} imageUrl={imageUrl} joinedAt={joinedAt} />;
 }

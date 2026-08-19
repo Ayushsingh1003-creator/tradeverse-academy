@@ -1,27 +1,51 @@
 "use client";
 
-import Link from "next/link";
-import { useFormState } from "react-dom";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { AuthSignInPanel } from "@/components/auth/AuthSignInPanel";
-import { AuthForm } from "@/components/auth/AuthForm";
-import { EmailVerificationForm } from "@/components/auth/EmailVerificationForm";
-import { isVerificationState } from "@/lib/auth/form-state";
-import { signInWithEmail } from "@/app/sign-in/[[...sign-in]]/actions";
-import type { SignInFormState } from "@/lib/auth/form-state";
+import { AuthForm, type AuthFormFields } from "@/components/auth/AuthForm";
+import { AwaitingVerificationPanel } from "@/components/auth/AwaitingVerificationPanel";
+import { signInWithEmail, TradeverseIdError } from "@/lib/auth/tradeverseIdClient";
 
 type SignInFormProps = {
-  initialState?: SignInFormState;
   emailVerified?: boolean;
 };
 
-export function SignInForm({ initialState = null, emailVerified }: SignInFormProps) {
-  const [state, formAction] = useFormState(signInWithEmail, initialState);
-  const needsVerification = isVerificationState(state);
+export function SignInForm({ emailVerified }: SignInFormProps) {
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+  const router = useRouter();
+
+  async function handleSubmit({ email, password }: AuthFormFields) {
+    try {
+      await signInWithEmail(email, password);
+    } catch (e) {
+      if (e instanceof TradeverseIdError && e.data?.requiresVerification) {
+        setPendingVerificationEmail(email);
+        return;
+      }
+      throw e instanceof Error ? e : new Error("Failed to sign in.");
+    }
+
+    // Dashboard vs onboarding depends on DB state the browser can't read
+    // directly — ask the server, default to onboarding if that fails.
+    let destination = "/onboarding";
+    try {
+      const res = await fetch("/api/auth/post-login-redirect");
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof data?.url === "string") destination = data.url;
+      }
+    } catch {
+      // fall through to the default
+    }
+    router.push(destination);
+    router.refresh();
+  }
 
   return (
-    <AuthSignInPanel variant="sign-in" showSocial={!needsVerification}>
-      {needsVerification && state && "email" in state ? (
-        <EmailVerificationForm email={state.email} initialMessage={state.message} />
+    <AuthSignInPanel variant="sign-in" showSocial={!pendingVerificationEmail}>
+      {pendingVerificationEmail ? (
+        <AwaitingVerificationPanel email={pendingVerificationEmail} />
       ) : (
         <>
           {emailVerified ? (
@@ -29,18 +53,7 @@ export function SignInForm({ initialState = null, emailVerified }: SignInFormPro
               Email verified. Sign in with your password to continue.
             </p>
           ) : null}
-          <AuthForm
-            action={signInWithEmail}
-            variant="sign-in"
-            formAction={formAction}
-            errorMessage={state && "error" in state ? state.error : null}
-          />
-          <p className="text-center text-xs text-[#666]">
-            Stuck without verifying?{" "}
-            <Link href="/sign-up?verify=1" className="font-semibold text-[#88C9F7] hover:text-[#456DFF]">
-              Get a new code
-            </Link>
-          </p>
+          <AuthForm variant="sign-in" onSubmit={handleSubmit} />
         </>
       )}
     </AuthSignInPanel>
