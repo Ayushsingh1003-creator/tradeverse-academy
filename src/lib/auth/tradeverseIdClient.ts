@@ -104,9 +104,15 @@ export function resendVerificationEmail(email: string, returnTo: string) {
   });
 }
 
-export function signInWithGoogleIdToken(idToken: string, attribution?: AttributionPayload) {
+// `useGoogleLogin`'s default (implicit) flow returns an OAuth access token, not a
+// JWT ID token — same distinction W1 makes (an ID token is a JWT and starts with
+// "eyJ"; an access token doesn't). Sending an access token labeled as `idToken`
+// makes the backend try to verify it as a JWT and fail with a generic 500.
+export function signInWithGoogle(token: string, attribution?: AttributionPayload) {
+  const isIdToken = token.startsWith('eyJ');
+  const payload = isIdToken ? { idToken: token } : { accessToken: token };
   return request<{ user: TradeverseIdUser; accessToken: string }>("/auth/google", {
-    body: { idToken, attribution },
+    body: { ...payload, attribution },
   });
 }
 

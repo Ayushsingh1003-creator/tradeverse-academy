@@ -8,7 +8,10 @@ import { resolvePostAuthUrl } from "@/lib/onboarding/resolvePostAuthUrl";
 export async function GET() {
   const authUserId = await getAuthUserId();
   if (!authUserId) {
-    return NextResponse.json({ url: "/onboarding" });
+    // Distinct from a genuine "needs onboarding" result — the client should not
+    // treat this the same way (e.g. navigating to /onboarding here would just
+    // bounce straight back to sign-in via middleware's own session check).
+    return NextResponse.json({ error: "No active session" }, { status: 401 });
   }
   const email = await getAuthUserEmail();
   const url = await resolvePostAuthUrl(authUserId, email);

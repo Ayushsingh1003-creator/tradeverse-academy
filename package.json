@@ -24,7 +24,6 @@
     "@base-ui/react": "^1.4.1",
     "@mux/mux-node": "^14.0.1",
     "@mux/mux-player-react": "^3.13.0",
-    "@neondatabase/auth": "^0.3.0-beta",
     "@neondatabase/serverless": "^1.1.0",
     "@paralleldrive/cuid2": "^3.3.0",
     "@radix-ui/react-slot": "^1.2.4",

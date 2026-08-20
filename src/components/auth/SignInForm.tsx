@@ -27,17 +27,22 @@ export function SignInForm({ emailVerified }: SignInFormProps) {
     }
 
     // Dashboard vs onboarding depends on DB state the browser can't read
-    // directly — ask the server, default to onboarding if that fails.
-    let destination = "/onboarding";
-    try {
-      const res = await fetch("/api/auth/post-login-redirect");
-      if (res.ok) {
-        const data = await res.json();
-        if (typeof data?.url === "string") destination = data.url;
-      }
-    } catch {
-      // fall through to the default
+    // directly — ask the server. A 401 here means the login response's Set-Cookie
+    // didn't actually reach this app (e.g. viewing it on a different host than the
+    // one the cookie is scoped to) — surface that plainly rather than silently
+    // navigating to /onboarding, where middleware's own session check would just
+    // bounce back to sign-in with no visible explanation.
+    const res = await fetch("/api/auth/post-login-redirect");
+    if (res.status === 401) {
+      throw new Error(
+        "Signed in, but this app didn't receive the session cookie. If you're testing locally, make sure you're on the same host the cookie is scoped to.",
+      );
     }
+    if (!res.ok) {
+      throw new Error("Signed in, but couldn't determine where to go next. Try refreshing.");
+    }
+    const data = await res.json();
+    const destination = typeof data?.url === "string" ? data.url : "/onboarding";
     router.push(destination);
     router.refresh();
   }

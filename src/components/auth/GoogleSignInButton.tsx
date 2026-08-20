@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
-import { signInWithGoogleIdToken, TradeverseIdError } from "@/lib/auth/tradeverseIdClient";
+import { signInWithGoogle, TradeverseIdError } from "@/lib/auth/tradeverseIdClient";
 import { AUTH_AFTER_SIGN_IN_URL, AUTH_AFTER_SIGN_UP_URL } from "@/lib/auth/urls";
 
 type GoogleSignInButtonProps = {
@@ -36,7 +36,7 @@ function GoogleSignInButtonInner({ variant }: GoogleSignInButtonProps) {
       setLoading(true);
       setError(null);
       try {
-        await signInWithGoogleIdToken(response.access_token);
+        await signInWithGoogle(response.access_token);
         router.push(redirectTo);
         router.refresh();
       } catch (e) {
