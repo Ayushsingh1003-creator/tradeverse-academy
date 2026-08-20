@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppNav } from "@/components/layout/AppNav";
 import { Card } from "@/components/ui/Card";
-import { authClient } from "@/lib/auth/client";
+import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { isAuthConfigured } from "@/lib/auth/enabled";
 import { useUserStore } from "@/lib/store";
 
@@ -53,9 +53,9 @@ function HistoryList({ rows }: { rows: Array<LedgerRow | LocalRow> }) {
 }
 
 function XpHistoryContent() {
-  const { data: session, isPending } = authClient.useSession();
-  const isSignedIn = Boolean(session?.user?.id);
-  const isLoaded = !isPending;
+  const { user, isLoading } = useAuthSession();
+  const isSignedIn = Boolean(user?.id);
+  const isLoaded = !isLoading;
   const hydrate = useUserStore((s) => s.hydrate);
   const lessonHistory = useUserStore((s) => s.lessonHistory);
 

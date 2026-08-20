@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { resolveIsAdmin } from "@/lib/admin/checkAdmin";
 import { isAuthConfigured } from "@/lib/auth/enabled";
-import { neonAuth } from "@/lib/auth/server";
+import { verifyTradeverseIdAccessToken, type TradeverseIdSessionUser } from "@/lib/auth/tradeverseId";
 import { AUTH_HOME_URL, AUTH_SIGN_IN_URL } from "@/lib/auth/urls";
 import { ONBOARDING_BYPASS_PREFIXES, ONBOARDING_URL } from "@/lib/onboarding/constants";
 import { needsOnboardingForAuthUser } from "@/lib/onboarding/needsAssessment";
@@ -15,7 +15,6 @@ const PUBLIC_PREFIXES = [
   "/library",
   "/sign-in",
   "/sign-up",
-  "/auth/callback",
 ];
 
 const PROTECTED_PREFIXES = [
@@ -49,6 +48,19 @@ function isOnboardingPath(pathname: string) {
   return pathname === ONBOARDING_URL || pathname.startsWith(`${ONBOARDING_URL}/`);
 }
 
+/** Reads and verifies the shared Tradeverse ID session cookie — no network round
+ * trip, just a local signature check (see src/lib/auth/tradeverseId.ts). This is
+ * also what makes cross-app SSO "silent": if the user just logged in on W1, the
+ * browser already carries this cookie on its first request to this app. */
+async function getMiddlewareSession(
+  request: NextRequest,
+): Promise<{ user: TradeverseIdSessionUser } | null> {
+  const token = request.cookies.get("tv_session")?.value;
+  if (!token) return null;
+  const user = await verifyTradeverseIdAccessToken(token);
+  return user ? { user } : null;
+}
+
 /** Signed-out users must not stay on the assessment page. */
 async function requireAuthForOnboarding(
   request: NextRequest,
@@ -56,13 +68,7 @@ async function requireAuthForOnboarding(
 ): Promise<NextResponse | null> {
   if (!isOnboardingPath(pathname)) return null;
 
-  let session: { user?: { id?: string } } | null = null;
-  try {
-    ({ data: session } = await neonAuth.getSession());
-  } catch {
-    return NextResponse.redirect(new URL(AUTH_SIGN_IN_URL, request.url));
-  }
-
+  const session = await getMiddlewareSession(request);
   if (!session?.user?.id) {
     return NextResponse.redirect(new URL(AUTH_SIGN_IN_URL, request.url));
   }
@@ -76,13 +82,7 @@ async function onboardingRedirectIfNeeded(
 ): Promise<NextResponse | null> {
   if (isOnboardingBypass(pathname)) return null;
 
-  let session: { user?: { id?: string; email?: string | null } } | null = null;
-  try {
-    ({ data: session } = await neonAuth.getSession());
-  } catch {
-    return null;
-  }
-
+  const session = await getMiddlewareSession(request);
   const authUserId = session?.user?.id;
   if (!authUserId) return null;
 
@@ -124,18 +124,16 @@ export async function middleware(request: NextRequest) {
   }
 
   if (matchesPrefix(pathname, PROTECTED_PREFIXES)) {
-    const handler = neonAuth.middleware({ loginUrl: AUTH_SIGN_IN_URL });
-    const res = await handler(request);
-    if (res.status >= 300 && res.status < 400) return res;
+    const session = await getMiddlewareSession(request);
+    if (!session?.user?.id) {
+      const signInUrl = new URL(AUTH_SIGN_IN_URL, request.url);
+      signInUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(signInUrl);
+    }
   }
 
   if (pathname.startsWith("/admin")) {
-    let session: { user?: { id?: string; email?: string | null } } | null = null;
-    try {
-      ({ data: session } = await neonAuth.getSession());
-    } catch {
-      return NextResponse.redirect(new URL(AUTH_SIGN_IN_URL, request.url));
-    }
+    const session = await getMiddlewareSession(request);
     if (!session?.user) {
       return NextResponse.redirect(new URL(AUTH_SIGN_IN_URL, request.url));
     }
@@ -180,7 +178,6 @@ export const config = {
     "/admin/:path*",
     "/sign-in/:path*",
     "/sign-up/:path*",
-    "/auth/callback",
     "/onboarding",
     "/onboarding/:path*",
   ],

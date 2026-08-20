@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { authClient } from "@/lib/auth/client";
+import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { isAuthConfigured } from "@/lib/auth/enabled";
@@ -42,8 +42,8 @@ function insightBadge(body: string) {
 
 export function LessonDiscussion({ lessonSlug }: { lessonSlug: string }) {
   const authEnabled = isAuthConfigured();
-  const { data: session } = authClient.useSession();
-  const isSignedIn = Boolean(session?.user?.id);
+  const { user } = useAuthSession();
+  const isSignedIn = Boolean(user?.id);
   const [sort, setSort] = useState<"helpful" | "newest" | "mine">("helpful");
   const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState("");

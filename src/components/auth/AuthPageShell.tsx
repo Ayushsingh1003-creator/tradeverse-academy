@@ -124,8 +124,8 @@ export function AuthPageShell({
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-left">
                   <p className="text-sm font-semibold text-amber-100">Auth not configured</p>
                   <p className="mt-1 text-xs text-amber-200/80">
-                    Add <code className="rounded bg-black/30 px-1">NEON_AUTH_BASE_URL</code> and{" "}
-                    <code className="rounded bg-black/30 px-1">NEON_AUTH_COOKIE_SECRET</code> to{" "}
+                    Add <code className="rounded bg-black/30 px-1">JWT_PUBLIC_KEY</code> and{" "}
+                    <code className="rounded bg-black/30 px-1">TRADEVERSE_ID_HOSTNAME</code> to{" "}
                     <code className="rounded bg-black/30 px-1">.env.local</code>.
                   </p>
                 </div>

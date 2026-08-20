@@ -1,99 +1,110 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useState, type FormEvent } from "react";
 import { PasswordInput } from "@/components/auth/PasswordInput";
-import type { SignInFormState } from "@/lib/auth/form-state";
+
+export type AuthFormFields = { name?: string; email: string; password: string };
 
 type AuthFormProps = {
-  action: (prev: SignInFormState, formData: FormData) => Promise<SignInFormState>;
   variant: "sign-in" | "sign-up";
-  /** Parent-owned form state (e.g. SignInForm handles verification branch). */
-  formAction?: (payload: FormData) => void;
+  onSubmit: (fields: AuthFormFields) => Promise<void>;
   errorMessage?: string | null;
+  defaultEmail?: string;
 };
 
 const fieldClassName =
   "w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none focus:border-[#456DFF]/60";
 
-function SubmitButton({ variant }: { variant: "sign-in" | "sign-up" }) {
-  const { pending } = useFormStatus();
+export function AuthForm({ variant, onSubmit, errorMessage, defaultEmail }: AuthFormProps) {
+  const [pending, setPending] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
   const isSignUp = variant === "sign-up";
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="mt-1 w-full rounded-xl bg-[#456DFF] py-2.5 text-sm font-bold text-white transition hover:bg-[#5a7fff] disabled:opacity-60"
-    >
-      {pending
-        ? isSignUp
-          ? "Creating account…"
-          : "Signing in…"
-        : isSignUp
-          ? "Create account"
-          : "Sign in"}
-    </button>
-  );
-}
+  const error = errorMessage ?? localError;
 
-export function AuthForm({ action, variant, formAction: controlledAction, errorMessage }: AuthFormProps) {
-  const [internalState, internalAction] = useFormState(action, null);
-  const formAction = controlledAction ?? internalAction;
-  const error = errorMessage ?? internalState?.error;
-  const isSignUp = variant === "sign-up";
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setLocalError(null);
+    const formData = new FormData(event.currentTarget);
+    const name = String(formData.get("name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+
+    try {
+      await onSubmit({ name, email, password });
+    } catch (err) {
+      setLocalError(err instanceof Error ? err.message : "Something went wrong. Try again.");
+    } finally {
+      setPending(false);
+    }
+  }
 
   return (
-    <form action={formAction} className="flex w-full min-w-0 flex-col gap-4">
-        {isSignUp ? (
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="name" className="text-sm font-medium text-[#ccc]">
-              Name
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              required
-              autoComplete="name"
-              placeholder="Your name"
-              className={fieldClassName}
-            />
-          </div>
-        ) : null}
-
+    <form onSubmit={handleSubmit} className="flex w-full min-w-0 flex-col gap-4">
+      {isSignUp ? (
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="email" className="text-sm font-medium text-[#ccc]">
-            Email
+          <label htmlFor="name" className="text-sm font-medium text-[#ccc]">
+            Name
           </label>
           <input
-            id="email"
-            name="email"
-            type="email"
+            id="name"
+            name="name"
+            type="text"
             required
-            autoComplete="email"
-            placeholder="you@example.com"
+            autoComplete="name"
+            placeholder="Your name"
             className={fieldClassName}
           />
         </div>
+      ) : null}
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="password" className="text-sm font-medium text-[#ccc]">
-            Password
-          </label>
-          <PasswordInput
-            id="password"
-            autoComplete={isSignUp ? "new-password" : "current-password"}
-            minLength={isSignUp ? 8 : undefined}
-            placeholder={isSignUp ? "At least 8 characters" : "••••••••"}
-          />
-        </div>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="email" className="text-sm font-medium text-[#ccc]">
+          Email
+        </label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          defaultValue={defaultEmail}
+          autoComplete="email"
+          placeholder="you@example.com"
+          className={fieldClassName}
+        />
+      </div>
 
-        {error ? (
-          <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-            {error}
-          </p>
-        ) : null}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="password" className="text-sm font-medium text-[#ccc]">
+          Password
+        </label>
+        <PasswordInput
+          id="password"
+          autoComplete={isSignUp ? "new-password" : "current-password"}
+          minLength={isSignUp ? 8 : undefined}
+          placeholder={isSignUp ? "At least 8 characters" : "••••••••"}
+        />
+      </div>
 
-        <SubmitButton variant={variant} />
+      {error ? (
+        <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+          {error}
+        </p>
+      ) : null}
+
+      <button
+        type="submit"
+        disabled={pending}
+        className="mt-1 w-full rounded-xl bg-[#456DFF] py-2.5 text-sm font-bold text-white transition hover:bg-[#5a7fff] disabled:opacity-60"
+      >
+        {pending
+          ? isSignUp
+            ? "Creating account…"
+            : "Signing in…"
+          : isSignUp
+            ? "Create account"
+            : "Sign in"}
+      </button>
     </form>
   );
 }
