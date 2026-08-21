@@ -29,13 +29,13 @@ export type Course = {
 };
 
 export const LEARNING_PATHS: LearningPath[] = [
+  { id: "p2", slug: "technical-analysis", title: "Technical Analysis", description: "Use indicators and structure in context." },
   {
     id: "p0",
     slug: "financial-market-trading-foundation",
     title: "Financial Market and Trading Foundation",
     description: "Build strong fundamentals before strategy and execution.",
   },
-  { id: "p2", slug: "technical-analysis", title: "Technical Analysis", description: "Use indicators and structure in context." },
   { id: "p3", slug: "risk-management", title: "Risk Management", description: "Protect capital and control risk." },
   { id: "p4", slug: "trading-psychology", title: "Trading Psychology", description: "Build emotional discipline and process." },
   { id: "p5", slug: "strategy-labs", title: "Strategy Labs", description: "Practice complete trading systems." },
@@ -50,7 +50,7 @@ export const COURSES: Course[] = [
       "Understand the Indian financial markets from zero — what's traded, who participates, when sessions run, and how prices form.",
     pathSlug: "financial-market-trading-foundation",
     xpReward: 480,
-    premium: false,
+    premium: true,
     illustrationEmoji: "🏛️",
     totalExercises: 64,
     lessonSlugs: [
@@ -77,7 +77,7 @@ export const COURSES: Course[] = [
       "Go from theory to action: open an account, pick a broker, place orders, and understand the real cost of every trade in India.",
     pathSlug: "financial-market-trading-foundation",
     xpReward: 520,
-    premium: false,
+    premium: true,
     illustrationEmoji: "📝",
     totalExercises: 68,
     lessonSlugs: [
@@ -104,7 +104,7 @@ export const COURSES: Course[] = [
       "Survive long enough to learn strategy. Master position sizing, stop-loss discipline, journaling, and the psychology that protects your capital.",
     pathSlug: "financial-market-trading-foundation",
     xpReward: 560,
-    premium: false,
+    premium: true,
     illustrationEmoji: "🛡️",
     totalExercises: 72,
     lessonSlugs: [
@@ -135,14 +135,8 @@ export const COURSES: Course[] = [
     illustrationEmoji: "🕯️",
     totalExercises: 85,
     lessonSlugs: [
-      "candlestick-intro",
-      "how-to-read-a-chart",
       "what-is-a-candlestick",
-      "meaning-of-patterns",
-      "candle-psychology",
       "timeframes-explained",
-      "understanding-trends",
-      "swing-structure-bos",
       "support-resistance",
       "trend-lines",
       "chart-patterns",
@@ -152,19 +146,7 @@ export const COURSES: Course[] = [
         id: "c1-l1",
         number: 1,
         title: "Foundations",
-        lessonSlugs: ["candlestick-intro", "how-to-read-a-chart", "what-is-a-candlestick", "meaning-of-patterns"],
-      },
-      {
-        id: "c1-l2",
-        number: 2,
-        title: "Reading Price",
-        lessonSlugs: ["candle-psychology", "timeframes-explained", "understanding-trends", "swing-structure-bos"],
-      },
-      {
-        id: "c1-l3",
-        number: 3,
-        title: "Key Price Levels",
-        lessonSlugs: ["support-resistance", "trend-lines", "chart-patterns"],
+        lessonSlugs: ["what-is-a-candlestick", "timeframes-explained", "support-resistance", "trend-lines", "chart-patterns"],
       },
     ],
   },

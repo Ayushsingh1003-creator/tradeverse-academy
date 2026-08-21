@@ -10,6 +10,8 @@ import { useUserStore } from "@/lib/store";
 import { LEARNING_PATHS, type Course } from "@/lib/data/courses";
 import type { Lesson } from "@/lib/data/lessons";
 
+const FREE_COURSE_SLUG = "candlestick-essentials";
+
 interface Props {
   course: Course;
   allLessons: Lesson[];
@@ -51,14 +53,8 @@ type IconKey =
 /** Line-art glyph per lesson slug — every course renders bespoke SVGs, never emoji. */
 const SVG_ICON_BY_SLUG: Record<string, IconKey> = {
   // Candlestick Essentials
-  "candlestick-intro": "candle",
   "what-is-a-candlestick": "candle",
-  "how-to-read-a-chart": "bars",
-  "meaning-of-patterns": "hammer",
-  "candle-psychology": "brain",
   "timeframes-explained": "clock",
-  "understanding-trends": "trend",
-  "swing-structure-bos": "arrows",
   "support-resistance": "sr",
   "trend-lines": "trend",
   "chart-patterns": "peaks",
@@ -116,6 +112,23 @@ export function CourseLessonPath({ course, allLessons }: Props) {
   const hydrate = useUserStore((s) => s.hydrate);
   const hydrated = useUserStore((s) => s.hydrated);
   const lessonsCompleted = useUserStore((s) => s.lessonsCompleted);
+
+  // Not wrapped in QueryClientProvider on this public route — fetch directly rather than useSubscription().
+  const [isPremium, setIsPremium] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/subscription/status", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data) setIsPremium(Boolean(data.isPremium));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const requiresPremium = course.slug !== FREE_COURSE_SLUG && !isPremium;
 
   useEffect(() => {
     if (!hydrated) hydrate();
@@ -325,6 +338,7 @@ export function CourseLessonPath({ course, allLessons }: Props) {
           index={course.lessonSlugs.indexOf(selectedLesson.slug)}
           total={total}
           state={stateOf(selectedLesson.slug)}
+          locked={requiresPremium}
           onClose={() => setSelectedSlug(null)}
         />
       ) : null}
@@ -501,6 +515,7 @@ function LessonPopup({
   index,
   total,
   state,
+  locked,
   onClose,
 }: {
   lesson: Lesson;
@@ -509,6 +524,7 @@ function LessonPopup({
   index: number;
   total: number;
   state: NodeState;
+  locked: boolean;
   onClose: () => void;
 }) {
   const done = state === "done";
@@ -575,6 +591,13 @@ function LessonPopup({
             {done ? (
               <Button asChild variant="outline" className="h-12 w-full rounded-full border-[#456dff]/40 text-[#88c9f7]">
                 <Link href={`/learn/${lesson.slug}`}>Review lesson ↺</Link>
+              </Button>
+            ) : locked ? (
+              <Button
+                asChild
+                className="h-12 w-full rounded-full bg-[#f7c325] text-[#141414] shadow-[0_4px_20px_rgba(247,195,37,0.3)] hover:bg-[#e0af12]"
+              >
+                <Link href="/settings">Upgrade to Premium →</Link>
               </Button>
             ) : (
               <Button

@@ -31,8 +31,6 @@ export const LESSON_ICON_BY_SLUG: Record<string, string> = {
 
   // Candlestick Essentials
   "what-is-a-candlestick": "🕯️",
-  "how-to-read-a-chart": "📖",
-  "meaning-of-patterns": "🔨",
   "trend-lines": "📈",
   "chart-patterns": "📐",
   "support-resistance": "🎯",

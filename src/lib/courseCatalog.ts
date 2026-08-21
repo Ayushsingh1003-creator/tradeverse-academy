@@ -227,7 +227,7 @@ const KEYWORD_HINTS: Array<{
   {
     terms: ["bullish", "bearish", "green candle", "red candle", "marubozu"],
     courseSlug: "candlestick-essentials",
-    lessonSlug: "how-to-read-a-chart",
+    lessonSlug: "what-is-a-candlestick",
     shortAnswer:
       "Bullish means you expect prices to rise — buyers are in control. Bearish means you expect prices to fall — sellers are in control.",
   },
