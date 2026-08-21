@@ -36,13 +36,23 @@ export const users = pgTable("User", {
   country: text("country"),
   /** Set when the 8-question onboarding assessment is completed. */
   onboardingAssessmentCompletedAt: timestamp("onboardingAssessmentCompletedAt", { mode: "date" }),
-  /** newcomer | knowledgeable_loser | almost_there */
+  /** Stage key from the knowledge x discipline matrix, e.g. "developing_trader". */
   traderPersona: text("traderPersona"),
+  /** Knowledge field score, 0-9. */
   assessmentKScore: integer("assessmentKScore"),
+  /** Discipline field score, 0-9. */
   assessmentDScore: integer("assessmentDScore"),
+  /** Experience field score, 0-3. */
+  assessmentExperienceScore: integer("assessmentExperienceScore"),
+  /** Track-record field score, 0-3. */
+  assessmentTrackRecordScore: integer("assessmentTrackRecordScore"),
+  /** Weighted composite score, 0-100. */
+  assessmentComposite: integer("assessmentComposite"),
   /** JSON map of questionId → selected optionId */
   assessmentAnswers: text("assessmentAnswers"),
-  /** Disciplined instincts, weak theory — accelerated newcomer track */
+  /** JSON array of contextual note strings attached to the result. */
+  assessmentNotes: text("assessmentNotes"),
+  /** Deprecated: unused since the persona decision-tree was replaced by the field-scoring model. */
   assessmentAcceleratedPace: boolean("assessmentAcceleratedPace").notNull().default(false),
 });
 

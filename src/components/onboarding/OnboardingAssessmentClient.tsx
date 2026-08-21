@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ONBOARDING_QUESTIONS } from "@/lib/onboarding/questions";
-import type { AssessmentAnswers, AssessmentResult } from "@/lib/onboarding/types";
+import type { AssessmentAnswers, AssessmentResult, QuestionId } from "@/lib/onboarding/types";
 import { AUTH_HOME_URL } from "@/lib/auth/urls";
 
 type Phase = "intro" | "questions" | "submitting" | "result";
@@ -23,7 +23,7 @@ export function OnboardingAssessmentClient() {
     () => `${index + 1} / ${ONBOARDING_QUESTIONS.length}`,
     [index],
   );
-  const selected = question ? answers[question.id] : undefined;
+  const selected = question ? answers[question.id as QuestionId] : undefined;
 
   async function submitAssessment(finalAnswers: AssessmentAnswers) {
     setPhase("submitting");
@@ -69,6 +69,18 @@ export function OnboardingAssessmentClient() {
           <span className="font-medium text-white">Your track: </span>
           {result.moduleTrack}
         </p>
+        {result.notes.length > 0 ? (
+          <ul className="mt-4 space-y-2">
+            {result.notes.map((note, i) => (
+              <li
+                key={i}
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-[#aaa]"
+              >
+                {note}
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <Button
           className="mt-6 w-full"
           onClick={() => {
