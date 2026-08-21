@@ -6,6 +6,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Confetti } from "@/components/ui/Confetti";
 import { useUserStore } from "@/lib/store";
+import { useLessonCoach } from "@/lib/hooks/useLessonCoach";
+import { LessonCoachDock } from "@/components/lesson/LessonCoachPanel";
 import { sound } from "@/lib/sounds";
 import { candleBodyColor } from "@/lib/candleColors";
 import { useScrollCtaIntoView } from "@/lib/hooks/useScrollCtaIntoView";
@@ -753,6 +755,33 @@ const FB_BY_STEP: Partial<Record<number, { hint: string; correct: string; wrong:
   24: BOSS_DECIDE.fb,
 };
 
+/** Real question text/options/answer per step, fed to the AI coach on a wrong attempt. */
+const QUESTION_CONTEXT_BY_STEP: Partial<
+  Record<number, { question: string; options?: string[]; correctAnswer?: string }>
+> = {
+  2: { question: INTUITION_MCQ.prompt, options: INTUITION_MCQ.options, correctAnswer: INTUITION_MCQ.options[INTUITION_MCQ.correctIndex] },
+  6: { question: TAP_SUPPORT.prompt },
+  8: { question: TAP_SWING.prompt },
+  11: { question: DRAG_ZONE.prompt },
+  13: {
+    question: SPOT_MISTAKE.prompt,
+    options: SPOT_CARDS.map((c) => `${c.label} — ${c.note}`),
+    correctAnswer: SPOT_CARDS[SPOT_MISTAKE.correctIndex]
+      ? `${SPOT_CARDS[SPOT_MISTAKE.correctIndex]!.label} — ${SPOT_CARDS[SPOT_MISTAKE.correctIndex]!.note}`
+      : undefined,
+  },
+  15: {
+    question: CANDLE_PREDICT.prompt,
+    options: CANDLE_PREDICT_OPTIONS.map((o) => o.label),
+    correctAnswer: CANDLE_PREDICT_OPTIONS[CANDLE_PREDICT.correctIndex]?.label,
+  },
+  18: { question: TAP_RETEST.prompt },
+  20: { question: QUALITY_COMPARE.prompt, options: QUALITY_COMPARE.options, correctAnswer: QUALITY_COMPARE.options[QUALITY_COMPARE.correctIndex] },
+  22: { question: PLACE_ORDERS.prompt },
+  23: { question: BOSS_TAP.prompt },
+  24: { question: BOSS_DECIDE.prompt, options: BOSS_DECIDE.options, correctAnswer: BOSS_DECIDE.options[BOSS_DECIDE.correctIndex] },
+};
+
 function currentFeedback(step: number, phase: Phase, lastAward: number): Feedback {
   if (phase === "idle") return null;
   const fb = FB_BY_STEP[step];
@@ -767,6 +796,11 @@ function currentFeedback(step: number, phase: Phase, lastAward: number): Feedbac
 export function SupportResistanceLesson() {
   const router = useRouter();
   const completeLesson = useUserStore((s) => s.completeLesson);
+  const { collapsed, setCollapsed, coachPanelProps, notifyWrongAttempt } = useLessonCoach({
+    lessonTitle: "Support & Resistance",
+    lessonTopic: "support-resistance",
+    suggestedChips: ["How do I spot support?", "What is resistance?", "Give me an example"],
+  });
 
   const [state, setState] = useState<LessonState>(initialState);
   const [floaters, setFloaters] = useState<{ id: number; amt: number }[]>([]);
@@ -886,6 +920,13 @@ export function SupportResistanceLesson() {
     setDragAnchor(null);
   }
 
+  function notifyWrongAttemptForStep(stage: "hint" | "explain") {
+    const ctx = QUESTION_CONTEXT_BY_STEP[step];
+    if (!ctx) return;
+    const userAnswer = ctx.options && state.sel != null ? ctx.options[state.sel] : undefined;
+    notifyWrongAttempt({ question: ctx.question, options: ctx.options, correctAnswer: ctx.correctAnswer, userAnswer, stage, sectionLabel: `Section - ${step + 1}` });
+  }
+
   function checkAnswer() {
     if (!ready) return;
     if (state.attempts === 0) {
@@ -897,10 +938,12 @@ export function SupportResistanceLesson() {
       } else {
         setState((s) => ({ ...s, phase: "hint", attempts: 1 }));
         sound.wrong();
+        notifyWrongAttemptForStep("hint");
       }
     } else {
       setState((s) => ({ ...s, phase: "wrong", attempts: s.attempts + 1, lastAward: 5, qAnswered: s.qAnswered + 1 }));
       awardXp(5);
+      notifyWrongAttemptForStep("explain");
     }
   }
 
@@ -985,7 +1028,7 @@ export function SupportResistanceLesson() {
       </div>
 
       {/* HEADER */}
-      <header className="relative z-10 flex items-center gap-4 border-b border-border-subtle bg-brill-800/70 px-4 py-3.5 backdrop-blur-md md:px-6">
+      <header className="fixed inset-x-0 top-0 z-30 flex items-center gap-4 border-b border-border-subtle bg-brill-800/70 px-4 py-3.5 backdrop-blur-md md:px-6">
         <button
           type="button"
           onClick={goBack}
@@ -1035,7 +1078,11 @@ export function SupportResistanceLesson() {
       </header>
 
       {/* STAGE */}
-      <main className="relative z-10 flex flex-1 items-center justify-center px-5 py-8 pb-28">
+      <main
+        className={`relative z-10 flex flex-1 items-center justify-center pr-5 pb-28 pt-[100px] transition-[padding-left] duration-300 ease-out ${
+          collapsed ? "pl-5" : "pl-[calc(1.25rem+min(150px,42.5vw))]"
+        }`}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
@@ -1838,6 +1885,8 @@ export function SupportResistanceLesson() {
           )}
         </div>
       </footer>
+
+      <LessonCoachDock {...coachPanelProps} collapsed={collapsed} onToggleCollapsed={() => setCollapsed((c) => !c)} />
     </div>
   );
 }

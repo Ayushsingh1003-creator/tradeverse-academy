@@ -7,6 +7,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Confetti } from "@/components/ui/Confetti";
 import { useUserStore } from "@/lib/store";
+import { useLessonCoach } from "@/lib/hooks/useLessonCoach";
+import { LessonCoachDock } from "@/components/lesson/LessonCoachPanel";
 import { sound } from "@/lib/sounds";
 import { candleBodyColor } from "@/lib/candleColors";
 import { useScrollCtaIntoView } from "@/lib/hooks/useScrollCtaIntoView";
@@ -830,6 +832,22 @@ const FB_BY_STEP: Partial<Record<number, { hint: string; correct: string; wrong:
   19: BOSS_DECIDE.fb,
 };
 
+/** Real question text/options/answer per step, fed to the AI coach on a wrong attempt. */
+const QUESTION_CONTEXT_BY_STEP: Partial<
+  Record<number, { question: string; options?: string[]; correctAnswer?: string }>
+> = {
+  2: { question: INTUITION_MCQ.prompt, options: INTUITION_MCQ.options, correctAnswer: INTUITION_MCQ.options[INTUITION_MCQ.correctIndex] },
+  4: { question: COUNT_QUIZ.prompt, options: COUNT_QUIZ.options, correctAnswer: COUNT_QUIZ.options[COUNT_QUIZ.correctIndex] },
+  6: { question: TAP_HIGH.prompt },
+  7: { question: TAP_CLOSE.prompt },
+  9: { question: TF_EXPLORE.prompt, options: TF_EXPLORE.options, correctAnswer: TF_EXPLORE.options[TF_EXPLORE.correctIndex] },
+  11: { question: NOISE_QUIZ.prompt, options: NOISE_QUIZ.options, correctAnswer: NOISE_QUIZ.options[NOISE_QUIZ.correctIndex] },
+  13: { question: MATCH_QUIZ.prompt, options: MATCH_QUIZ.options, correctAnswer: MATCH_QUIZ.options[MATCH_QUIZ.correctIndex] },
+  16: { question: CONFLICT_QUIZ.prompt, options: CONFLICT_QUIZ.options, correctAnswer: CONFLICT_QUIZ.options[CONFLICT_QUIZ.correctIndex] },
+  18: { question: BOSS_TAP.prompt },
+  19: { question: BOSS_DECIDE.prompt, options: BOSS_DECIDE.options, correctAnswer: BOSS_DECIDE.options[BOSS_DECIDE.correctIndex] },
+};
+
 function currentFeedback(step: number, phase: Phase, lastAward: number): Feedback {
   if (phase === "idle") return null;
   const fb = FB_BY_STEP[step];
@@ -844,6 +862,11 @@ function currentFeedback(step: number, phase: Phase, lastAward: number): Feedbac
 export function TimeFramesLesson() {
   const router = useRouter();
   const completeLesson = useUserStore((s) => s.completeLesson);
+  const { collapsed, setCollapsed, coachPanelProps, notifyWrongAttempt } = useLessonCoach({
+    lessonTitle: "Timeframes Explained",
+    lessonTopic: "timeframes",
+    suggestedChips: ["Which timeframe should I use?", "Why do candles look different zoomed in?", "Give me an example"],
+  });
 
   const [state, setState] = useState<LessonState>(initialState);
   const [floaters, setFloaters] = useState<{ id: number; amt: number }[]>([]);
@@ -886,6 +909,13 @@ export function TimeFramesLesson() {
     setState((s) => ({ ...s, tap: loc }));
   }
 
+  function notifyWrongAttemptForStep(stage: "hint" | "explain") {
+    const ctx = QUESTION_CONTEXT_BY_STEP[step];
+    if (!ctx) return;
+    const userAnswer = ctx.options && state.sel != null ? ctx.options[state.sel] : undefined;
+    notifyWrongAttempt({ question: ctx.question, options: ctx.options, correctAnswer: ctx.correctAnswer, userAnswer, stage, sectionLabel: `Section - ${step + 1}` });
+  }
+
   function checkAnswer() {
     if (!ready) return;
     if (state.attempts === 0) {
@@ -897,10 +927,12 @@ export function TimeFramesLesson() {
       } else {
         setState((s) => ({ ...s, phase: "hint", attempts: 1 }));
         sound.wrong();
+        notifyWrongAttemptForStep("hint");
       }
     } else {
       setState((s) => ({ ...s, phase: "wrong", attempts: s.attempts + 1, lastAward: 5, qAnswered: s.qAnswered + 1 }));
       awardXp(5);
+      notifyWrongAttemptForStep("explain");
     }
   }
 
@@ -982,7 +1014,7 @@ export function TimeFramesLesson() {
       </div>
 
       {/* HEADER */}
-      <header className="relative z-10 flex items-center gap-4 border-b border-border-subtle bg-brill-800/70 px-4 py-3.5 backdrop-blur-md md:px-6">
+      <header className="fixed inset-x-0 top-0 z-30 flex items-center gap-4 border-b border-border-subtle bg-brill-800/70 px-4 py-3.5 backdrop-blur-md md:px-6">
         <button
           type="button"
           onClick={goBack}
@@ -1032,7 +1064,11 @@ export function TimeFramesLesson() {
       </header>
 
       {/* STAGE */}
-      <main className="relative z-10 flex flex-1 items-center justify-center px-5 py-8 pb-28">
+      <main
+        className={`relative z-10 flex flex-1 items-center justify-center pr-5 pb-28 pt-[100px] transition-[padding-left] duration-300 ease-out ${
+          collapsed ? "pl-5" : "pl-[calc(1.25rem+min(150px,42.5vw))]"
+        }`}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
@@ -1647,6 +1683,8 @@ export function TimeFramesLesson() {
           )}
         </div>
       </footer>
+
+      <LessonCoachDock {...coachPanelProps} collapsed={collapsed} onToggleCollapsed={() => setCollapsed((c) => !c)} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { getAuthUserId } from "@/lib/auth/session";
 import { getLessonBySlug } from "@/lib/data/lessonLookup";
 import { COURSES } from "@/lib/data/courses";
 import { fetchLessonImageConfigMap } from "@/lib/lessonImageOverrides.server";
+import { resolvePremiumStatus } from "@/lib/premium/resolvePremiumStatus";
 import { PageLoader } from "@/components/ui/Loader";
 import { ANATOMY_LESSON_SLUG } from "@/components/lesson/anatomy-of-a-candle/constants";
 import { CHART_PATTERNS_LESSON_SLUG } from "@/components/lesson/chart-patterns/constants";
@@ -16,11 +17,8 @@ const FREE_COURSE_SLUG = "candlestick-essentials";
 
 async function requestorIsPremium(): Promise<boolean> {
   const userId = await getAuthUserId();
-  if (!userId) return false;
-  const subscription = await db.subscription.findUnique({ where: { authUserId: userId } });
-  const plan = subscription?.plan ?? "free";
-  const status = subscription?.status ?? "inactive";
-  return plan !== "free" && ["active", "trialing"].includes(status);
+  const { isPremium } = await resolvePremiumStatus(userId);
+  return isPremium;
 }
 
 const LessonPlayer = dynamic(

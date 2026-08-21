@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Mic, Square, Volume2, VolumeX } from "lucide-react";
 import {
   fetchVoiceStatus,
   transcribeWithBrowser,
@@ -96,11 +97,14 @@ export function CoachVoiceInput({
 
   return (
     <div className={className}>
-      <p className="mb-2 text-[10px] text-slate-500">
-        {whisperReady ? "🎙 Whisper STT" : "🎙 Browser STT"}
-        {" · "}
-        {voiceLabel}
-        {status && !status.ready ? " · run npm run voice:server" : null}
+      <p className="mb-2 flex items-center gap-1 text-[10px] text-slate-500">
+        <Mic size={11} className="shrink-0" />
+        <span>
+          {whisperReady ? "Whisper STT" : "Browser STT"}
+          {" · "}
+          {voiceLabel}
+          {status && !status.ready ? " · run npm run voice:server" : null}
+        </span>
       </p>
       <div className="flex gap-2">
         <input
@@ -114,19 +118,30 @@ export function CoachVoiceInput({
           title={recording ? "Stop and send" : "Speak"}
           disabled={aiLoading || transcribing}
           aria-pressed={recording}
-          className={`shrink-0 rounded-xl border px-3 py-2 text-lg transition ${
+          className={`shrink-0 rounded-xl border px-3 py-2 transition ${
             recording
               ? "animate-pulse border-red-500/60 bg-red-500/20"
               : "border-slate-600 bg-slate-800 hover:border-[#456DFF]/50"
           } disabled:opacity-50`}
           onClick={() => void handleMicClick()}
         >
-          {transcribing ? "…" : recording ? "⏹" : "🎤"}
+          {transcribing ? (
+            <span className="text-lg leading-none">…</span>
+          ) : recording ? (
+            <Square size={18} fill="currentColor" />
+          ) : (
+            <Mic size={18} />
+          )}
         </button>
       </div>
       <div className="mt-2 flex gap-2">
-        <button type="button" className="rounded-lg border border-slate-600 px-2 py-1 text-xs text-slate-200" onClick={onToggleVoice}>
-          {voiceOn ? "🔊 Voice on" : "🔇 Voice off"}
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 rounded-lg border border-slate-600 px-2 py-1 text-xs text-slate-200"
+          onClick={onToggleVoice}
+        >
+          {voiceOn ? <Volume2 size={13} /> : <VolumeX size={13} />}
+          {voiceOn ? "Voice on" : "Voice off"}
         </button>
         <button
           type="button"
