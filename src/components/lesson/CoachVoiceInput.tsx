@@ -45,8 +45,8 @@ export function CoachVoiceInput({
   }, []);
 
   const whisperReady = status?.whisper ?? false;
-  const piperReady = status?.piper ?? false;
-  const voiceLabel = piperReady ? "Piper voice" : voiceOn ? "Browser voice" : "Voice off";
+  const fishAudioReady = status?.fishAudio ?? false;
+  const voiceLabel = fishAudioReady ? "Fish Audio voice" : voiceOn ? "Browser voice" : "Voice off";
 
   const handleMicClick = async () => {
     if (aiLoading || transcribing) return;
@@ -103,7 +103,7 @@ export function CoachVoiceInput({
           {whisperReady ? "Whisper STT" : "Browser STT"}
           {" · "}
           {voiceLabel}
-          {status && !status.ready ? " · run npm run voice:server" : null}
+          {status && !status.whisper ? " · run npm run voice:server for Whisper STT" : null}
         </span>
       </p>
       <div className="flex gap-2">

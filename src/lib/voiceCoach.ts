@@ -11,7 +11,7 @@ export function isVoiceCoachSupported() {
   return typeof window !== "undefined" && ("speechSynthesis" in window || typeof Audio !== "undefined");
 }
 
-function clearPiperAudio() {
+function clearFetchedAudio() {
   if (currentAudio) {
     currentAudio.pause();
     currentAudio.onended = null;
@@ -30,10 +30,10 @@ export function stopVoiceCoach() {
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     window.speechSynthesis.cancel();
   }
-  clearPiperAudio();
+  clearFetchedAudio();
 }
 
-/** Wait until Piper audio is cached (or failed). Call before showing coach text when voice is on. */
+/** Wait until Fish Audio audio is cached (or failed). Call before showing coach text when voice is on. */
 export async function prepareCoachTts(text: string): Promise<boolean> {
   const trimmed = textForSpeech(text);
   if (!trimmed || typeof window === "undefined") return false;
@@ -44,7 +44,7 @@ export async function prepareCoachTts(text: string): Promise<boolean> {
   return blob !== null;
 }
 
-/** Start Piper TTS fetch as soon as coach text is known (before playback). */
+/** Start Fish Audio TTS fetch as soon as coach text is known (before playback). */
 export function prefetchCoachTts(text: string): void {
   const trimmed = textForSpeech(text);
   if (!trimmed || typeof window === "undefined") return;
@@ -72,7 +72,7 @@ export function prefetchCoachTts(text: string): void {
   }
 }
 
-async function fetchPiperBlob(text: string, generation: number): Promise<Blob | null> {
+async function fetchTtsBlob(text: string, generation: number): Promise<Blob | null> {
   const trimmed = textForSpeech(text);
   if (!trimmed || generation !== speakGeneration) return null;
 
@@ -114,13 +114,13 @@ function speakWithBrowserTts(text: string, generation: number, onEnd?: () => voi
   window.speechSynthesis.speak(utterance);
 }
 
-async function speakWithPiper(text: string, generation: number): Promise<boolean> {
+async function speakWithFishAudio(text: string, generation: number): Promise<boolean> {
   if (typeof window === "undefined" || generation !== speakGeneration) return false;
 
-  const blob = await fetchPiperBlob(text, generation);
+  const blob = await fetchTtsBlob(text, generation);
   if (!blob || generation !== speakGeneration) return false;
 
-  clearPiperAudio();
+  clearFetchedAudio();
   currentObjectUrl = URL.createObjectURL(blob);
   currentAudio = new Audio(currentObjectUrl);
   currentAudio.preload = "auto";
@@ -148,7 +148,7 @@ async function speakWithPiper(text: string, generation: number): Promise<boolean
   return generation === speakGeneration;
 }
 
-/** Speak coach reply — Piper WAV when server is up, else browser speechSynthesis. */
+/** Speak coach reply — Fish Audio audio when configured, else browser speechSynthesis. */
 export async function speakCoachText(text: string, enabled: boolean, onEnd?: () => void) {
   if (!enabled || !textForSpeech(text)) {
     onEnd?.();
@@ -159,15 +159,15 @@ export async function speakCoachText(text: string, enabled: boolean, onEnd?: () 
   const generation = speakGeneration;
 
   try {
-    const usedPiper = await speakWithPiper(text, generation);
+    const usedFishAudio = await speakWithFishAudio(text, generation);
     if (generation !== speakGeneration) return;
-    if (usedPiper) {
+    if (usedFishAudio) {
       onEnd?.();
-      clearPiperAudio();
+      clearFetchedAudio();
       return;
     }
   } catch {
-    clearPiperAudio();
+    clearFetchedAudio();
     if (generation !== speakGeneration) return;
   }
 
