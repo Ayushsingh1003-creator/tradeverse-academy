@@ -1013,7 +1013,7 @@ export function TrendLinesLesson() {
       {/* STAGE */}
       <main
         className={`relative z-10 flex flex-1 items-center justify-center pr-5 pb-28 pt-[100px] transition-[padding-left] duration-300 ease-out ${
-          collapsed ? "pl-5" : "pl-[calc(1.25rem+min(150px,42.5vw))]"
+          step === 0 || collapsed ? "pl-5" : "pl-[calc(1.25rem+min(150px,42.5vw))]"
         }`}
       >
         <AnimatePresence mode="wait">
@@ -1784,7 +1784,9 @@ export function TrendLinesLesson() {
         </div>
       </footer>
 
-      <LessonCoachDock {...coachPanelProps} collapsed={collapsed} onToggleCollapsed={() => setCollapsed((c) => !c)} />
+      {step > 0 ? (
+        <LessonCoachDock {...coachPanelProps} collapsed={collapsed} onToggleCollapsed={() => setCollapsed((c) => !c)} />
+      ) : null}
     </div>
   );
 }
