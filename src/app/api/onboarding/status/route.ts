@@ -10,12 +10,24 @@ export async function GET() {
   const { dbUser } = authResult;
 
   const completed = Boolean(dbUser.onboardingAssessmentCompletedAt);
+  let notes: string[] = [];
+  try {
+    notes = dbUser.assessmentNotes ? JSON.parse(dbUser.assessmentNotes) : [];
+  } catch {
+    notes = [];
+  }
+
   return NextResponse.json({
     completed,
     needsAssessment: userNeedsOnboardingAssessment(dbUser),
-    persona: dbUser.traderPersona ?? null,
-    kScore: dbUser.assessmentKScore ?? null,
-    dScore: dbUser.assessmentDScore ?? null,
-    acceleratedPace: dbUser.assessmentAcceleratedPace ?? false,
+    stage: dbUser.traderPersona ?? null,
+    composite: dbUser.assessmentComposite ?? null,
+    fields: {
+      knowledge: dbUser.assessmentKScore ?? null,
+      discipline: dbUser.assessmentDScore ?? null,
+      experience: dbUser.assessmentExperienceScore ?? null,
+      trackRecord: dbUser.assessmentTrackRecordScore ?? null,
+    },
+    notes,
   });
 }

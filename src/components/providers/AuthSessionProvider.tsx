@@ -1,7 +1,7 @@
 "use client";
 
-import { authClient } from "@/lib/auth/client";
-import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { fetchSession } from "@/lib/auth/tradeverseIdClient";
 
 export type AuthSessionUser = {
   id: string;
@@ -29,39 +29,21 @@ export function AuthSessionProvider({
   initialUser: AuthSessionUser | null;
   children: ReactNode;
 }) {
-  const { data, isPending, isRefetching, refetch } = authClient.useSession();
-  const retriedRef = useRef(false);
+  const [user, setUser] = useState<AuthSessionUser | null>(initialUser);
+  const [isLoading, setIsLoading] = useState(!initialUser);
 
-  const clientUser = data?.user ?? null;
-  const resolved = !isPending && !isRefetching;
+  const refetch = useCallback(async () => {
+    const sessionUser = await fetchSession();
+    setUser(sessionUser ? { id: sessionUser.id, email: sessionUser.email, name: null, image: null } : null);
+    setIsLoading(false);
+  }, []);
 
   useEffect(() => {
+    // Reconciles with the live session on every mount, same as before — this is
+    // also what picks up a session set by a login on W1 moments earlier (the
+    // shared cookie is already there; this just confirms it and hydrates state).
     void refetch();
   }, [refetch]);
-
-  useEffect(() => {
-    if (retriedRef.current || clientUser || initialUser) return;
-    if (isPending || isRefetching) return;
-
-    retriedRef.current = true;
-    const t = window.setTimeout(() => {
-      void refetch();
-    }, 250);
-    return () => window.clearTimeout(t);
-  }, [clientUser, initialUser, isPending, isRefetching, refetch]);
-
-  useEffect(() => {
-    if (initialUser) retriedRef.current = false;
-  }, [initialUser?.id]);
-
-  let user: AuthSessionUser | null;
-  if (resolved) {
-    user = clientUser;
-  } else {
-    user = initialUser ?? clientUser ?? null;
-  }
-
-  const isLoading = !user && (isPending || isRefetching);
 
   return (
     <AuthSessionContext.Provider value={{ user, isLoading, refetch }}>

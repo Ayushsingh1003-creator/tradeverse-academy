@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { generateId } from "@/lib/generateId";
 
 export type Position = {
   id: string;
@@ -76,7 +77,7 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({
         ...state.portfolio,
         {
           ...position,
-          id: crypto.randomUUID(),
+          id: generateId(),
           openedAt: new Date().toISOString(),
           currentPnL: 0,
         },

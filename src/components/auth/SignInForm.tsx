@@ -1,27 +1,56 @@
 "use client";
 
-import Link from "next/link";
-import { useFormState } from "react-dom";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { AuthSignInPanel } from "@/components/auth/AuthSignInPanel";
-import { AuthForm } from "@/components/auth/AuthForm";
-import { EmailVerificationForm } from "@/components/auth/EmailVerificationForm";
-import { isVerificationState } from "@/lib/auth/form-state";
-import { signInWithEmail } from "@/app/sign-in/[[...sign-in]]/actions";
-import type { SignInFormState } from "@/lib/auth/form-state";
+import { AuthForm, type AuthFormFields } from "@/components/auth/AuthForm";
+import { AwaitingVerificationPanel } from "@/components/auth/AwaitingVerificationPanel";
+import { signInWithEmail, TradeverseIdError } from "@/lib/auth/tradeverseIdClient";
 
 type SignInFormProps = {
-  initialState?: SignInFormState;
   emailVerified?: boolean;
 };
 
-export function SignInForm({ initialState = null, emailVerified }: SignInFormProps) {
-  const [state, formAction] = useFormState(signInWithEmail, initialState);
-  const needsVerification = isVerificationState(state);
+export function SignInForm({ emailVerified }: SignInFormProps) {
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+  const router = useRouter();
+
+  async function handleSubmit({ email, password }: AuthFormFields) {
+    try {
+      await signInWithEmail(email, password);
+    } catch (e) {
+      if (e instanceof TradeverseIdError && e.data?.requiresVerification) {
+        setPendingVerificationEmail(email);
+        return;
+      }
+      throw e instanceof Error ? e : new Error("Failed to sign in.");
+    }
+
+    // Dashboard vs onboarding depends on DB state the browser can't read
+    // directly — ask the server. A 401 here means the login response's Set-Cookie
+    // didn't actually reach this app (e.g. viewing it on a different host than the
+    // one the cookie is scoped to) — surface that plainly rather than silently
+    // navigating to /onboarding, where middleware's own session check would just
+    // bounce back to sign-in with no visible explanation.
+    const res = await fetch("/api/auth/post-login-redirect");
+    if (res.status === 401) {
+      throw new Error(
+        "Signed in, but this app didn't receive the session cookie. If you're testing locally, make sure you're on the same host the cookie is scoped to.",
+      );
+    }
+    if (!res.ok) {
+      throw new Error("Signed in, but couldn't determine where to go next. Try refreshing.");
+    }
+    const data = await res.json();
+    const destination = typeof data?.url === "string" ? data.url : "/onboarding";
+    router.push(destination);
+    router.refresh();
+  }
 
   return (
-    <AuthSignInPanel variant="sign-in" showSocial={!needsVerification}>
-      {needsVerification && state && "email" in state ? (
-        <EmailVerificationForm email={state.email} initialMessage={state.message} />
+    <AuthSignInPanel variant="sign-in" showSocial={!pendingVerificationEmail}>
+      {pendingVerificationEmail ? (
+        <AwaitingVerificationPanel email={pendingVerificationEmail} />
       ) : (
         <>
           {emailVerified ? (
@@ -29,18 +58,7 @@ export function SignInForm({ initialState = null, emailVerified }: SignInFormPro
               Email verified. Sign in with your password to continue.
             </p>
           ) : null}
-          <AuthForm
-            action={signInWithEmail}
-            variant="sign-in"
-            formAction={formAction}
-            errorMessage={state && "error" in state ? state.error : null}
-          />
-          <p className="text-center text-xs text-[#666]">
-            Stuck without verifying?{" "}
-            <Link href="/sign-up?verify=1" className="font-semibold text-[#88C9F7] hover:text-[#456DFF]">
-              Get a new code
-            </Link>
-          </p>
+          <AuthForm variant="sign-in" onSubmit={handleSubmit} />
         </>
       )}
     </AuthSignInPanel>

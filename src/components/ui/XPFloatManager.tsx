@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { generateId } from "@/lib/generateId";
 
 type FloatItem = { id: string; amount: number };
 type XPFloatContextValue = { trigger: (amount: number) => void };
@@ -11,7 +12,7 @@ export function XPFloatProvider({ children }: { children: React.ReactNode }) {
   const [floats, setFloats] = useState<FloatItem[]>([]);
 
   const trigger = useCallback((amount: number) => {
-    const id = crypto.randomUUID();
+    const id = generateId();
     setFloats((prev) => [...prev, { id, amount }]);
     window.setTimeout(() => {
       setFloats((prev) => prev.filter((item) => item.id !== id));

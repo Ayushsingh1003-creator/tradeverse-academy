@@ -1,39 +1,9 @@
-import { neonAuth } from "@/lib/auth/server";
-import type { VerificationFormState } from "@/lib/auth/form-state";
+import { getPublicAppUrl } from "@/lib/auth/app-url";
+import { AUTH_SIGN_IN_URL } from "@/lib/auth/urls";
 
-export async function sendVerificationOtpForEmail(email: string) {
-  return neonAuth.emailOtp.sendVerificationOtp({
-    email,
-    type: "email-verification",
-  });
-}
-
-/** Resume OTP verification for an existing unverified account. */
-export async function buildVerificationResumeState(
-  email: string,
-  context: "sign-up" | "sign-in",
-): Promise<VerificationFormState> {
-  const { error } = await sendVerificationOtpForEmail(email);
-
-  const contextMessage =
-    context === "sign-up"
-      ? "This email is already registered but not verified yet. We sent a new 6-digit code — enter it below to finish setting up your account."
-      : "Your email isn't verified yet. We sent a new 6-digit code — enter it below to verify and continue.";
-
-  if (error) {
-    return {
-      needsVerification: true,
-      email,
-      message: contextMessage,
-      error:
-        error.message ||
-        "Could not send a new code. Wait a minute and use Resend code, or try again later.",
-    };
-  }
-
-  return {
-    needsVerification: true,
-    email,
-    message: contextMessage,
-  };
+/** Where Tradeverse ID redirects the browser after a verification link is clicked
+ * — this app's own sign-in page, not W1's (see the register/resend calls that pass
+ * this as `returnTo`). */
+export function getVerifiedReturnUrl(): string {
+  return `${getPublicAppUrl()}${AUTH_SIGN_IN_URL}?verified=1`;
 }

@@ -5,8 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useShowAdminNav } from "@/lib/admin/useShowAdminNav";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { AUTH_AFTER_SIGN_OUT_URL } from "@/lib/auth/urls";
-import { signOutAction } from "@/lib/auth/sign-out-action";
-import { clearClientAuthSession } from "@/lib/auth/sign-out-client";
+import { signOut } from "@/lib/auth/sign-out-client";
 
 function userInitials(name: string | null | undefined, email: string | null | undefined): string {
   if (name?.trim()) {
@@ -129,12 +128,7 @@ export function AuthUserMenu() {
               onClick={() => {
                 setOpen(false);
                 void (async () => {
-                  await clearClientAuthSession();
-                  try {
-                    await signOutAction();
-                  } catch {
-                    /* redirect() throws; fall through to hard navigation */
-                  }
+                  await signOut();
                   window.location.assign(AUTH_AFTER_SIGN_OUT_URL);
                 })();
               }}

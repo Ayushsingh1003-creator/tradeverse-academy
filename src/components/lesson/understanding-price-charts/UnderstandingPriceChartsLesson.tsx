@@ -497,7 +497,7 @@ export function UnderstandingPriceChartsLesson() {
       </div>
 
       {/* HEADER */}
-      <header className="relative z-10 flex items-center gap-4 border-b border-border-subtle bg-brill-800/70 px-4 py-3.5 backdrop-blur-md md:px-6">
+      <header className="fixed inset-x-0 top-0 z-30 flex items-center gap-4 border-b border-border-subtle bg-brill-800/70 px-4 py-3.5 backdrop-blur-md md:px-6">
         <button
           type="button"
           onClick={goBack}
@@ -547,7 +547,7 @@ export function UnderstandingPriceChartsLesson() {
       </header>
 
       {/* STAGE */}
-      <main className="relative z-10 flex flex-1 items-center justify-center px-5 py-8 pb-28">
+      <main className="relative z-10 flex flex-1 items-center justify-center px-5 pb-28 pt-[100px]">
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
