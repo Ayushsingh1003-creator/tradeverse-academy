@@ -941,9 +941,16 @@ export function SupportResistanceLesson() {
         notifyWrongAttemptForStep("hint");
       }
     } else {
-      setState((s) => ({ ...s, phase: "wrong", attempts: s.attempts + 1, lastAward: 5, qAnswered: s.qAnswered + 1 }));
-      awardXp(5);
-      notifyWrongAttemptForStep("explain");
+      const ok = evalSceneCorrect(step, state);
+      if (ok) {
+        setState((s) => ({ ...s, phase: "correct", attempts: s.attempts + 1, lastAward: 15, qAnswered: s.qAnswered + 1 }));
+        awardXp(15);
+        sound.correct();
+      } else {
+        setState((s) => ({ ...s, phase: "wrong", attempts: s.attempts + 1, lastAward: 5, qAnswered: s.qAnswered + 1 }));
+        awardXp(5);
+        notifyWrongAttemptForStep("explain");
+      }
     }
   }
 

@@ -27,8 +27,12 @@ export async function POST(req: Request) {
 
   const referenceId = process.env.FISH_AUDIO_REFERENCE_ID?.trim() || DEFAULT_REFERENCE_ID;
   const model = process.env.FISH_AUDIO_MODEL?.trim() || DEFAULT_MODEL;
+  // "balanced" trims latency vs. the "normal" default while keeping speech quality acceptable for a coaching voice.
+  const latency = process.env.FISH_AUDIO_LATENCY?.trim() || "balanced";
 
   const controller = new AbortController();
+  const onClientAbort = () => controller.abort();
+  req.signal?.addEventListener("abort", onClientAbort);
   const timer = setTimeout(() => controller.abort(), FISH_AUDIO_FETCH_TIMEOUT_MS);
 
   try {
@@ -43,11 +47,12 @@ export async function POST(req: Request) {
         text: text.slice(0, 2000),
         reference_id: referenceId,
         format: "mp3",
+        latency,
       }),
       signal: controller.signal,
     });
 
-    if (!res.ok) {
+    if (!res.ok || !res.body) {
       const detail = await res.text().catch(() => "");
       return Response.json(
         { fallback: true, error: `Fish Audio ${res.status}: ${detail.slice(0, 300)}` },
@@ -55,8 +60,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const audio = await res.arrayBuffer();
-    return new Response(audio, {
+    // Pipe Fish Audio's chunked response straight through as it arrives — do not
+    // buffer the whole clip before responding, so the browser can start playing
+    // as soon as the first bytes land.
+    return new Response(res.body, {
       headers: {
         "Content-Type": "audio/mpeg",
         "Cache-Control": "no-store",
@@ -67,5 +74,6 @@ export async function POST(req: Request) {
     return Response.json({ fallback: true, error: message }, { status: 200 });
   } finally {
     clearTimeout(timer);
+    req.signal?.removeEventListener("abort", onClientAbort);
   }
 }
