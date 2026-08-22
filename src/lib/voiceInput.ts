@@ -35,7 +35,7 @@ function getSpeechRecognition(): SpeechRecognitionCtor | null {
 export type VoiceInputStatus = {
   ready: boolean;
   whisper: boolean;
-  piper: boolean;
+  fishAudio: boolean;
 };
 
 export async function fetchVoiceStatus(): Promise<VoiceInputStatus> {
@@ -44,15 +44,15 @@ export async function fetchVoiceStatus(): Promise<VoiceInputStatus> {
     const data = (await res.json()) as {
       ready?: boolean;
       whisper?: boolean;
-      piper?: boolean;
+      fishAudio?: boolean;
     };
     return {
       ready: Boolean(data.ready),
       whisper: Boolean(data.whisper),
-      piper: Boolean(data.piper),
+      fishAudio: Boolean(data.fishAudio),
     };
   } catch {
-    return { ready: false, whisper: false, piper: false };
+    return { ready: false, whisper: false, fishAudio: false };
   }
 }
 

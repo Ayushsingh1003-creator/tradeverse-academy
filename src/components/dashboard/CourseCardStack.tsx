@@ -3,70 +3,81 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import SwiperCore from "swiper";
-import { EffectCoverflow } from "swiper/modules";
+import { Autoplay, EffectCoverflow } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/effect-coverflow";
 import { useUserStore } from "@/lib/store";
 import { LESSONS, type Lesson } from "@/lib/data/lessons";
+import { IconGlyph, type IconKey } from "@/components/icons/LessonIconGlyph";
 
-const CARDS = [
+const CARDS: {
+  id: string;
+  title: string;
+  sectionLabel: string;
+  accentColor: string;
+  accentDark: string;
+  icon: IconKey;
+  recommended: boolean;
+  lessonSlugs: string[];
+  startHref: string;
+}[] = [
   {
     id: "c1",
-    title: "Candlestick Foundations",
+    title: "Anatomy of a Candlestick",
     sectionLabel: "Candlestick Essentials",
     accentColor: "#456DFF",
     accentDark: "#1A2A6A",
-    emoji: "🕯️",
-    recommended: false,
-    lessonSlugs: ["what-is-a-candlestick", "how-to-read-a-chart"],
+    icon: "candle",
+    recommended: true,
+    lessonSlugs: ["what-is-a-candlestick"],
     startHref: "/learn/what-is-a-candlestick",
   },
   {
     id: "c2",
-    title: "Meaning of Patterns",
+    title: "Timeframes Explained",
     sectionLabel: "Candlestick Essentials",
     accentColor: "#8B5CF6",
     accentDark: "#2D1B5A",
-    emoji: "🔨",
-    recommended: true,
-    lessonSlugs: ["meaning-of-patterns"],
-    startHref: "/learn/meaning-of-patterns",
+    icon: "clock",
+    recommended: false,
+    lessonSlugs: ["timeframes-explained"],
+    startHref: "/learn/timeframes-explained",
   },
   {
     id: "c3",
-    title: "Trend & Structure",
+    title: "Support & Resistance",
     sectionLabel: "Candlestick Essentials",
     accentColor: "#F59E0B",
     accentDark: "#4A2E00",
-    emoji: "🎯",
-    recommended: true,
-    lessonSlugs: ["trend-lines", "support-resistance", "chart-patterns"],
-    startHref: "/learn/trend-lines",
+    icon: "sr",
+    recommended: false,
+    lessonSlugs: ["support-resistance"],
+    startHref: "/learn/support-resistance",
   },
   {
     id: "c4",
-    title: "RSI & Momentum",
-    sectionLabel: "Indicator Starter Kit",
+    title: "Trendlines",
+    sectionLabel: "Candlestick Essentials",
     accentColor: "#10B981",
     accentDark: "#052E1A",
-    emoji: "📊",
+    icon: "trend",
     recommended: false,
-    lessonSlugs: ["rsi-basics"],
-    startHref: "/learn/rsi-basics",
+    lessonSlugs: ["trend-lines"],
+    startHref: "/learn/trend-lines",
   },
   {
     id: "c5",
-    title: "Risk Management",
-    sectionLabel: "All Courses",
+    title: "Chart Patterns",
+    sectionLabel: "Candlestick Essentials",
     accentColor: "#EF4444",
     accentDark: "#3A0A0A",
-    emoji: "🛡️",
+    icon: "peaks",
     recommended: false,
-    lessonSlugs: ["support-resistance"],
-    startHref: "/courses",
+    lessonSlugs: ["chart-patterns"],
+    startHref: "/learn/chart-patterns",
   },
-] as const;
+];
 
 function MiniChart({ accent }: { accent: string }) {
   const id = accent.replace("#", "sg");
@@ -212,7 +223,9 @@ export default function CourseCardStack() {
             swiperRef.current = swiper;
           }}
           onSlideChange={(swiper) => setActiveIdx(swiper.activeIndex)}
-          modules={[EffectCoverflow]}
+          onReachEnd={(swiper) => swiper.autoplay?.stop()}
+          modules={[EffectCoverflow, Autoplay]}
+          autoplay={{ delay: 2200, disableOnInteraction: true }}
           effect="coverflow"
           // grabCursor
           centeredSlides
@@ -276,13 +289,13 @@ export default function CourseCardStack() {
                       <div className="relative h-[148px] w-full">
                         <MiniChart accent={card.accentColor} />
                         <div
-                          className="animate-float absolute left-5 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-xl text-2xl shadow-lg"
+                          className="animate-float absolute left-5 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-xl shadow-lg"
                           style={{
                             background: `linear-gradient(135deg, ${card.accentColor}33, ${card.accentColor}11)`,
                             border: `1.5px solid ${card.accentColor}44`,
                           }}
                         >
-                          {card.emoji}
+                          <IconGlyph icon={card.icon} size={28} />
                         </div>
                       </div>
                     </div>
@@ -354,7 +367,7 @@ export default function CourseCardStack() {
                 boxShadow: isActive ? `0 0 0 1px ${card.accentColor}22` : "none",
               }}
             >
-              <span className="text-xl leading-none sm:text-[22px]">{card.emoji}</span>
+              <IconGlyph icon={card.icon} size={22} />
             </button>
           );
         })}

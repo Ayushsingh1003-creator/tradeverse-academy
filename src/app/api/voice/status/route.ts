@@ -5,24 +5,17 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const health = await fetchVoiceHealth();
-  if (!health) {
-    return Response.json({
-      ready: false,
-      whisper: false,
-      piper: false,
-      message: "Voice server offline. Run: npm run voice:server",
-    });
-  }
+  const fishAudioReady = Boolean(process.env.FISH_AUDIO_API_KEY);
+  const whisperReady = Boolean(health?.whisper.ready);
 
   return Response.json({
-    ready: health.ok,
-    whisper: health.whisper.ready,
-    piper: health.piper.ready,
-    whisperModel: health.whisper.model,
-    piperVoice: health.piper.voice,
+    ready: whisperReady || fishAudioReady,
+    whisper: whisperReady,
+    fishAudio: fishAudioReady,
+    whisperModel: health?.whisper.model,
+    message: whisperReady ? undefined : "Whisper STT offline. Run: npm run voice:server",
     errors: {
-      whisper: health.whisper.error,
-      piper: health.piper.error,
+      whisper: health?.whisper.error,
     },
   });
 }
