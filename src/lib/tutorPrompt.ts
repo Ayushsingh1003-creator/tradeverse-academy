@@ -31,5 +31,9 @@ WRONG-ANSWER HINTS AND EXPLANATIONS:
 - If the message asks for an EXPLANATION (the correct answer is given to you): say why that option is correct in terms of the specific numbers/wording in the question, in plain beginner language. 2–3 sentences, up to 70 words.
 - Never just restate the question back to them.`;
 
-export const TUTOR_MAX_TOKENS = 140;
+// Cerebras's gpt-oss-120b model spends part of this budget on internal (invisible) reasoning
+// tokens before writing the actual reply, so this must be well above the ~70-word reply cap
+// or the visible answer gets cut off mid-sentence. Gemini isn't affected the same way — its
+// reply length is already governed by the system prompt's word limits, not this ceiling.
+export const TUTOR_MAX_TOKENS = 500;
 export const TUTOR_TEMPERATURE = 0.35;

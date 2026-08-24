@@ -334,6 +334,16 @@ export const db: any = {
     { lessonSlug: s.lessonImages.lessonSlug, pageId: s.lessonImages.pageId },
     s.lessonImages,
   ),
+  questionVoiceResponse: makeModel(
+    {
+      lessonSlug: s.questionVoiceResponses.lessonSlug,
+      questionKey: s.questionVoiceResponses.questionKey,
+      stage: s.questionVoiceResponses.stage,
+      courseSlug: s.questionVoiceResponses.courseSlug,
+    },
+    s.questionVoiceResponses,
+  ),
+  voicePrefix: makeModel({ kind: s.voicePrefixes.kind }, s.voicePrefixes),
   lesson: makeModel({ slug: s.lessons.slug, id: s.lessons.id }, s.lessons),
   lessonComment: makeModel({ id: s.lessonComments.id, lessonSlug: s.lessonComments.lessonSlug }, s.lessonComments),
   lessonCommentReply: makeModel({ id: s.lessonCommentReplies.id, commentId: s.lessonCommentReplies.commentId }, s.lessonCommentReplies),
