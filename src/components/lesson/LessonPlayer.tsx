@@ -27,7 +27,7 @@ import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { Confetti } from "@/components/ui/Confetti";
 import { useToast } from "@/components/ui/Toast";
 import { useXPFloat } from "@/components/ui/XPFloatManager";
-import { getCoachReply } from "@/lib/aiCoach";
+import { streamCoachReply } from "@/lib/aiCoach";
 import { isSoundEnabled, persistSoundPreference, resumeAudioContext, sound } from "@/lib/sounds";
 import type { Lesson } from "@/lib/data/lessons";
 import { COURSES } from "@/lib/data/courses";
@@ -64,8 +64,8 @@ import type {
   VisualChoicePage,
 } from "@/types/lessonPage";
 import { LessonCoachAside, LessonCoachMobile } from "@/components/lesson/LessonCoachPanel";
-import { prepareCoachTts, speakCoachText, stopVoiceCoach } from "@/lib/voiceCoach";
-import { textForSpeech } from "@/lib/speechText";
+import { startStreamingCoachSession, stopVoiceCoach } from "@/lib/voiceCoach";
+import { CoachTiming } from "@/lib/coachTiming";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { RichText } from "@/components/ui/RichText";
 
@@ -488,28 +488,44 @@ export function LessonPlayer({
         ? `practice-${resolvedLesson.practice?.[practiceIx]?.type ?? "question"}`
         : String(currentLessonTopic);
 
-    const result = await getCoachReply({
-      prompt,
-      lessonTitle: lesson.title,
-      lessonTopic,
-      history: historyForRequest,
-      isWrongAttempt,
-    });
-    const coachText = result.text;
+    // Placeholder bubble filled in as text streams.
+    setAiHistory((prev) => [...prev, { role: "coach", text: "" }]);
+    const setCoachBubbleText = (bubbleText: string) => {
+      setAiHistory((prev) => {
+        const next = [...prev];
+        next[next.length - 1] = { ...next[next.length - 1], text: bubbleText };
+        return next;
+      });
+    };
 
-    if (voiceOn && textForSpeech(coachText)) {
-      setAiLoadingPhase("voice");
-      await prepareCoachTts(coachText);
-    }
+    const timing = new CoachTiming();
+    timing.mark("requestStart");
+    const session = voiceOn ? startStreamingCoachSession(() => setCoachSpeaking(false), timing) : null;
+    if (session) setCoachSpeaking(true);
 
-    setAiHistory((prev) => [...prev, { role: "coach", text: coachText }]);
+    let streamedText = "";
+    let firstChunk = true;
+    const result = await streamCoachReply(
+      { prompt, lessonTitle: lesson.title, lessonTopic, history: historyForRequest, isWrongAttempt },
+      (delta) => {
+        if (firstChunk) {
+          firstChunk = false;
+          setAiLoading(false);
+          setAiLoadingPhase(null);
+        }
+        session?.feedText(delta);
+        streamedText += delta;
+        setCoachBubbleText(streamedText);
+      },
+      { timing },
+    );
+
+    // Nothing ever streamed (e.g. the request failed outright) — speak the local fallback reply instead.
+    if (firstChunk && result.text) session?.feedText(result.text);
+    session?.finish();
+    setCoachBubbleText(result.text);
     setAiLoading(false);
     setAiLoadingPhase(null);
-
-    if (voiceOn && textForSpeech(coachText)) {
-      setCoachSpeaking(true);
-      void speakCoachText(coachText, true, () => setCoachSpeaking(false));
-    }
   };
 
   const handleWrongAttemptCoach = () => {

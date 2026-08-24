@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getCoachReply } from "@/lib/aiCoach";
-import { prepareCoachTts, speakCoachText, stopVoiceCoach } from "@/lib/voiceCoach";
-import { textForSpeech } from "@/lib/speechText";
+import { streamCoachReply } from "@/lib/aiCoach";
+import { startStreamingCoachSession, stopVoiceCoach } from "@/lib/voiceCoach";
+import { CoachTiming } from "@/lib/coachTiming";
 import type { CoachMessage } from "@/components/lesson/LessonCoachPanel";
 
 type UseLessonCoachParams = {
@@ -63,28 +63,43 @@ export function useLessonCoach({ lessonTitle, lessonTopic, suggestedChips = [] }
     setAiLoading(true);
     setAiLoadingPhase("thinking");
 
-    const result = await getCoachReply({
-      prompt,
-      lessonTitle,
-      lessonTopic,
-      history: historyForRequest,
-      isWrongAttempt,
-    });
-    const coachText = result.text;
+    // Placeholder bubble filled in as text streams — sectionLabel is display-only and never reaches TTS.
+    setAiHistory((prev) => [...prev, { role: "coach", text: "", sectionLabel }]);
+    const setCoachBubbleText = (bubbleText: string) => {
+      setAiHistory((prev) => {
+        const next = [...prev];
+        next[next.length - 1] = { ...next[next.length - 1], text: bubbleText };
+        return next;
+      });
+    };
 
-    if (voiceOn && textForSpeech(coachText)) {
-      setAiLoadingPhase("voice");
-      await prepareCoachTts(coachText);
-    }
+    const timing = new CoachTiming();
+    timing.mark("requestStart");
+    const session = voiceOn ? startStreamingCoachSession(undefined, timing) : null;
 
-    setAiHistory((prev) => [...prev, { role: "coach", text: coachText, sectionLabel }]);
+    let streamedText = "";
+    let firstChunk = true;
+    const result = await streamCoachReply(
+      { prompt, lessonTitle, lessonTopic, history: historyForRequest, isWrongAttempt },
+      (delta) => {
+        if (firstChunk) {
+          firstChunk = false;
+          setAiLoading(false);
+          setAiLoadingPhase(null);
+        }
+        session?.feedText(delta);
+        streamedText += delta;
+        setCoachBubbleText(streamedText);
+      },
+      { timing },
+    );
+
+    // Nothing ever streamed (e.g. the request failed outright) — speak the local fallback reply instead.
+    if (firstChunk && result.text) session?.feedText(result.text);
+    session?.finish();
+    setCoachBubbleText(result.text);
     setAiLoading(false);
     setAiLoadingPhase(null);
-
-    // Only the AI's own reply is spoken — sectionLabel is display-only and never reaches TTS.
-    if (voiceOn && textForSpeech(coachText)) {
-      void speakCoachText(coachText, true);
-    }
   };
 
   /**

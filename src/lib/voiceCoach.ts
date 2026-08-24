@@ -1,97 +1,28 @@
 import { textForSpeech } from "@/lib/speechText";
+import { SentenceBuffer } from "@/lib/sentenceBuffer";
+import { TtsAudioSession } from "@/lib/ttsAudioQueue";
+import { CoachTiming } from "@/lib/coachTiming";
 
-let currentAudio: HTMLAudioElement | null = null;
-let currentObjectUrl: string | null = null;
-/** Bumped when a new speak starts or stopVoiceCoach runs — stale async must not fall back to browser TTS. */
-let speakGeneration = 0;
-
-const ttsCache = new Map<string, Promise<Blob | null>>();
+let activeSession: TtsAudioSession | null = null;
+/** Bumped on every new speak/stop — stale async work must never touch a later reply's UI or audio. */
+let generation = 0;
 
 export function isVoiceCoachSupported() {
   return typeof window !== "undefined" && ("speechSynthesis" in window || typeof Audio !== "undefined");
 }
 
-function clearFetchedAudio() {
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio.onended = null;
-    currentAudio.onerror = null;
-    currentAudio.src = "";
-    currentAudio = null;
-  }
-  if (currentObjectUrl) {
-    URL.revokeObjectURL(currentObjectUrl);
-    currentObjectUrl = null;
-  }
-}
-
+/** Cancels the in-flight streaming TTS session (if any) and any browser-TTS fallback speech. */
 export function stopVoiceCoach() {
-  speakGeneration += 1;
+  generation += 1;
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     window.speechSynthesis.cancel();
   }
-  clearFetchedAudio();
+  activeSession?.cancel();
+  activeSession = null;
 }
 
-/** Wait until Fish Audio audio is cached (or failed). Call before showing coach text when voice is on. */
-export async function prepareCoachTts(text: string): Promise<boolean> {
-  const trimmed = textForSpeech(text);
-  if (!trimmed || typeof window === "undefined") return false;
-  prefetchCoachTts(trimmed);
-  const pending = ttsCache.get(trimmed);
-  if (!pending) return false;
-  const blob = await pending;
-  return blob !== null;
-}
-
-/** Start Fish Audio TTS fetch as soon as coach text is known (before playback). */
-export function prefetchCoachTts(text: string): void {
-  const trimmed = textForSpeech(text);
-  if (!trimmed || typeof window === "undefined") return;
-  if (ttsCache.has(trimmed)) return;
-
-  ttsCache.set(
-    trimmed,
-    fetch("/api/voice/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: trimmed }),
-    })
-      .then(async (res) => {
-        const contentType = res.headers.get("content-type") ?? "";
-        if (!res.ok || !contentType.includes("audio")) return null;
-        const blob = await res.blob();
-        return blob.size > 0 ? blob : null;
-      })
-      .catch(() => null),
-  );
-
-  if (ttsCache.size > 12) {
-    const first = ttsCache.keys().next().value;
-    if (first) ttsCache.delete(first);
-  }
-}
-
-async function fetchTtsBlob(text: string, generation: number): Promise<Blob | null> {
-  const trimmed = textForSpeech(text);
-  if (!trimmed || generation !== speakGeneration) return null;
-
-  let pending = ttsCache.get(trimmed);
-  if (!pending) {
-    prefetchCoachTts(trimmed);
-    pending = ttsCache.get(trimmed);
-  }
-
-  const blob = pending ? await pending : null;
-  if (generation !== speakGeneration) return null;
-  return blob;
-}
-
-function speakWithBrowserTts(text: string, generation: number, onEnd?: () => void) {
-  if (generation !== speakGeneration) {
-    onEnd?.();
-    return;
-  }
+function speakWithBrowserTts(text: string, myGeneration: number, onEnd?: () => void) {
+  if (myGeneration !== generation) return;
   if (typeof window === "undefined" || !("speechSynthesis" in window)) {
     onEnd?.();
     return;
@@ -106,72 +37,71 @@ function speakWithBrowserTts(text: string, generation: number, onEnd?: () => voi
   utterance.pitch = 1;
   utterance.volume = 1;
   utterance.onend = () => {
-    if (generation === speakGeneration) onEnd?.();
+    if (myGeneration === generation) onEnd?.();
   };
   utterance.onerror = () => {
-    if (generation === speakGeneration) onEnd?.();
+    if (myGeneration === generation) onEnd?.();
   };
   window.speechSynthesis.speak(utterance);
 }
 
-async function speakWithFishAudio(text: string, generation: number): Promise<boolean> {
-  if (typeof window === "undefined" || generation !== speakGeneration) return false;
+export type CoachStreamSession = {
+  /** Feed the next streamed text delta from the LLM as soon as it arrives. */
+  feedText: (delta: string) => void;
+  /** Call once the LLM stream has finished — flushes any trailing partial sentence. */
+  finish: () => void;
+};
 
-  const blob = await fetchTtsBlob(text, generation);
-  if (!blob || generation !== speakGeneration) return false;
-
-  clearFetchedAudio();
-  currentObjectUrl = URL.createObjectURL(blob);
-  currentAudio = new Audio(currentObjectUrl);
-  currentAudio.preload = "auto";
-
-  await new Promise<void>((resolve, reject) => {
-    if (!currentAudio || generation !== speakGeneration) {
-      reject(new Error("Cancelled"));
-      return;
-    }
-    const audio = currentAudio;
-    const done = () => resolve();
-    audio.onended = done;
-    audio.onerror = () => reject(new Error("Playback failed"));
-    if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
-      void audio.play().catch(reject);
-    } else {
-      audio.oncanplaythrough = () => {
-        audio.oncanplaythrough = null;
-        void audio.play().catch(reject);
-      };
-      audio.load();
-    }
-  });
-
-  return generation === speakGeneration;
-}
-
-/** Speak coach reply — Fish Audio audio when configured, else browser speechSynthesis. */
-export async function speakCoachText(text: string, enabled: boolean, onEnd?: () => void) {
-  if (!enabled || !textForSpeech(text)) {
-    onEnd?.();
-    return;
-  }
-
+/**
+ * Starts a new low-latency streaming TTS session: text fed in via feedText()
+ * is split into sentences as soon as a natural boundary appears, and each
+ * sentence is sent to Fish Audio and queued for playback immediately —
+ * without waiting for the LLM (or earlier sentences' audio) to finish.
+ *
+ * Cancels any previous session first, so audio from an old reply can never
+ * play after a new request starts.
+ */
+export function startStreamingCoachSession(onEnd?: () => void, timing?: CoachTiming): CoachStreamSession {
   stopVoiceCoach();
-  const generation = speakGeneration;
+  const myGeneration = generation;
 
-  try {
-    const usedFishAudio = await speakWithFishAudio(text, generation);
-    if (generation !== speakGeneration) return;
-    if (usedFishAudio) {
-      onEnd?.();
-      clearFetchedAudio();
+  const session = new TtsAudioSession(timing);
+  activeSession = session;
+  const buffer = new SentenceBuffer();
+  let fullText = "";
+  let firstSentenceMarked = false;
+
+  session.onAllDone = (anyPlayed) => {
+    if (myGeneration !== generation) return;
+    if (!anyPlayed && fullText.trim()) {
+      // Fish Audio never actually produced audible playback for this reply — fall back to browser TTS once.
+      speakWithBrowserTts(fullText, myGeneration, onEnd);
       return;
     }
-  } catch {
-    clearFetchedAudio();
-    if (generation !== speakGeneration) return;
-  }
+    onEnd?.();
+  };
 
-  if (generation !== speakGeneration) return;
+  const enqueue = (sentence: string) => {
+    const spoken = textForSpeech(sentence);
+    if (!spoken) return;
+    if (!firstSentenceMarked) {
+      firstSentenceMarked = true;
+      timing?.mark("firstSentenceDetected");
+    }
+    session.enqueueText(spoken);
+  };
 
-  speakWithBrowserTts(text, generation, onEnd);
+  return {
+    feedText(delta: string) {
+      if (myGeneration !== generation) return;
+      fullText += delta;
+      for (const sentence of buffer.push(delta)) enqueue(sentence);
+    },
+    finish() {
+      if (myGeneration !== generation) return;
+      const rest = buffer.flush();
+      if (rest) enqueue(rest);
+      session.close();
+    },
+  };
 }
