@@ -42,7 +42,7 @@ export async function GET(req: Request, { params }: { params: { segments: string
   const clip = await fetchVoiceClip(s3Key);
   if (!clip) return new Response("Not found", { status: 404 });
 
-  return new Response(clip.body, {
+  return new Response(clip.body as unknown as BodyInit, {
     headers: {
       "Content-Type": clip.contentType,
       // Private: safe to cache in the requester's own browser, never in a shared/public cache.
