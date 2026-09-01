@@ -47,6 +47,8 @@ export async function GET(req: Request, { params }: { params: { segments: string
       "Content-Type": clip.contentType,
       // Private: safe to cache in the requester's own browser, never in a shared/public cache.
       "Cache-Control": "private, max-age=86400, immutable",
+      // Diagnostic only — whether this was served from the in-process S3 cache or fetched fresh.
+      "X-Cache": clip.cacheStatus,
     },
   });
 }

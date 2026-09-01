@@ -20,18 +20,21 @@ function getClient(): S3Client {
   return client;
 }
 
-type CachedClip = { body: Buffer; contentType: string };
+type CachedClip = { body: Buffer; contentType: string; cacheStatus: "HIT" | "MISS" };
 
 // Clips are static (a given key's content never changes), so cache bytes
 // in-process to avoid re-fetching from S3 on every request. Bounded FIFO
 // eviction keeps this from growing unbounded across a long-running process.
+// Note: on serverless (e.g. Vercel), this only helps when the same warm
+// container handles the request — it does not persist across cold starts
+// or across concurrently-scaled instances.
 const CACHE_MAX_ENTRIES = 500;
-const cache = new Map<string, CachedClip>();
+const cache = new Map<string, Omit<CachedClip, "cacheStatus">>();
 
 /** Fetches `audio/{key}` from the (private) voice-clips bucket, cached in-process. Returns null if the object doesn't exist. */
 export async function fetchVoiceClip(key: string): Promise<CachedClip | null> {
   const cached = cache.get(key);
-  if (cached) return cached;
+  if (cached) return { ...cached, cacheStatus: "HIT" };
 
   const bucket = process.env.VOICE_S3_BUCKET;
   if (!bucket) throw new Error("VOICE_S3_BUCKET is not set");
@@ -39,7 +42,7 @@ export async function fetchVoiceClip(key: string): Promise<CachedClip | null> {
   try {
     const res = await getClient().send(new GetObjectCommand({ Bucket: bucket, Key: `audio/${key}` }));
     if (!res.Body) return null;
-    const clip: CachedClip = {
+    const clip = {
       body: Buffer.from(await res.Body.transformToByteArray()),
       contentType: res.ContentType ?? "audio/mpeg",
     };
@@ -49,7 +52,7 @@ export async function fetchVoiceClip(key: string): Promise<CachedClip | null> {
       if (oldestKey !== undefined) cache.delete(oldestKey);
     }
     cache.set(key, clip);
-    return clip;
+    return { ...clip, cacheStatus: "MISS" };
   } catch (err) {
     const name = (err as { name?: string })?.name;
     if (name === "NoSuchKey" || name === "NotFound") return null;
