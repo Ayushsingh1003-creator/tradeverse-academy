@@ -20,18 +20,36 @@ function getClient(): S3Client {
   return client;
 }
 
-/** Streams `audio/{key}` from the (private) voice-clips bucket. Returns null if the object doesn't exist. */
-export async function fetchVoiceClip(key: string): Promise<{ body: ReadableStream; contentType: string } | null> {
+type CachedClip = { body: Buffer; contentType: string };
+
+// Clips are static (a given key's content never changes), so cache bytes
+// in-process to avoid re-fetching from S3 on every request. Bounded FIFO
+// eviction keeps this from growing unbounded across a long-running process.
+const CACHE_MAX_ENTRIES = 500;
+const cache = new Map<string, CachedClip>();
+
+/** Fetches `audio/{key}` from the (private) voice-clips bucket, cached in-process. Returns null if the object doesn't exist. */
+export async function fetchVoiceClip(key: string): Promise<CachedClip | null> {
+  const cached = cache.get(key);
+  if (cached) return cached;
+
   const bucket = process.env.VOICE_S3_BUCKET;
   if (!bucket) throw new Error("VOICE_S3_BUCKET is not set");
 
   try {
     const res = await getClient().send(new GetObjectCommand({ Bucket: bucket, Key: `audio/${key}` }));
     if (!res.Body) return null;
-    return {
-      body: res.Body.transformToWebStream(),
+    const clip: CachedClip = {
+      body: Buffer.from(await res.Body.transformToByteArray()),
       contentType: res.ContentType ?? "audio/mpeg",
     };
+
+    if (cache.size >= CACHE_MAX_ENTRIES) {
+      const oldestKey = cache.keys().next().value;
+      if (oldestKey !== undefined) cache.delete(oldestKey);
+    }
+    cache.set(key, clip);
+    return clip;
   } catch (err) {
     const name = (err as { name?: string })?.name;
     if (name === "NoSuchKey" || name === "NotFound") return null;
