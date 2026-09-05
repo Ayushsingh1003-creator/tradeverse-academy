@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "@/styles/dashboard-shell.css";
 
 export const metadata: Metadata = {
   title: "Dashboard",
