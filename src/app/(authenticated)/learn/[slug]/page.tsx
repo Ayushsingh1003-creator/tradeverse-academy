@@ -1,25 +1,17 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { db } from "@/lib/db";
-import { getAuthUserId } from "@/lib/auth/session";
 import { getLessonBySlug } from "@/lib/data/lessonLookup";
 import { COURSES } from "@/lib/data/courses";
 import { fetchLessonImageConfigMap } from "@/lib/lessonImageOverrides.server";
-import { resolvePremiumStatus } from "@/lib/premium/resolvePremiumStatus";
+import { fetchQuestionVoiceMap, fetchVoicePrefixes } from "@/lib/answerVoiceFeedback.server";
+import { FREE_COURSE_SLUG, requestorIsPremium } from "@/lib/premium/lessonAccess";
 import { PageLoader } from "@/components/ui/Loader";
 import { ANATOMY_LESSON_SLUG } from "@/components/lesson/anatomy-of-a-candle/constants";
 import { CHART_PATTERNS_LESSON_SLUG } from "@/components/lesson/chart-patterns/constants";
 import { SUPPORT_RESISTANCE_LESSON_SLUG } from "@/components/lesson/support-resistance/constants";
 import { TIME_FRAMES_LESSON_SLUG } from "@/components/lesson/timeframes/constants";
 import { TREND_LINES_LESSON_SLUG } from "@/components/lesson/trend-lines/constants";
-
-const FREE_COURSE_SLUG = "candlestick-essentials";
-
-async function requestorIsPremium(): Promise<boolean> {
-  const userId = await getAuthUserId();
-  const { isPremium } = await resolvePremiumStatus(userId);
-  return isPremium;
-}
 
 const LessonPlayer = dynamic(
   () => import("@/components/lesson/LessonPlayer").then((m) => m.LessonPlayer),
@@ -56,21 +48,27 @@ type PageProps = {
   searchParams: { library?: string };
 };
 
+const BESPOKE_LESSON_SLUGS = new Set([
+  ANATOMY_LESSON_SLUG,
+  SUPPORT_RESISTANCE_LESSON_SLUG,
+  TREND_LINES_LESSON_SLUG,
+  TIME_FRAMES_LESSON_SLUG,
+  CHART_PATTERNS_LESSON_SLUG,
+]);
+
 export default async function LearnPage({ params, searchParams }: PageProps) {
-  if (params.slug === ANATOMY_LESSON_SLUG) {
-    return <AnatomyOfACandleLesson />;
-  }
-  if (params.slug === SUPPORT_RESISTANCE_LESSON_SLUG) {
-    return <SupportResistanceLesson />;
-  }
-  if (params.slug === TREND_LINES_LESSON_SLUG) {
-    return <TrendLinesLesson />;
-  }
-  if (params.slug === TIME_FRAMES_LESSON_SLUG) {
-    return <TimeFramesLesson />;
-  }
-  if (params.slug === CHART_PATTERNS_LESSON_SLUG) {
-    return <ChartPatternsLesson />;
+  if (BESPOKE_LESSON_SLUGS.has(params.slug)) {
+    const [voiceConfigByQuestion, voicePrefixes] = await Promise.all([
+      fetchQuestionVoiceMap(params.slug),
+      fetchVoicePrefixes(),
+    ]);
+    const voiceProps = { voiceConfigByQuestion, voicePrefixes };
+
+    if (params.slug === ANATOMY_LESSON_SLUG) return <AnatomyOfACandleLesson {...voiceProps} />;
+    if (params.slug === SUPPORT_RESISTANCE_LESSON_SLUG) return <SupportResistanceLesson {...voiceProps} />;
+    if (params.slug === TREND_LINES_LESSON_SLUG) return <TrendLinesLesson {...voiceProps} />;
+    if (params.slug === TIME_FRAMES_LESSON_SLUG) return <TimeFramesLesson {...voiceProps} />;
+    return <ChartPatternsLesson {...voiceProps} />;
   }
 
   const baseLesson = getLessonBySlug(params.slug);
@@ -99,16 +97,24 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
 
   let playbackId: string | null = null;
   let imageConfigByPageId = {};
+  let voiceConfigByQuestion = {};
+  let voicePrefixes = {};
   try {
-    const [video, imageConfigs] = await Promise.all([
+    const [video, imageConfigs, questionVoiceMap, prefixes] = await Promise.all([
       db.lessonVideo.findUnique({ where: { lessonSlug: params.slug } }),
       fetchLessonImageConfigMap(params.slug),
+      fetchQuestionVoiceMap(params.slug),
+      fetchVoicePrefixes(),
     ]);
     playbackId = video?.muxPlaybackId ?? null;
     imageConfigByPageId = imageConfigs;
+    voiceConfigByQuestion = questionVoiceMap;
+    voicePrefixes = prefixes;
   } catch {
     playbackId = null;
     imageConfigByPageId = {};
+    voiceConfigByQuestion = {};
+    voicePrefixes = {};
   }
 
   return (
@@ -117,6 +123,8 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
       imageConfigByPageId={imageConfigByPageId}
       muxPlaybackId={playbackId}
       libraryCourseSlug={libraryCourseSlug || undefined}
+      voiceConfigByQuestion={voiceConfigByQuestion}
+      voicePrefixes={voicePrefixes}
     />
   );
 }

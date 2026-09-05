@@ -4,6 +4,7 @@ import { TtsAudioSession } from "@/lib/ttsAudioQueue";
 import { CoachTiming } from "@/lib/coachTiming";
 
 let activeSession: TtsAudioSession | null = null;
+let activeStaticAudio: HTMLAudioElement | null = null;
 /** Bumped on every new speak/stop — stale async work must never touch a later reply's UI or audio. */
 let generation = 0;
 
@@ -11,7 +12,7 @@ export function isVoiceCoachSupported() {
   return typeof window !== "undefined" && ("speechSynthesis" in window || typeof Audio !== "undefined");
 }
 
-/** Cancels the in-flight streaming TTS session (if any) and any browser-TTS fallback speech. */
+/** Cancels the in-flight streaming TTS session (if any), any browser-TTS fallback speech, and any static playback. */
 export function stopVoiceCoach() {
   generation += 1;
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -19,6 +20,13 @@ export function stopVoiceCoach() {
   }
   activeSession?.cancel();
   activeSession = null;
+  if (activeStaticAudio) {
+    activeStaticAudio.pause();
+    activeStaticAudio.onended = null;
+    activeStaticAudio.onerror = null;
+    activeStaticAudio.src = "";
+    activeStaticAudio = null;
+  }
 }
 
 function speakWithBrowserTts(text: string, myGeneration: number, onEnd?: () => void) {
@@ -104,4 +112,45 @@ export function startStreamingCoachSession(onEnd?: () => void, timing?: CoachTim
       session.close();
     },
   };
+}
+
+export type StaticCoachAudioUrls = { prefixUrl: string | null; responseUrl?: string };
+
+/**
+ * Plays a pre-generated static clip sequence for a lesson-question outcome:
+ * the shared prefix clip, then (if present) the per-question response clip.
+ * Static `<audio src="https://...">` streams progressively via HTTP range
+ * requests on its own, so no chunking/MSE machinery is needed here — that's
+ * specific to the live Fish Audio proxy used by startStreamingCoachSession.
+ *
+ * Shares the same generation/cancellation mechanism as the streaming coach
+ * session, so the two can never overlap or race.
+ */
+export function playStaticCoachAudio(urls: StaticCoachAudioUrls, onEnd?: () => void) {
+  stopVoiceCoach();
+  const myGeneration = generation;
+
+  const playClip = (url: string, next?: () => void) => {
+    if (myGeneration !== generation) return;
+    const audio = new Audio(url);
+    activeStaticAudio = audio;
+    const advance = () => {
+      if (myGeneration !== generation) return;
+      if (activeStaticAudio === audio) activeStaticAudio = null;
+      if (next) next();
+      else onEnd?.();
+    };
+    audio.onended = advance;
+    audio.onerror = advance;
+    void audio.play().catch(advance);
+  };
+
+  const responseUrl = urls.responseUrl;
+  if (urls.prefixUrl) {
+    playClip(urls.prefixUrl, responseUrl ? () => playClip(responseUrl) : undefined);
+  } else if (responseUrl) {
+    playClip(responseUrl);
+  } else {
+    onEnd?.();
+  }
 }

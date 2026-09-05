@@ -8,6 +8,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Confetti } from "@/components/ui/Confetti";
 import { useUserStore } from "@/lib/store";
 import { useLessonCoach } from "@/lib/hooks/useLessonCoach";
+import type { QuestionVoiceMap, VoicePrefixMap } from "@/lib/answerVoiceFeedback";
 import { LessonCoachDock } from "@/components/lesson/LessonCoachPanel";
 import { sound } from "@/lib/sounds";
 import { candleBodyColor } from "@/lib/candleColors";
@@ -833,7 +834,8 @@ const FB_BY_STEP: Partial<Record<number, { hint: string; correct: string; wrong:
 };
 
 /** Real question text/options/answer per step, fed to the AI coach on a wrong attempt. */
-const QUESTION_CONTEXT_BY_STEP: Partial<
+/** Consumed offline by scripts/voice-responses/generate.ts. */
+export const QUESTION_CONTEXT_BY_STEP: Partial<
   Record<number, { question: string; options?: string[]; correctAnswer?: string }>
 > = {
   2: { question: INTUITION_MCQ.prompt, options: INTUITION_MCQ.options, correctAnswer: INTUITION_MCQ.options[INTUITION_MCQ.correctIndex] },
@@ -859,13 +861,20 @@ function currentFeedback(step: number, phase: Phase, lastAward: number): Feedbac
 
 /* ================================================================ */
 
-export function TimeFramesLesson() {
+type TimeFramesLessonProps = {
+  voiceConfigByQuestion?: QuestionVoiceMap;
+  voicePrefixes?: VoicePrefixMap;
+};
+
+export function TimeFramesLesson({ voiceConfigByQuestion, voicePrefixes }: TimeFramesLessonProps = {}) {
   const router = useRouter();
   const completeLesson = useUserStore((s) => s.completeLesson);
-  const { collapsed, setCollapsed, coachPanelProps, notifyWrongAttempt } = useLessonCoach({
+  const { collapsed, setCollapsed, coachPanelProps, notifyAnswerOutcome } = useLessonCoach({
     lessonTitle: "Timeframes Explained",
     lessonTopic: "timeframes",
     suggestedChips: ["Which timeframe should I use?", "Why do candles look different zoomed in?", "Give me an example"],
+    voiceConfigByQuestion,
+    voicePrefixes,
   });
 
   const [state, setState] = useState<LessonState>(initialState);
@@ -909,11 +918,8 @@ export function TimeFramesLesson() {
     setState((s) => ({ ...s, tap: loc }));
   }
 
-  function notifyWrongAttemptForStep(stage: "hint" | "explain") {
-    const ctx = QUESTION_CONTEXT_BY_STEP[step];
-    if (!ctx) return;
-    const userAnswer = ctx.options && state.sel != null ? ctx.options[state.sel] : undefined;
-    notifyWrongAttempt({ question: ctx.question, options: ctx.options, correctAnswer: ctx.correctAnswer, userAnswer, stage, sectionLabel: `Section - ${step + 1}` });
+  function notifyAnswerFeedback(stage: "hint" | "explain" | "correct") {
+    notifyAnswerOutcome({ stage, questionKey: String(step), sectionLabel: `Section - ${step + 1}` });
   }
 
   function checkAnswer() {
@@ -924,10 +930,11 @@ export function TimeFramesLesson() {
         setState((s) => ({ ...s, phase: "correct", attempts: 1, lastAward: 30, qAnswered: s.qAnswered + 1, firstTryCorrect: s.firstTryCorrect + 1 }));
         awardXp(30);
         sound.correct();
+        notifyAnswerFeedback("correct");
       } else {
         setState((s) => ({ ...s, phase: "hint", attempts: 1 }));
         sound.wrong();
-        notifyWrongAttemptForStep("hint");
+        notifyAnswerFeedback("hint");
       }
     } else {
       const ok = evalSceneCorrect(step, state);
@@ -935,10 +942,11 @@ export function TimeFramesLesson() {
         setState((s) => ({ ...s, phase: "correct", attempts: s.attempts + 1, lastAward: 15, qAnswered: s.qAnswered + 1 }));
         awardXp(15);
         sound.correct();
+        notifyAnswerFeedback("correct");
       } else {
         setState((s) => ({ ...s, phase: "wrong", attempts: s.attempts + 1, lastAward: 5, qAnswered: s.qAnswered + 1 }));
         awardXp(5);
-        notifyWrongAttemptForStep("explain");
+        notifyAnswerFeedback("explain");
       }
     }
   }

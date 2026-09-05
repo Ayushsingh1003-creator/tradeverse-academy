@@ -16,10 +16,12 @@
     "icons": "node scripts/generate-icons.js",
     "test": "tsx --test src/lib/mergeServerStreak.test.ts src/lib/streak.test.ts src/lib/dailyChallenge.test.ts src/lib/libraryCourseProgress.test.ts src/lib/libraryLearnResume.test.ts src/lib/onboarding/scoreAssessment.test.ts",
     "voice:setup": "cd scripts/voice && python -m pip install -r requirements.txt && python download_models.py",
-    "voice:server": "cd scripts/voice && python -m pip install -q -r requirements.txt && python server.py"
+    "voice:server": "cd scripts/voice && python -m pip install -q -r requirements.txt && python server.py",
+    "voice:generate": "tsx scripts/voice-responses/generate.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.55",
+    "@aws-sdk/client-s3": "^3.1116.0",
     "@ai-sdk/react": "^3.0.174",
     "@base-ui/react": "^1.4.1",
     "@mux/mux-node": "^14.0.1",
