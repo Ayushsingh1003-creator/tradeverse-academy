@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Award, BookOpen, Flame, GraduationCap, Lock, Zap } from "lucide-react";
+import { AchievementIcon } from "@/components/icons/AchievementIcon";
 import { AppShell, ThemeScope } from "@/components/layout/AppShell";
 import { LEARNING_PATHS, COURSES } from "@/lib/data/courses";
 import { LESSONS } from "@/lib/data/lessons";
@@ -27,6 +28,14 @@ export function ProfileClient({
     course.lessonSlugs.every((slug) => lessonsCompleted.includes(slug)),
   ).length;
   const history = [...lessonHistory].sort((a, b) => b.completedAt.localeCompare(a.completedAt));
+
+  // Earned first, in the order they were unlocked — earliest at the top — then
+  // the ones still locked.
+  const sortedAchievements = [...achievements].sort((a, b) => {
+    if (a.earned !== b.earned) return a.earned ? -1 : 1;
+    if (a.earned && b.earned) return (a.earnedAt ?? "").localeCompare(b.earnedAt ?? "");
+    return 0;
+  });
 
   return (
     <ThemeScope>
@@ -109,11 +118,11 @@ export function ProfileClient({
           </div>
         ) : (
           <div className="tvd-grid">
-            {achievements.map((achievement) => (
+            {sortedAchievements.map((achievement) => (
               <div key={achievement.id} className="tvd-ccard" data-done={achievement.earned ? "" : undefined}>
                 <div className="tvd-ccard-top">
                   <span className="tvd-ctile" aria-hidden>
-                    {achievement.earned ? <Award size={20} /> : <Lock size={18} />}
+                    {achievement.earned ? <AchievementIcon icon={achievement.icon} size={20} /> : <Lock size={18} />}
                   </span>
                 </div>
                 <h3>{achievement.title}</h3>

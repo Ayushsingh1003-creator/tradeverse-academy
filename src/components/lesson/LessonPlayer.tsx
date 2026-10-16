@@ -252,7 +252,7 @@ export function LessonPlayer({
   const { push } = useToast();
   const { trigger } = useXPFloat();
   const completeLesson = useUserStore((s) => s.completeLesson);
-  const unlockAchievement = useUserStore((s) => s.unlockAchievement);
+  const syncAchievements = useUserStore((s) => s.syncAchievements);
   const lessonsCompleted = useUserStore((s) => s.lessonsCompleted);
   const resolvedLesson = useMemo(
     () => applyLessonImageConfigMap(lesson, imageConfigByPageId),
@@ -604,8 +604,7 @@ export function LessonPlayer({
     if (result.freezeEarned) {
       push("🛡️ Streak freeze earned! (max 2)", "success");
     }
-    const u = unlockAchievement("a4");
-    if (u) push(`🏆 ${u.title}`, "success");
+    syncAchievements();
   };
 
   const restartLesson = () => {
