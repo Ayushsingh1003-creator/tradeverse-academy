@@ -13,23 +13,23 @@ export function LibraryVideoCard({
     <button
       type="button"
       onClick={() => onWatch(video)}
-      className="block h-full w-full cursor-pointer rounded-2xl border border-transparent p-0 text-left transition hover:border-[#456DFF]/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#456DFF]"
+      className="block h-full w-full cursor-pointer rounded-2xl border border-transparent p-0 text-left transition hover:border-[var(--tv-acc-line)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tv-acc)]"
     >
       <Card className="flex h-full flex-col overflow-hidden p-0">
         <div className="relative aspect-video w-full">
           <img src={video.thumbnailUrl} alt={video.title} className="h-full w-full object-cover" loading="lazy" />
         </div>
         <div className="flex flex-1 flex-col p-4">
-          <p className="line-clamp-2 text-sm font-semibold text-white">{video.title}</p>
-          <p className="mt-1 text-xs text-text-muted">
+          <p className="line-clamp-2 text-sm font-semibold text-[color:var(--tv-ink)]">{video.title}</p>
+          <p className="mt-1 text-xs text-[color:var(--tv-mute)]">
             {video.duration} · {video.publishedAt}
           </p>
-          <p className="mt-2 line-clamp-2 text-xs text-text-muted">{video.description}</p>
+          <p className="mt-2 line-clamp-2 text-xs text-[color:var(--tv-mute)]">{video.description}</p>
           <div className="mt-3 flex flex-wrap gap-1">
             {video.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-border px-2 py-0.5 text-[10px] text-text-muted"
+                className="rounded-full border border-[var(--tv-line)] px-2 py-0.5 text-[10px] text-[color:var(--tv-mute)]"
               >
                 {tag}
               </span>

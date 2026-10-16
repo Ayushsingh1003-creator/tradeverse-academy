@@ -7,9 +7,7 @@ import { FreeMode } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/free-mode";
-import { AppNav } from "@/components/layout/AppNav";
-import { PAGE_SHELL_CLASSES } from "@/components/layout/pageShell";
-import { Button } from "@/components/ui/Button";
+import { AppShell, ThemeScope } from "@/components/layout/AppShell";
 import { LibraryCourseCard } from "@/components/library/LibraryCourseCard";
 import { LibraryVideoCard } from "@/components/library/LibraryVideoCard";
 import { YouTubePlayerModal } from "@/components/library/YouTubePlayerModal";
@@ -124,13 +122,15 @@ export function LibraryPageClient({
   };
 
   return (
-    <main className="min-h-screen bg-[#141414]">
-      <AppNav />
-      <section className={`${PAGE_SHELL_CLASSES} py-8`}>
+    <ThemeScope>
+      <AppShell>
         {resumeItems.length > 0 ? (
           <section className="mb-10">
-            <h2 className="mb-1 text-xl font-bold text-white">Resume learning</h2>
-            <p className="mb-4 text-xs text-text-muted">Pick up where you left off in courses you have started.</p>
+            <div className="tvd-srule" style={{ marginTop: 0 }}>
+              <h2>Resume learning</h2>
+              <i />
+            </div>
+            <p className="tvd-secsub">Pick up where you left off in courses you have started.</p>
             <Swiper {...swiperCommon}>
               {resumeItems.map(({ course, lastVideoId }) => {
                 const href = resumeHref(course, lastVideoId);
@@ -138,7 +138,8 @@ export function LibraryPageClient({
                   <SwiperSlide key={`${course.id}-resume`} className={slideClass}>
                     <Link
                       href={href}
-                      className="group relative flex flex-col overflow-hidden rounded-2xl border border-[#456DFF]/30 bg-gradient-to-b from-[#456DFF]/12 to-[#1a1a1a] p-0 shadow-[0_12px_40px_rgba(0,0,0,0.45)] transition hover:border-[#456DFF]/55 hover:shadow-[0_16px_48px_rgba(69,109,255,0.18)]"
+                      className="tvd-ccard group"
+                      style={{ padding: 0, overflow: "hidden", borderColor: "var(--tv-acc-line)" }}
                     >
                       <div className="relative aspect-video w-full overflow-hidden">
                         <img
@@ -148,13 +149,13 @@ export function LibraryPageClient({
                           loading="lazy"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                        <span className="absolute bottom-3 left-3 rounded-full bg-[#456DFF] px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                        <span className="tvd-chipsm" style={{ position: "absolute", bottom: 12, left: 12, background: "var(--tv-up)", borderColor: "var(--tv-up-sh)", color: "var(--tv-up-ink)" }}>
                           Continue
                         </span>
                       </div>
                       <div className="p-4">
-                        <p className="text-sm font-bold leading-snug text-white">{course.title}</p>
-                        <p className="mt-1 line-clamp-2 text-[11px] text-text-muted">{course.description}</p>
+                        <p style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.3, margin: 0 }}>{course.title}</p>
+                        <p className="tvd-cdesc" style={{ marginTop: 5, fontSize: 12 }}>{course.description}</p>
                       </div>
                     </Link>
                   </SwiperSlide>
@@ -165,26 +166,28 @@ export function LibraryPageClient({
         ) : null}
 
         <div className="mb-6 space-y-3">
-          <h1 className="text-3xl font-extrabold text-white">Library</h1>
-          <p className="text-sm text-text-muted">
-            Watch full recorded courses and independent YouTube lessons directly on Tradeverse.
-          </p>
+          <div className="tvd-pagehead">
+            <h1>Library</h1>
+            <p>Watch full recorded courses and independent YouTube lessons directly on Tradeverse.</p>
+          </div>
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search courses and videos"
-              className="w-full rounded-xl border border-border bg-surface2 px-3 py-2 text-sm text-white outline-none md:max-w-md"
+              className="tvd-input md:max-w-md"
             />
             <div className="flex flex-wrap gap-2">
               {(["all", "courses", "videos"] as const).map((item) => (
-                <Button
+                <button
                   key={item}
-                  variant={mode === item ? "default" : "secondary"}
+                  type="button"
+                  className="tvd-btn"
+                  data-tone={mode === item ? "primary" : undefined}
                   onClick={() => setMode(item)}
                 >
                   {item === "all" ? "All" : item === "courses" ? "Courses" : "Videos"}
-                </Button>
+                </button>
               ))}
             </div>
           </div>
@@ -194,11 +197,8 @@ export function LibraryPageClient({
                 key={tag}
                 type="button"
                 onClick={() => setSelectedTag(tag)}
-                className={`rounded-full border px-3 py-1 text-xs ${
-                  selectedTag === tag
-                    ? "border-[#456DFF] bg-[#456DFF]/20 text-white"
-                    : "border-border text-text-muted hover:text-white"
-                }`}
+                className="tvd-tag"
+                data-tone={selectedTag === tag ? "acc" : undefined}
               >
                 {tag}
               </button>
@@ -208,7 +208,10 @@ export function LibraryPageClient({
 
         {(mode === "all" || mode === "courses") && filteredCourses.length ? (
           <section className="mb-10">
-            <h2 className="mb-3 text-xl font-bold text-white">Courses</h2>
+            <div className="tvd-srule">
+              <h2>Courses</h2>
+              <i />
+            </div>
             <Swiper {...swiperCommon}>
               {filteredCourses.map((course, index) => (
                 <SwiperSlide key={course.id} className={slideClass}>
@@ -225,7 +228,10 @@ export function LibraryPageClient({
 
         {(mode === "all" || mode === "videos") && filteredVideos.length ? (
           <section>
-            <h2 className="mb-3 text-xl font-bold text-white">Independent Videos</h2>
+            <div className="tvd-srule">
+              <h2>Independent videos</h2>
+              <i />
+            </div>
             <Swiper {...swiperCommon}>
               {filteredVideos.map((video) => (
                 <SwiperSlide key={video.id} className={slideClass}>
@@ -237,17 +243,16 @@ export function LibraryPageClient({
         ) : null}
 
         {!filteredCourses.length && !filteredVideos.length ? (
-          <p className="mt-8 rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text-muted">
-            No content matched your filters. Try a different search or tag.
-          </p>
+          <div className="tvd-card" style={{ marginTop: 28 }}>
+            <p className="tvd-empty">No content matched your filters. Try a different search or tag.</p>
+          </div>
         ) : null}
-      </section>
-
-      <YouTubePlayerModal
-        open={Boolean(playingVideo)}
-        video={playingVideo}
-        onClose={() => setPlayingVideo(null)}
-      />
-    </main>
+        <YouTubePlayerModal
+          open={Boolean(playingVideo)}
+          video={playingVideo}
+          onClose={() => setPlayingVideo(null)}
+        />
+      </AppShell>
+    </ThemeScope>
   );
 }

@@ -9,23 +9,27 @@ export default async function LiveClassesPage() {
 
   return (
     <LiveClassesPageShell>
-      <div className="mb-6 space-y-2">
-        <h1 className="text-3xl font-extrabold text-white">Live Cohort</h1>
-        <p className="max-w-3xl text-sm text-text-muted">
-          Join live cohort-based classes with structured curriculum, instructor support, and practical trading execution frameworks.
+      <div className="tvd-pagehead">
+        <h1>Live Cohort</h1>
+        <p>
+          Join live cohort-based classes with structured curriculum, instructor support, and practical trading
+          execution frameworks.
         </p>
       </div>
 
       {courses.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-16 text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-accent">Stay Tuned</p>
-          <h2 className="mt-2 text-xl font-bold text-white">No Upcoming Live Classes!</h2>
-          <p className="mx-auto mt-3 max-w-md text-sm text-text-muted">
-            New cohorts are on the way. Check back soon for live sessions with structured curriculum and instructor support.
+        <div className="tvd-card" style={{ padding: "56px 24px", textAlign: "center", marginTop: 18 }}>
+          <div className="tvd-eyebrow">Stay tuned</div>
+          <h2 style={{ marginTop: 8, fontSize: 20, fontWeight: 900, letterSpacing: "-0.02em" }}>
+            No upcoming live classes
+          </h2>
+          <p className="tvd-muted" style={{ margin: "10px auto 0", maxWidth: 420 }}>
+            New cohorts are on the way. Check back soon for live sessions with structured curriculum and instructor
+            support.
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="tvd-grid" style={{ marginTop: 18 }}>
           {courses.map((course) => (
             <LiveClassCard key={course.id} course={course} />
           ))}

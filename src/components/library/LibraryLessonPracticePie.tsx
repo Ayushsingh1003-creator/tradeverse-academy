@@ -95,12 +95,12 @@ export function LibraryLessonPracticePie({
           role="tooltip"
           className="absolute bottom-full right-0 z-50 mb-1.5 w-52 rounded-xl border border-white/10 bg-[#1E1E1E] p-3 text-left shadow-xl"
         >
-          <p className="text-xs font-bold text-white">{title}</p>
-          <p className="mt-1 text-[11px] leading-snug text-text-muted">{detailLine}</p>
+          <p className="text-xs font-bold text-[color:var(--tv-ink)]">{title}</p>
+          <p className="mt-1 text-[11px] leading-snug text-[color:var(--tv-mute)]">{detailLine}</p>
           {practiceTotal > 0 ? (
-            <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-text-muted">
+            <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-[color:var(--tv-mute)]">
               <span className="inline-flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#456DFF]" /> Correct
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--tv-up)]" /> Correct
               </span>
               <span className="inline-flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#F7C325]" /> Missed
@@ -116,7 +116,7 @@ export function LibraryLessonPracticePie({
         title={open ? undefined : detailLine}
       >
         <PieDisk correct={correct} missed={missed} pending={pending} />
-        <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[8px] font-bold leading-none text-white drop-shadow-sm">
+        <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[8px] font-bold leading-none text-[color:var(--tv-ink)] drop-shadow-sm">
           {centerLabel}
         </span>
       </div>

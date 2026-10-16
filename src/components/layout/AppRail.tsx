@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { isNavLinkActive } from "@/components/layout/NavLink";
 import { useShowAdminNav } from "@/lib/admin/useShowAdminNav";
+import { PRICING_URL } from "@/lib/pricingUrl";
 
 type Theme = "light" | "dark";
 
@@ -54,7 +55,7 @@ function useAppTheme(): [Theme, (next: Theme) => void] {
   return [theme, apply];
 }
 
-export function DashboardRail({ mini, onToggleMini }: { mini: boolean; onToggleMini: () => void }) {
+export function AppRail({ mini, onToggleMini }: { mini: boolean; onToggleMini: () => void }) {
   const pathname = usePathname() ?? "";
   const showAdmin = useShowAdminNav();
   const [theme, setTheme] = useAppTheme();
@@ -136,7 +137,7 @@ export function DashboardRail({ mini, onToggleMini }: { mini: boolean; onToggleM
         </div>
 
         <div className="tvd-pro">
-          <a href="https://www.tradeversejournal.com/pricing" target="_blank" rel="noopener noreferrer">
+          <a href={PRICING_URL} target="_blank" rel="noopener noreferrer">
             <span>Upgrade</span>
           </a>
         </div>

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AppNav } from "@/components/layout/AppNav";
-import { Card } from "@/components/ui/Card";
+import { ArrowLeft } from "lucide-react";
+import { AppShell, ThemeScope } from "@/components/layout/AppShell";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { isAuthConfigured } from "@/lib/auth/enabled";
 import { useUserStore } from "@/lib/store";
@@ -32,20 +32,20 @@ function formatReason(r: string) {
 
 function HistoryList({ rows }: { rows: Array<LedgerRow | LocalRow> }) {
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className="tvd-stack" style={{ listStyle: "none", margin: 0, padding: 0 }}>
       {rows.map((row) => (
         <li key={row.id}>
-          <Card className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-            <div className="min-w-0">
-              <p className="font-medium text-white">{formatReason(row.reason)}</p>
-              <p className="text-xs text-text-muted">
+          <div className="tvd-row">
+            <div className="tvd-rowbody">
+              <b>{formatReason(row.reason)}</b>
+              <small>
                 {new Date(row.createdAt).toLocaleString()}
                 {row.ref ? ` · ${row.ref}` : ""}
                 {row.source === "device" ? " · this device" : ""}
-              </p>
+              </small>
             </div>
-            <span className="shrink-0 text-sm font-bold text-[#F7C325]">+{row.amount} XP</span>
-          </Card>
+            <span className="tvd-rowxp">+{row.amount} XP</span>
+          </div>
         </li>
       ))}
     </ul>
@@ -132,60 +132,71 @@ function XpHistoryContent() {
   const showEmpty = displayRows.length === 0 && !loading;
 
   return (
-    <main className="min-h-screen bg-background">
-      <AppNav />
-      <section className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <ThemeScope>
+      <AppShell>
+        <div className="tvd-pagehead" style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: 16 }}>
           <div>
-            <h1 className="text-2xl font-bold text-white">XP history</h1>
-            <p className="mt-1 text-sm text-text-muted">
+            <h1>XP history</h1>
+            <p>
               {showServer
                 ? "Synced to your account when you earn XP while signed in."
                 : "Lesson XP saved on this device. Sign in to sync across devices."}
             </p>
           </div>
-          <Link href="/dashboard" className="text-sm font-medium text-[#88C9F7] no-underline hover:underline">
-            ← Back to dashboard
+          <Link href="/dashboard" className="tvd-lk">
+            <ArrowLeft size={13} aria-hidden style={{ display: "inline", verticalAlign: "-2px", marginRight: 4 }} />
+            Back to dashboard
           </Link>
         </div>
 
         {!isAuthConfigured() ? (
-          <Card className="mb-4 border-[#456DFF]/30 bg-[#456DFF]/10 p-4 text-sm text-[#88C9F7]">
-            Sign-in is not configured — only on-device history is shown below.
-          </Card>
+          <div className="tvd-card" style={{ marginBottom: 14 }}>
+            <p className="tvd-muted">Sign-in is not configured — only on-device history is shown below.</p>
+          </div>
         ) : !isLoaded ? (
-          <Card className="p-6 text-sm text-text-muted">Loading…</Card>
+          <div className="tvd-card">
+            <p className="tvd-empty">Loading…</p>
+          </div>
         ) : !isSignedIn ? (
-          <Card className="mb-4 p-4 text-sm text-text-muted">
-            <Link href="/sign-in" className="font-medium text-[#456DFF] no-underline hover:underline">
+          <div className="tvd-card" style={{ marginBottom: 14 }}>
+            <p className="tvd-muted">
+              Sign in to sync XP to your account. Until then, completions on this device appear below.
+            </p>
+            <Link href="/sign-in" className="tvd-btn" data-tone="primary" style={{ marginTop: 14 }}>
               Sign in
-            </Link>{" "}
-            to sync XP to your account. Until then, completions on this device appear below.
-          </Card>
+            </Link>
+          </div>
         ) : err ? (
-          <Card className="mb-4 p-4 text-sm text-[#fbbf24]">{err}</Card>
+          <div className="tvd-alert" style={{ marginBottom: 14 }}>
+            {err}
+          </div>
         ) : null}
 
         {showLocalHint ? (
-          <Card className="mb-4 p-4 text-sm text-text-muted">
-            No synced events yet. Showing lessons completed on this device — finish a lesson while signed in to
-            back up XP to the server.
-          </Card>
+          <div className="tvd-card" style={{ marginBottom: 14 }}>
+            <p className="tvd-muted">
+              No synced events yet. Showing lessons completed on this device — finish a lesson while signed in to
+              back up XP to the server.
+            </p>
+          </div>
         ) : null}
 
         {loading && displayRows.length === 0 ? (
-          <Card className="p-6 text-sm text-text-muted">Loading history…</Card>
+          <div className="tvd-card">
+            <p className="tvd-empty">Loading history…</p>
+          </div>
         ) : showEmpty ? (
-          <Card className="p-6 text-sm text-text-muted">
-            No XP events yet. Complete a lesson or daily challenge to earn XP.
-          </Card>
+          <div className="tvd-card">
+            <p className="tvd-empty">No XP events yet. Complete a lesson or daily challenge to earn XP.</p>
+          </div>
         ) : (
           <>
             <HistoryList rows={displayRows} />
             {showServer && hasMore ? (
               <button
                 type="button"
-                className="mt-4 w-full rounded-xl border border-border py-2 text-sm font-medium text-white transition hover:bg-[rgba(255,255,255,0.06)]"
+                className="tvd-btn"
+                style={{ marginTop: 16, width: "100%" }}
                 disabled={loading}
                 onClick={() => void load(page + 1, true)}
               >
@@ -196,13 +207,16 @@ function XpHistoryContent() {
         )}
 
         {showServer && serverRows.length > 0 && localRows.length > 0 ? (
-          <div className="mt-8">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Also on this device</h2>
+          <>
+            <div className="tvd-srule">
+              <h2>Also on this device</h2>
+              <i />
+            </div>
             <HistoryList rows={localRows} />
-          </div>
+          </>
         ) : null}
-      </section>
-    </main>
+      </AppShell>
+    </ThemeScope>
   );
 }
 

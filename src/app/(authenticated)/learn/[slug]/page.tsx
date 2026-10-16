@@ -12,6 +12,7 @@ import { CHART_PATTERNS_LESSON_SLUG } from "@/components/lesson/chart-patterns/c
 import { SUPPORT_RESISTANCE_LESSON_SLUG } from "@/components/lesson/support-resistance/constants";
 import { TIME_FRAMES_LESSON_SLUG } from "@/components/lesson/timeframes/constants";
 import { TREND_LINES_LESSON_SLUG } from "@/components/lesson/trend-lines/constants";
+import { PRICING_URL } from "@/lib/pricingUrl";
 
 const LessonPlayer = dynamic(
   () => import("@/components/lesson/LessonPlayer").then((m) => m.LessonPlayer),
@@ -82,12 +83,14 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
         <p className="text-[#999]">
           &ldquo;{baseLesson.title}&rdquo; is part of {lessonCourse.title}, which requires Premium to unlock.
         </p>
-        <Link
-          href="/settings"
+        <a
+          href={PRICING_URL}
+          target="_blank"
+          rel="noopener noreferrer"
           className="rounded-full bg-[#456dff] px-6 py-3 text-sm font-bold text-white hover:bg-[#2a4ae8]"
         >
           Upgrade to Premium
-        </Link>
+        </a>
       </main>
     );
   }
