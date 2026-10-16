@@ -1,40 +1,59 @@
 import Link from "next/link";
+import { ArrowRight, CalendarDays, Clock, Users } from "lucide-react";
 import type { LiveClassCourse } from "@/lib/data/liveClasses";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 
 export function LiveClassCard({ course }: { course: LiveClassCourse }) {
   return (
-    <Card className="flex h-full flex-col gap-3">
-      <img src={course.heroImageUrl} alt={course.title} className="h-44 w-full rounded-xl object-cover" loading="lazy" />
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-accent">{course.level}</p>
-        <h3 className="mt-1 text-lg font-bold text-white">{course.title}</h3>
-        <p className="mt-1 text-xs text-text-muted">{course.subtitle}</p>
-      </div>
-      <p className="text-sm text-text-muted">{course.description}</p>
+    <div className="tvd-ccard">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={course.heroImageUrl}
+        alt=""
+        loading="lazy"
+        style={{
+          height: 160,
+          width: "100%",
+          borderRadius: 14,
+          objectFit: "cover",
+          border: "1px solid var(--tv-line)",
+        }}
+      />
 
-      <div className="grid grid-cols-2 gap-2 text-xs text-text-muted">
-        <span>Starts: {course.startDate}</span>
-        <span>Duration: {course.durationWeeks} weeks</span>
-        <span>Schedule: {course.schedule}</span>
-        <span>Seats left: {course.seatsLeft}/{course.seats}</span>
+      <div className="tvd-eyebrow">{course.level}</div>
+      <h3 style={{ marginTop: 0 }}>{course.title}</h3>
+      <p className="tvd-cdesc">{course.subtitle}</p>
+
+      <div className="tvd-cmeta" style={{ gap: 10, flexDirection: "column" }}>
+        <span>
+          <CalendarDays size={12} aria-hidden style={{ display: "inline", verticalAlign: "-2px", marginRight: 6 }} />
+          Starts {course.startDate} · {course.durationWeeks} weeks
+        </span>
+        <span>
+          <Clock size={12} aria-hidden style={{ display: "inline", verticalAlign: "-2px", marginRight: 6 }} />
+          {course.schedule}
+        </span>
+        <span>
+          <Users size={12} aria-hidden style={{ display: "inline", verticalAlign: "-2px", marginRight: 6 }} />
+          {course.seatsLeft} of {course.seats} seats left
+        </span>
       </div>
 
-      <div className="mt-auto">
-        <p className="mb-3 text-lg font-extrabold text-white">{course.priceLabel}</p>
-        <div className="flex gap-2">
-          <Link
-            href={`/live-classes/${course.slug}`}
-            className="inline-flex h-9 items-center justify-center rounded-lg border border-border px-3 text-sm text-white no-underline transition-colors hover:bg-white/5"
-          >
-            View Details
-          </Link>
-          <Button asChild size="sm">
-            <Link href={`/live-classes/${course.slug}`}>Enroll</Link>
-          </Button>
-        </div>
+      <div
+        style={{
+          marginTop: "auto",
+          paddingTop: 10,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+        }}
+      >
+        <b style={{ fontSize: 17, fontWeight: 900, letterSpacing: "-0.02em" }}>{course.priceLabel}</b>
+        <Link href={`/live-classes/${course.slug}`} className="tvd-ccta">
+          View details
+          <ArrowRight size={15} aria-hidden />
+        </Link>
       </div>
-    </Card>
+    </div>
   );
 }

@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AppNav } from "@/components/layout/AppNav";
-import { Card } from "@/components/ui/Card";
+import { Crown } from "lucide-react";
+import { AppShell, ThemeScope } from "@/components/layout/AppShell";
 import { useSubscription } from "@/lib/hooks/useSubscription";
+import { PRICING_URL } from "@/lib/pricingUrl";
 import { useUserStore } from "@/lib/store";
 
 const readBool = (key: string, fallback = true) => {
@@ -22,25 +23,7 @@ export function SettingsClient({ fullName, email }: { fullName: string; email: s
   const [dailyGoal, setDailyGoal] = useState("1 lesson");
   const [tradingStyle, setTradingStyle] = useState("All");
   const { isPremium, plan } = useSubscription();
-  const [upgrading, setUpgrading] = useState(false);
 
-  async function startCheckout() {
-    setUpgrading(true);
-    try {
-      const response = await fetch("/api/stripe/create-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          priceId: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID ?? "",
-          returnUrl: window.location.origin,
-        }),
-      });
-      const data = (await response.json()) as { url?: string };
-      if (data.url) window.location.href = data.url;
-    } finally {
-      setUpgrading(false);
-    }
-  }
 
   useEffect(() => {
     setSounds(readBool("tv_sounds"));
@@ -53,131 +36,160 @@ export function SettingsClient({ fullName, email }: { fullName: string; email: s
   const persist = (key: string, value: string) => window.localStorage.setItem(key, value);
 
   return (
-    <main className="min-h-screen bg-background">
-      <AppNav />
-      <section className="mx-auto max-w-4xl space-y-6 px-4 py-8">
-        <h1 className="text-3xl font-bold">Settings</h1>
+    <ThemeScope>
+      <AppShell>
+        <div className="tvd-pagehead">
+          <h1>Settings</h1>
+          <p>Account, preferences, progress, and billing.</p>
+        </div>
 
-        <Card>
-          <h2 className="text-xl font-semibold">Account</h2>
-          <p className="mt-2 text-sm text-text-muted">{fullName}</p>
-          <p className="text-sm text-text-muted">{email}</p>
-          <Link href="/profile" className="mt-4 inline-block rounded-2xl border border-border px-4 py-2">
-            Manage Account
-          </Link>
-        </Card>
+        <div className="tvd-cardstack">
+          <div className="tvd-card">
+            <h2>Account</h2>
+            <p className="tvd-muted">{fullName}</p>
+            <p className="tvd-muted">{email}</p>
+            <Link href="/profile" className="tvd-btn" style={{ marginTop: 14 }}>
+              Manage account
+            </Link>
+          </div>
 
-        <Card className="space-y-4">
-          <h2 className="text-xl font-semibold">Preferences</h2>
-          <Toggle
-            label="Sound effects"
-            checked={sounds}
-            onChange={(value) => {
-              setSounds(value);
-              persist("tv_sounds", String(value));
-            }}
-          />
-          <Toggle
-            label="Show XP animations"
-            checked={xpAnim}
-            onChange={(value) => {
-              setXpAnim(value);
-              persist("tv_xp_anim", String(value));
-            }}
-          />
-          <Toggle
-            label="Email reminders"
-            checked={emailReminders}
-            onChange={(value) => {
-              setEmailReminders(value);
-              persist("tv_email_reminders", String(value));
-            }}
-          />
-          <label className="block">
-            <span className="mb-1 block text-sm text-text-muted">Daily goal</span>
-            <select
-              className="w-full rounded-2xl border border-border bg-surface2 px-4 py-3"
-              value={dailyGoal}
-              onChange={(event) => {
-                setDailyGoal(event.target.value);
-                persist("tv_daily_goal", event.target.value);
-              }}
-            >
-              <option>1 lesson</option>
-              <option>2 lessons</option>
-              <option>3 lessons</option>
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm text-text-muted">Preferred trading style</span>
-            <select
-              className="w-full rounded-2xl border border-border bg-surface2 px-4 py-3"
-              value={tradingStyle}
-              onChange={(event) => {
-                setTradingStyle(event.target.value);
-                persist("tv_style", event.target.value);
-              }}
-            >
-              <option>Day Trading</option>
-              <option>Swing Trading</option>
-              <option>Long-term Investing</option>
-              <option>All</option>
-            </select>
-          </label>
-        </Card>
+          <div className="tvd-card">
+            <h2>Preferences</h2>
+            <div className="tvd-cardstack" style={{ gap: 10 }}>
+              <Toggle
+                label="Sound effects"
+                checked={sounds}
+                onChange={(value) => {
+                  setSounds(value);
+                  persist("tv_sounds", String(value));
+                }}
+              />
+              <Toggle
+                label="Show XP animations"
+                checked={xpAnim}
+                onChange={(value) => {
+                  setXpAnim(value);
+                  persist("tv_xp_anim", String(value));
+                }}
+              />
+              <Toggle
+                label="Email reminders"
+                checked={emailReminders}
+                onChange={(value) => {
+                  setEmailReminders(value);
+                  persist("tv_email_reminders", String(value));
+                }}
+              />
+              <label className="tvd-field">
+                <span>Daily goal</span>
+                <select
+                  className="tvd-select"
+                  value={dailyGoal}
+                  onChange={(event) => {
+                    setDailyGoal(event.target.value);
+                    persist("tv_daily_goal", event.target.value);
+                  }}
+                >
+                  <option>1 lesson</option>
+                  <option>2 lessons</option>
+                  <option>3 lessons</option>
+                </select>
+              </label>
+              <label className="tvd-field">
+                <span>Preferred trading style</span>
+                <select
+                  className="tvd-select"
+                  value={tradingStyle}
+                  onChange={(event) => {
+                    setTradingStyle(event.target.value);
+                    persist("tv_style", event.target.value);
+                  }}
+                >
+                  <option>Day Trading</option>
+                  <option>Swing Trading</option>
+                  <option>Long-term Investing</option>
+                  <option>All</option>
+                </select>
+              </label>
+            </div>
+          </div>
 
-        <Card>
-          <h2 className="text-xl font-semibold">Progress</h2>
-          <p className="mt-2 text-sm text-text-muted">
-            Total XP: {xp} · Lessons done: {lessonsCompleted.length} · Streak: {streak}
-          </p>
-          <button
-            onClick={() => {
-              if (window.confirm("Reset all progress? This cannot be undone.")) reset();
-            }}
-            className="mt-4 rounded-2xl border border-red-500/50 bg-red-500/10 px-4 py-3 text-red-200"
-          >
-            Reset all progress
-          </button>
-        </Card>
-
-        <Card>
-          <h2 className="text-xl font-semibold">Subscription</h2>
-          <p className="mt-2 text-sm text-text-muted">Currently on: {isPremium ? plan : "Free"}</p>
-          {isPremium ? (
-            <button
-              onClick={async () => {
-                const response = await fetch("/api/stripe/create-portal", { method: "POST" });
-                const data = await response.json();
-                if (data.url) window.location.href = data.url;
-              }}
-              className="mt-4 rounded-2xl border border-border px-6 py-3"
-            >
-              Manage subscription
-            </button>
-          ) : (
+          <div className="tvd-card">
+            <h2>Progress</h2>
+            <p className="tvd-muted">
+              Total XP: {xp} · Lessons done: {lessonsCompleted.length} · Streak: {streak}
+            </p>
             <button
               type="button"
-              onClick={() => void startCheckout()}
-              disabled={upgrading}
-              className="mt-4 rounded-2xl bg-accent px-6 py-3 font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+              className="tvd-btn"
+              data-tone="danger"
+              style={{ marginTop: 14 }}
+              onClick={() => {
+                if (window.confirm("Reset all progress? This cannot be undone.")) reset();
+              }}
             >
-              {upgrading ? "Redirecting…" : "Upgrade to Premium"}
+              Reset all progress
             </button>
-          )}
-        </Card>
-      </section>
-    </main>
+          </div>
+
+          <div className="tvd-card">
+            <h2>Subscription</h2>
+            <p className="tvd-muted">Currently on: {isPremium ? plan : "Free"}</p>
+            {isPremium ? (
+              <button
+                type="button"
+                className="tvd-btn"
+                style={{ marginTop: 14 }}
+                onClick={async () => {
+                  const response = await fetch("/api/stripe/create-portal", { method: "POST" });
+                  const data = await response.json();
+                  if (data.url) window.location.href = data.url;
+                }}
+              >
+                Manage subscription
+              </button>
+            ) : (
+              <a
+                href={PRICING_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="tvd-btn"
+                data-tone="primary"
+                style={{ marginTop: 14 }}
+              >
+                <Crown size={16} aria-hidden />
+                Upgrade to Premium
+              </a>
+            )}
+          </div>
+        </div>
+      </AppShell>
+    </ThemeScope>
   );
 }
 
-function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+function Toggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
   return (
-    <label className="flex items-center justify-between rounded-2xl border border-border bg-surface2 px-4 py-3">
+    <div className="tvd-toggle">
       <span>{label}</span>
-      <button type="button" onClick={() => onChange(!checked)} className={`h-7 w-12 rounded-full p-1 transition ${checked ? "bg-accent" : "bg-slate-600"}`}>
-        <span className={`block h-5 w-5 rounded-full bg-white transition ${checked ? "translate-x-5" : "translate-x-0"}`} />
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        className="tvd-switch"
+        onClick={() => onChange(!checked)}
+      >
+        <i />
       </button>
-    </label>
+    </div>
   );
 }

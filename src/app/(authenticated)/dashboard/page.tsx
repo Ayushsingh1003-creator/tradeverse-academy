@@ -1,9 +1,10 @@
+import { ThemeScope } from "@/components/layout/AppShell";
 import { DashboardPageClient } from "./DashboardPageClient";
 
 export default function DashboardPage() {
   return (
-    <div className="tvdash min-w-0 overflow-x-hidden">
+    <ThemeScope>
       <DashboardPageClient />
-    </div>
+    </ThemeScope>
   );
 }

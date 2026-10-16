@@ -123,7 +123,7 @@ export function DashboardIntro({ onDone }: { onDone: () => void }) {
             return (
               <div
                 key={DECK_CARDS[i].slug}
-                className={isHero ? "tvd-dcard tvd-hero" : "tvd-dcard"}
+                className={isHero ? "tvd-dcard tvd-dhero" : "tvd-dcard"}
                 style={
                   {
                     "--tvd-fan": `${FAN[i]}deg`,

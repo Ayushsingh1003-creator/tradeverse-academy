@@ -32,7 +32,7 @@ export function LibraryCourseCard({
       className={cn(
         "h-full",
         hasVideos &&
-          "cursor-pointer rounded-2xl transition hover:ring-2 hover:ring-[#456DFF]/40 focus-within:ring-2 focus-within:ring-[#456DFF]/50",
+          "cursor-pointer rounded-2xl transition hover:ring-2 hover:ring-[var(--tv-acc-line)] focus-within:ring-2 focus-within:ring-[var(--tv-acc-line)]",
       )}
       role={hasVideos ? "button" : undefined}
       tabIndex={hasVideos ? 0 : undefined}
@@ -53,20 +53,20 @@ export function LibraryCourseCard({
         </div>
         <div className="p-4">
           <div className="mb-2 flex items-center gap-2">
-            <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-text-muted">
+            <span className="rounded-full border border-[var(--tv-line)] px-2 py-0.5 text-[10px] text-[color:var(--tv-mute)]">
               {course.level}
             </span>
-            <span className="text-xs text-text-muted">{course.videos.length} videos</span>
-            <span className="text-xs text-text-muted">· {course.estimatedDurationMin} min</span>
+            <span className="text-xs text-[color:var(--tv-mute)]">{course.videos.length} videos</span>
+            <span className="text-xs text-[color:var(--tv-mute)]">· {course.estimatedDurationMin} min</span>
           </div>
-          <p className="text-base font-semibold text-white">{course.title}</p>
-          <p className="mt-1 line-clamp-2 text-xs text-text-muted">{course.description}</p>
+          <p className="text-base font-semibold text-[color:var(--tv-ink)]">{course.title}</p>
+          <p className="mt-1 line-clamp-2 text-xs text-[color:var(--tv-mute)]">{course.description}</p>
           <LibraryCourseProgressTracker progress={cardProgress} index={index} />
           <div className="mt-3 flex flex-wrap gap-1">
             {course.tags.slice(0, 4).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-border px-2 py-0.5 text-[10px] text-text-muted"
+                className="rounded-full border border-[var(--tv-line)] px-2 py-0.5 text-[10px] text-[color:var(--tv-mute)]"
               >
                 {tag}
               </span>
@@ -92,17 +92,17 @@ export function LibraryCourseCard({
           </div>
 
           {expanded ? (
-            <div className="mt-4 space-y-2 border-t border-border pt-3" onClick={(e) => e.stopPropagation()}>
+            <div className="mt-4 space-y-2 border-t border-[var(--tv-line)] pt-3" onClick={(e) => e.stopPropagation()}>
               {course.videos.map((video, index) => (
                 <Link
                   key={video.id}
                   href={`/library/${course.slug}?v=${encodeURIComponent(video.id)}`}
-                  className="flex w-full items-center justify-between rounded-lg border border-border bg-[rgba(255,255,255,0.02)] px-3 py-2 text-left transition hover:bg-[rgba(255,255,255,0.05)]"
+                  className="flex w-full items-center justify-between rounded-lg border border-[var(--tv-line)] bg-[var(--tv-sunk)] px-3 py-2 text-left transition hover:border-[var(--tv-line-hi)]"
                 >
-                  <span className="text-xs text-white">
+                  <span className="text-xs text-[color:var(--tv-ink)]">
                     {index + 1}. {video.title}
                   </span>
-                  <span className="text-[10px] text-text-muted">{video.duration}</span>
+                  <span className="text-[10px] text-[color:var(--tv-mute)]">{video.duration}</span>
                 </Link>
               ))}
             </div>
