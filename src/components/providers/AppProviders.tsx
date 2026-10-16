@@ -40,7 +40,7 @@ function AppEvents() {
     if (!hydrated) return;
     const today = todayLocalISO();
     if (dailyChallengeDoneDate !== today) {
-      push("📅 Don't forget your daily challenge!", "info");
+      push("Don't forget your daily challenge!", "info");
     }
   }, [dailyChallengeDoneDate, hydrated, push]);
 

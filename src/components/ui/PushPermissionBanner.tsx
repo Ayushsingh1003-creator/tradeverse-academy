@@ -53,16 +53,16 @@ export function PushPermissionBanner() {
   };
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-[200] mx-auto max-w-lg rounded-2xl border border-accent/40 bg-surface p-4 shadow-xl md:left-auto md:right-6 md:mx-0">
-      <p className="text-sm font-medium">Get streak reminders on your phone?</p>
-      <p className="mt-1 text-xs text-text-muted">Enable notifications once — we only send useful trading nudges.</p>
+    <div className="fixed bottom-4 left-4 right-4 z-[200] mx-auto max-w-lg rounded-2xl border border-[var(--tv-line)] bg-[var(--tv-pane)] p-4 shadow-[0_12px_32px_var(--tv-card-shadow)] md:left-auto md:right-6 md:mx-0">
+      <p className="text-sm font-bold text-[color:var(--tv-ink)]">Get streak reminders on your phone?</p>
+      <p className="mt-1 text-xs text-[color:var(--tv-mute)]">Enable notifications once — we only send useful trading nudges.</p>
       <div className="mt-3 flex gap-2">
-        <button type="button" className="rounded-2xl bg-accent px-4 py-2 text-sm font-semibold text-slate-900" onClick={() => void enable()}>
+        <button type="button" className="rounded-2xl bg-[var(--tv-up)] px-4 py-2 text-sm font-bold text-[color:var(--tv-up-ink)]" onClick={() => void enable()}>
           Enable Notifications
         </button>
         <button
           type="button"
-          className="rounded-2xl border border-border px-4 py-2 text-sm"
+          className="rounded-2xl border border-[var(--tv-line)] px-4 py-2 text-sm font-semibold text-[color:var(--tv-mute)]"
           onClick={() => {
             window.localStorage.setItem("tv_push_dismissed", "1");
             setVisible(false);
