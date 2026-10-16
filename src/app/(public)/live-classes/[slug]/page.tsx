@@ -3,7 +3,6 @@ import { EnrollButton } from "@/components/live-classes/EnrollButton";
 import { LiveClassesPageShell } from "@/components/live-classes/LiveClassesPageShell";
 import { LiveClassCurriculum } from "@/components/live-classes/LiveClassCurriculum";
 import { LiveClassSamplePlayer } from "@/components/live-classes/LiveClassSamplePlayer";
-import { Card } from "@/components/ui/Card";
 import { getLiveClassBySlugFromDb } from "@/lib/queries/contentFromDb";
 
 export const revalidate = 120;
