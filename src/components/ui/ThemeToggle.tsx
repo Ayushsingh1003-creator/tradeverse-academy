@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Monitor, Moon, Sun } from "lucide-react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -31,17 +32,17 @@ export function ThemeToggle() {
     applyTheme(next);
   };
 
-  const icon2 = theme === "light" ? "☀️" : theme === "dark" ? "🌙" : "💻";
+  const Icon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
 
   return (
     <button
       type="button"
       title={`Theme: ${theme}`}
       onClick={cycle}
-      className="rounded-2xl border border-border px-3 py-2 text-sm"
+      className="inline-flex items-center justify-center rounded-2xl border border-border px-3 py-2 text-sm"
       aria-label="Toggle color theme"
     >
-      {icon2}
+      <Icon size={16} aria-hidden />
     </button>
   );
 }

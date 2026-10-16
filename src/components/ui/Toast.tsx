@@ -9,13 +9,6 @@ type ToastContextValue = { push: (message: string, type?: ToastType) => void };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const typeClass: Record<ToastType, string> = {
-  success: "border-[#456DFF]/40 bg-[rgba(69,109,255,0.15)] text-[#88C9F7]",
-  warning: "border-amber-400/40 bg-amber-500/15 text-amber-100",
-  info: "border-blue-400/40 bg-blue-500/15 text-blue-100",
-  xp: "border-accent/50 bg-accent/15 text-yellow-100",
-};
-
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
 
@@ -49,7 +42,8 @@ function ToastContainer({ items }: { items: ToastItem[] }) {
       {items.map((item) => (
         <div
           key={item.id}
-          className={`animate-in slide-in-from-right-4 rounded-2xl border px-4 py-3 shadow-lg duration-200 ${typeClass[item.type]}`}
+          className="tv-toast animate-in slide-in-from-right-4 duration-200"
+          data-tone={item.type}
         >
           {item.message}
         </div>

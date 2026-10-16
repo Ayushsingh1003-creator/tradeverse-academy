@@ -47,7 +47,7 @@ export function Banner({
       {...props}
       className={cn(
         "sticky top-0 z-40 flex flex-row items-center justify-center px-4 text-center text-sm font-medium",
-        variant === "normal" && "bg-[rgba(30,30,30,0.9)] backdrop-blur-sm",
+        variant === "normal" && "bg-[var(--tv-pane)] text-[color:var(--tv-ink)] backdrop-blur-sm",
         variant === "rainbow" && "bg-[rgba(20,20,20,0.9)]",
         props.className,
       )}
@@ -65,7 +65,7 @@ export function Banner({
             setOpen(false);
             if (globalKey) localStorage.setItem(globalKey, "true");
           }}
-          className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-white/70 transition hover:bg-white/10 hover:text-white md:right-5"
+          className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[color:var(--tv-mute)] transition hover:bg-[var(--tv-sunk)] hover:text-[color:var(--tv-ink)] md:right-5"
         >
           <X color={xColor} size={16} />
         </button>

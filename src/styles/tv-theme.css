@@ -6,7 +6,7 @@
    under .tvapp, which any page opts into by wrapping its content in it.
    Light is the base; dark redefines the same token names.
    ========================================================== */
-.tvapp {
+:root {
   --tv-bg: #f3f6f3;
   --tv-pane: #ffffff;
   --tv-sunk: #eef2ee;
@@ -52,7 +52,11 @@
 
   --tv-fun: "Nunito", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --tv-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
 
+/* Opting a page into the theme. Tokens live on :root so portalled UI
+   (toasts, modals) outside this element can use them too. */
+.tvapp {
   background: var(--tv-bg);
   color: var(--tv-ink);
   font-family: var(--tv-fun);
@@ -61,7 +65,7 @@
   min-height: 100vh;
 }
 
-:root[data-theme="dark"] .tvapp {
+:root[data-theme="dark"] {
   --tv-bg: #0a0d13;
   --tv-pane: #141922;
   --tv-sunk: #0f141c;
@@ -107,7 +111,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .tvapp {
+  :root:not([data-theme="light"]) {
     --tv-bg: #0a0d13;
     --tv-pane: #141922;
     --tv-sunk: #0f141c;
@@ -2613,4 +2617,62 @@
 .tvd-path {
   position: relative;
   padding-bottom: 8px;
+}
+
+/* ==========================================================
+   Shared dark-built primitives, retinted inside the theme scope.
+   Pages not yet migrated keep their original dark appearance.
+   ========================================================== */
+.tvapp .tv-surface {
+  background: var(--tv-pane) !important;
+  border-color: var(--tv-line) !important;
+  color: var(--tv-ink);
+}
+
+/* ---------------- toasts (render outside .tvapp) ---------------- */
+.tv-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 15px;
+  border: 1px solid var(--tv-line);
+  background: var(--tv-pane);
+  color: var(--tv-ink);
+  padding: 12px 15px;
+  font-family: var(--tv-fun);
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.45;
+  box-shadow: 0 12px 32px var(--tv-card-shadow);
+}
+.tv-toast[data-tone="success"] {
+  border-color: var(--tv-acc-line);
+  background: var(--tv-acc-wash);
+  color: var(--tv-acc-chip);
+}
+.tv-toast[data-tone="xp"],
+.tv-toast[data-tone="warning"] {
+  border-color: var(--tv-gold);
+  background: var(--tv-gold-wash);
+  color: var(--tv-gold-chip);
+}
+.tv-toast svg {
+  flex: none;
+}
+
+/* Legacy design-token utilities, retinted inside the theme scope only. */
+.tvapp .bg-surface {
+  background-color: var(--tv-pane);
+}
+.tvapp .bg-surface2 {
+  background-color: var(--tv-sunk);
+}
+.tvapp .border-border {
+  border-color: var(--tv-line);
+}
+.tvapp .tv-progress {
+  background: var(--tv-line-hi);
+}
+.tvapp .tv-progress-fill {
+  background: var(--tv-acc);
 }

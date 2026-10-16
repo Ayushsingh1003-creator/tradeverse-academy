@@ -337,7 +337,7 @@ export function LibraryCoursePlayerClient({
                     <li
                       key={video.id}
                       className={`relative rounded-lg transition ${
-                        isActive ? "bg-[var(--tv-up)]/10" : "hover:bg-white/[0.03]"
+                        isActive ? "bg-[var(--tv-acc-wash)]" : "hover:bg-[var(--tv-sunk)]"
                       }`}
                     >
                       <button

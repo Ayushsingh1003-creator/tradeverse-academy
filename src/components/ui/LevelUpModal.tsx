@@ -63,10 +63,10 @@ export function LevelUpModal({
             exit={{ opacity: 0, scale: 0.92, y: 16 }}
             transition={{ type: "spring", stiffness: 380, damping: 28 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-[420px] overflow-hidden rounded-[24px] border border-white/10 bg-[#171717] text-center shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_64px_rgba(0,0,0,0.55)]"
+            className="relative w-full max-w-[420px] overflow-hidden rounded-[24px] border border-[var(--tv-line)] bg-[var(--tv-pane)] text-center shadow-[0_24px_64px_var(--tv-card-shadow)]"
           >
             <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#456DFF] to-transparent"
+              className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[var(--tv-acc)] to-transparent"
               aria-hidden
             />
             <div
@@ -75,12 +75,12 @@ export function LevelUpModal({
               aria-hidden
             />
             <div
-              className="pointer-events-none absolute -bottom-12 -right-12 h-40 w-40 rounded-full bg-[#456DFF]/25 blur-3xl"
+              className="pointer-events-none absolute -bottom-12 -right-12 h-40 w-40 rounded-full bg-[var(--tv-acc-wash)] blur-3xl"
               aria-hidden
             />
 
             <div className="relative px-8 pb-8 pt-10">
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#F7C325]">
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[color:var(--tv-gold-chip)]">
                 Milestone reached
               </p>
 
@@ -94,12 +94,12 @@ export function LevelUpModal({
                 <div
                   className="absolute inset-2 rounded-full"
                   style={{
-                    background: `radial-gradient(circle at 30% 25%, ${accent}44, transparent 55%), linear-gradient(160deg, #2a2a2a, #141414)`,
-                    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.12), 0 0 32px ${accent}33`,
+                    background: `radial-gradient(circle at 30% 25%, ${accent}44, transparent 55%), var(--tv-sunk)`,
+                    boxShadow: `0 0 32px ${accent}33`,
                   }}
                 />
                 <span
-                  className="relative text-5xl font-black tabular-nums text-white"
+                  className="relative text-5xl font-black tabular-nums text-[color:var(--tv-ink)]"
                   style={{ textShadow: `0 0 24px ${accent}88` }}
                 >
                   {level}
@@ -108,21 +108,21 @@ export function LevelUpModal({
 
               <h2
                 id="level-up-title"
-                className="mt-6 text-2xl font-extrabold tracking-tight text-white"
+                className="mt-6 text-2xl font-extrabold tracking-tight text-[color:var(--tv-ink)]"
               >
                 Level Up
               </h2>
               <p className="mt-2 text-base font-semibold" style={{ color: accent }}>
                 {title}
               </p>
-              <p className="mt-3 text-sm leading-relaxed text-[#999]">
+              <p className="mt-3 text-sm leading-relaxed text-[color:var(--tv-mute)]">
                 You&apos;ve unlocked a new rank. Keep learning to reach the next tier —{" "}
-                <span className="text-[#88C9F7]">{nextXp} XP</span> to level {level + 1}.
+                <span className="text-[color:var(--tv-acc-chip)]">{nextXp} XP</span> to level {level + 1}.
               </p>
 
               <Button
                 type="button"
-                className="mt-7 h-11 w-full rounded-full bg-[#456DFF] text-sm font-semibold text-white shadow-[0_4px_24px_rgba(69,109,255,0.35)] hover:bg-[#2A4AE8]"
+                className="mt-7 h-11 w-full rounded-full bg-[var(--tv-up)] text-sm font-bold text-[color:var(--tv-up-ink)] hover:brightness-105"
                 onClick={onClose}
               >
                 Continue
