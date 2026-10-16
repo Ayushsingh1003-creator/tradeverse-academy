@@ -19,6 +19,7 @@ export type PersistedUserStore = {
   lessonsCompleted: string[];
   lessonHistory: unknown[];
   achievements: unknown[];
+  dailyChallengeCount?: number;
   dailyChallengeDoneDate?: string;
   /** Local calendar day the user submitted any daily-challenge answer. */
   dailyChallengeAnsweredDate?: string;

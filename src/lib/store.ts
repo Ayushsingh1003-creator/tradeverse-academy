@@ -10,6 +10,11 @@ import {
   yesterdayLocalISO,
 } from "@/lib/streak";
 import { applyXp, getLevelFromTotalXp } from "@/lib/xp";
+import {
+  ACHIEVEMENTS,
+  earnedAchievementIds,
+  type AchievementProgress,
+} from "@/lib/data/achievements";
 import type { XpEarnReason } from "@/lib/xpEarnPolicy";
 import { mergeServerClientStreakState } from "@/lib/mergeServerStreak";
 import { syncXpEarn } from "@/lib/syncXpClient";
@@ -73,11 +78,16 @@ type UserState = {
   lessonHistory: CompletedLesson[];
   achievements: Achievement[];
   dailyChallengeDoneDate?: string;
+  /** Lifetime count of daily challenges banked — drives the habit achievements. */
+  dailyChallengeCount: number;
   /** UI state: user picked an answer today (right or wrong). */
   dailyChallengeAnsweredDate?: string;
   dailyChallengeSelected?: number;
   /** Set only when the user levels up via earned XP (not hydrate / server sync). */
   pendingLevelUp: number | null;
+  /** Achievements unlocked but not yet announced. Drained by AppEvents. */
+  pendingAchievements: Achievement[];
+  clearPendingAchievements: () => void;
   clearLevelUp: () => void;
   hydrate: () => void;
   /** Load persisted progress for the signed-in Clerk account (or anonymous when signed out). */
@@ -100,6 +110,8 @@ type UserState = {
   updateStreak: () => StreakUpdateResult;
   completeLesson: (payload: { lessonSlug: string; score: number; xpEarned: number }) => CompleteLessonResult;
   unlockAchievement: (id: string) => Achievement | null;
+  /** Re-checks every rule and marks newly-earned ones. Returns what just unlocked. */
+  syncAchievements: () => Achievement[];
   recordDailyChallengeAnswer: (selectedIndex: number) => void;
   markDailyChallengeDone: () => StreakUpdateResult;
   addStreakFreeze: () => void;
@@ -110,14 +122,45 @@ type UserState = {
 let activeStorageKey: string = ANONYMOUS_USER_STORE_KEY;
 let persistEnabled = true;
 
-const baseAchievements: Achievement[] = Array.from({ length: 20 }).map((_, idx) => ({
-  id: `a${idx + 1}`,
-  icon: ["📈", "🧠", "🏁", "🔥", "🎯"][idx % 5],
-  title: `Achievement ${idx + 1}`,
-  description: `Complete milestone ${idx + 1}.`,
-  earned: idx < 3,
-  earnedAt: idx < 3 ? new Date().toISOString() : undefined,
+const baseAchievements: Achievement[] = ACHIEVEMENTS.map((a) => ({
+  id: a.id,
+  icon: a.icon,
+  title: a.title,
+  description: a.description,
+  earned: false,
 }));
+
+/** Everything the achievement rules are measured against. */
+function achievementProgress(state: UserState): AchievementProgress {
+  return {
+    xp: state.xp,
+    level: state.level,
+    streak: state.streak,
+    lessonsCompleted: state.lessonsCompleted,
+    perfectScores: state.lessonHistory.filter((entry) => entry.score >= 100).length,
+    dailyChallengeCount: state.dailyChallengeCount,
+  };
+}
+
+/**
+ * Saved progress keeps its earned flags, but title/description/icon always come
+ * from the current definitions — so older saves holding "Achievement 7" and the
+ * three that used to be pre-earned are corrected on load.
+ */
+function mergeSavedAchievements(saved: Achievement[] | undefined): Achievement[] {
+  const byId = new Map((saved ?? []).map((a) => [a.id, a]));
+  return ACHIEVEMENTS.map((def) => {
+    const prev = byId.get(def.id);
+    return {
+      id: def.id,
+      icon: def.icon,
+      title: def.title,
+      description: def.description,
+      earned: prev?.earned ?? false,
+      earnedAt: prev?.earned ? prev.earnedAt : undefined,
+    };
+  });
+}
 
 function storageKeyForClerkUser(clerkUserId: string | null) {
   return clerkUserId ? userStoreStorageKey(clerkUserId) : ANONYMOUS_USER_STORE_KEY;
@@ -136,6 +179,7 @@ function snapshotForPersist(state: UserState, clerkUserId: string | null): Persi
     lessonsCompleted: state.lessonsCompleted,
     lessonHistory: state.lessonHistory,
     achievements: state.achievements,
+    dailyChallengeCount: state.dailyChallengeCount,
     dailyChallengeDoneDate: state.dailyChallengeDoneDate,
     dailyChallengeAnsweredDate: state.dailyChallengeAnsweredDate,
     dailyChallengeSelected: state.dailyChallengeSelected,
@@ -158,7 +202,8 @@ function applyParsedPersisted(
     streakFreezeCount: parsed.streakFreezeCount ?? defaultState.streakFreezeCount,
     lessonsCompleted: parsed.lessonsCompleted ?? [],
     lessonHistory: (parsed.lessonHistory ?? []) as CompletedLesson[],
-    achievements: (parsed.achievements ?? defaultState.achievements) as Achievement[],
+    achievements: mergeSavedAchievements(parsed.achievements as Achievement[] | undefined),
+    dailyChallengeCount: parsed.dailyChallengeCount ?? 0,
     dailyChallengeDoneDate: parsed.dailyChallengeDoneDate,
     dailyChallengeAnsweredDate: parsed.dailyChallengeAnsweredDate,
     dailyChallengeSelected: parsed.dailyChallengeSelected,
@@ -179,10 +224,12 @@ const defaultState = {
   lessonsCompleted: [] as string[],
   lessonHistory: [] as CompletedLesson[],
   achievements: baseAchievements,
+  dailyChallengeCount: 0,
   dailyChallengeDoneDate: undefined as string | undefined,
   dailyChallengeAnsweredDate: undefined as string | undefined,
   dailyChallengeSelected: undefined as number | undefined,
   pendingLevelUp: null as number | null,
+  pendingAchievements: [] as Achievement[],
 };
 
 export const useUserStore = create<UserState>((set, get) => ({
@@ -293,6 +340,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     });
   },
   clearLevelUp: () => set({ pendingLevelUp: null }),
+  clearPendingAchievements: () => set({ pendingAchievements: [] }),
   addXp: (amount, opts) => {
     let leveledUp = false;
     set((state) => {
@@ -334,6 +382,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         });
       });
     }
+    get().syncAchievements();
     return { leveledUp };
   },
   updateStreak: () => {
@@ -406,6 +455,7 @@ export const useUserStore = create<UserState>((set, get) => ({
       idempotencyKey: `lesson:${lessonSlug}`,
     });
     const streakResult = get().updateStreak();
+    get().syncAchievements();
     return {
       streak: streakResult.streak,
       streakIncremented: streakResult.incremented,
@@ -426,6 +476,24 @@ export const useUserStore = create<UserState>((set, get) => ({
     }));
     return unlocked;
   },
+  syncAchievements: () => {
+    const state = get();
+    const earned = new Set(earnedAchievementIds(achievementProgress(state)));
+    const newly: Achievement[] = [];
+    const now = new Date().toISOString();
+
+    const achievements = state.achievements.map((achievement) => {
+      if (achievement.earned || !earned.has(achievement.id)) return achievement;
+      const next = { ...achievement, earned: true, earnedAt: now };
+      newly.push(next);
+      return next;
+    });
+
+    if (newly.length) {
+      set((s) => ({ achievements, pendingAchievements: [...s.pendingAchievements, ...newly] }));
+    }
+    return newly;
+  },
   recordDailyChallengeAnswer: (selectedIndex) => {
     const today = todayLocalISO();
     set({
@@ -435,8 +503,14 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
   markDailyChallengeDone: () => {
     const today = todayLocalISO();
-    set({ dailyChallengeDoneDate: today });
-    return get().updateStreak();
+    const alreadyBanked = get().dailyChallengeDoneDate === today;
+    set((s) => ({
+      dailyChallengeDoneDate: today,
+      dailyChallengeCount: alreadyBanked ? s.dailyChallengeCount : s.dailyChallengeCount + 1,
+    }));
+    const streakResult = get().updateStreak();
+    get().syncAchievements();
+    return streakResult;
   },
   addStreakFreeze: () => {
     set((s) => ({ streakFreezeCount: Math.min(2, s.streakFreezeCount + 1) }));
