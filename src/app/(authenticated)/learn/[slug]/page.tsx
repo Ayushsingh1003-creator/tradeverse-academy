@@ -1,4 +1,3 @@
-import Link from "next/link";
 import dynamic from "next/dynamic";
 import { db } from "@/lib/db";
 import { getLessonBySlug } from "@/lib/data/lessonLookup";
