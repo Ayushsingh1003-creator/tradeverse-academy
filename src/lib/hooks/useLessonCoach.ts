@@ -1,15 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getCoachReply } from "@/lib/aiCoach";
-import { prepareCoachTts, speakCoachText, stopVoiceCoach } from "@/lib/voiceCoach";
-import { textForSpeech } from "@/lib/speechText";
+import { streamCoachReply } from "@/lib/aiCoach";
+import { startStreamingCoachSession, playStaticCoachAudio, stopVoiceCoach } from "@/lib/voiceCoach";
+import { CoachTiming } from "@/lib/coachTiming";
+import { buildAnswerFeedback, type AnswerStage, type QuestionVoiceMap, type VoicePrefixMap } from "@/lib/answerVoiceFeedback";
 import type { CoachMessage } from "@/components/lesson/LessonCoachPanel";
 
 type UseLessonCoachParams = {
   lessonTitle: string;
   lessonTopic: string;
   suggestedChips?: string[];
+  /** Pre-generated hint/explain text+audio per question, keyed by questionKey. Empty for lessons without generated content. */
+  voiceConfigByQuestion?: QuestionVoiceMap;
+  /** The 3 shared "Wrong, try again" / "Wrong answer" / "Correct" clips. */
+  voicePrefixes?: VoicePrefixMap;
 };
 
 /**
@@ -17,7 +22,13 @@ type UseLessonCoachParams = {
  * lesson components that render outside LessonPlayer (e.g. the bespoke
  * candlestick-essentials lessons) and so can't share its state directly.
  */
-export function useLessonCoach({ lessonTitle, lessonTopic, suggestedChips = [] }: UseLessonCoachParams) {
+export function useLessonCoach({
+  lessonTitle,
+  lessonTopic,
+  suggestedChips = [],
+  voiceConfigByQuestion = {},
+  voicePrefixes = {},
+}: UseLessonCoachParams) {
   const [aiOpen, setAiOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [aiInput, setAiInput] = useState("");
@@ -63,61 +74,72 @@ export function useLessonCoach({ lessonTitle, lessonTopic, suggestedChips = [] }
     setAiLoading(true);
     setAiLoadingPhase("thinking");
 
-    const result = await getCoachReply({
-      prompt,
-      lessonTitle,
-      lessonTopic,
-      history: historyForRequest,
-      isWrongAttempt,
-    });
-    const coachText = result.text;
+    // Placeholder bubble filled in as text streams — sectionLabel is display-only and never reaches TTS.
+    setAiHistory((prev) => [...prev, { role: "coach", text: "", sectionLabel }]);
+    const setCoachBubbleText = (bubbleText: string) => {
+      setAiHistory((prev) => {
+        const next = [...prev];
+        next[next.length - 1] = { ...next[next.length - 1], text: bubbleText };
+        return next;
+      });
+    };
 
-    if (voiceOn && textForSpeech(coachText)) {
-      setAiLoadingPhase("voice");
-      await prepareCoachTts(coachText);
-    }
+    const timing = new CoachTiming();
+    timing.mark("requestStart");
+    const session = voiceOn ? startStreamingCoachSession(undefined, timing) : null;
 
-    setAiHistory((prev) => [...prev, { role: "coach", text: coachText, sectionLabel }]);
+    let streamedText = "";
+    let firstChunk = true;
+    const result = await streamCoachReply(
+      { prompt, lessonTitle, lessonTopic, history: historyForRequest, isWrongAttempt },
+      (delta) => {
+        if (firstChunk) {
+          firstChunk = false;
+          setAiLoading(false);
+          setAiLoadingPhase(null);
+        }
+        session?.feedText(delta);
+        streamedText += delta;
+        setCoachBubbleText(streamedText);
+      },
+      { timing },
+    );
+
+    // Nothing ever streamed (e.g. the request failed outright) — speak the local fallback reply instead.
+    if (firstChunk && result.text) session?.feedText(result.text);
+    session?.finish();
+    setCoachBubbleText(result.text);
     setAiLoading(false);
     setAiLoadingPhase(null);
-
-    // Only the AI's own reply is spoken — sectionLabel is display-only and never reaches TTS.
-    if (voiceOn && textForSpeech(coachText)) {
-      void speakCoachText(coachText, true);
-    }
   };
 
   /**
-   * Auto-triggered on a wrong answer — feeds the actual question, options, and
-   * (on a repeat miss) the correct answer to the coach, so the reply is specific
-   * to what the learner got wrong instead of a generic "try again".
+   * Auto-triggered after a question is answered — shows/plays the
+   * pre-generated hint/explain/correct feedback for this question if the
+   * generation script has produced one, else falls back to the shared prefix
+   * clip alone ("Wrong, try again" / "Wrong answer" / "Correct"). No live AI
+   * call: these questions are fixed content, so their feedback is generated
+   * once offline (see scripts/voice-responses/generate.ts).
    */
-  const notifyWrongAttempt = ({
-    question,
-    options,
-    correctAnswer,
-    userAnswer,
+  const notifyAnswerOutcome = ({
     stage,
+    questionKey,
     sectionLabel,
   }: {
-    question: string;
-    options?: string[];
-    correctAnswer?: string;
-    userAnswer?: string;
-    /** "hint" = first miss, don't reveal the answer. "explain" = repeat miss, answer is already shown on screen. */
-    stage: "hint" | "explain";
+    stage: AnswerStage;
+    questionKey?: string;
     /** e.g. "Section - 3" — shown on the reply bubble, never spoken. */
     sectionLabel?: string;
   }) => {
-    const optionsText = options?.length ? ` Options were: ${options.join(", ")}.` : "";
-    const pickedText = userAnswer ? ` I picked "${userAnswer}".` : "";
-    const text =
-      stage === "hint"
-        ? `I got this question wrong on my first try: "${question}".${optionsText}${pickedText} Give me one short hint — don't tell me the answer — so I can retry.`
-        : `I got this question wrong again: "${question}".${optionsText}${pickedText} The correct answer is "${correctAnswer ?? ""}". Briefly explain why.`;
-
-    setCollapsed(false);
-    void submitCoachPrompt({ text, isWrongAttempt: true, appendUser: false, sectionLabel });
+    const feedback = buildAnswerFeedback(stage, questionKey, voicePrefixes, voiceConfigByQuestion);
+    // "Correct" is audio-only — no chat bubble, so a stream of right answers doesn't clutter the panel.
+    if (stage !== "correct") {
+      setCollapsed(false);
+      setAiHistory((prev) => [...prev, { role: "coach", text: feedback.text, sectionLabel }]);
+    }
+    if (voiceOn) {
+      playStaticCoachAudio({ prefixUrl: feedback.prefixUrl, responseUrl: feedback.responseUrl });
+    }
   };
 
   const coachPanelProps = {
@@ -134,5 +156,5 @@ export function useLessonCoach({ lessonTitle, lessonTopic, suggestedChips = [] }
     onTranscript: (text: string) => void submitCoachPrompt({ text, appendUser: true }),
   };
 
-  return { aiOpen, setAiOpen, collapsed, setCollapsed, coachPanelProps, notifyWrongAttempt };
+  return { aiOpen, setAiOpen, collapsed, setCollapsed, coachPanelProps, notifyAnswerOutcome };
 }

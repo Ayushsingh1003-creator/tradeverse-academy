@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -27,14 +27,14 @@ type AskTurn = {
 
 function AiChatText({ children }: { children: React.ReactNode }) {
   return (
-    <p className="m-0 text-[14px] leading-relaxed text-[#ccc]">{children}</p>
+    <p className="m-0 text-[14px] leading-relaxed text-[color:var(--tv-ink)]">{children}</p>
   );
 }
 
 function UserChatBubble({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex justify-end">
-      <p className="m-0 max-w-[88%] rounded-2xl rounded-br-sm bg-[rgba(69,109,255,0.22)] px-4 py-2.5 text-[14px] leading-relaxed text-white">
+      <p className="m-0 max-w-[88%] rounded-2xl rounded-br-sm border border-[var(--tv-acc-line)] bg-[var(--tv-acc-wash)] px-4 py-2.5 text-[14px] leading-relaxed text-[color:var(--tv-ink)]">
         {children}
       </p>
     </div>
@@ -43,7 +43,7 @@ function UserChatBubble({ children }: { children: React.ReactNode }) {
 
 function ThinkingIndicator() {
   return (
-    <p className="m-0 animate-fade-in-soft text-[14px] text-[#888]">
+    <p className="m-0 animate-fade-in-soft text-[14px] text-[color:var(--tv-mute)]">
       Thinking<span className="animate-pulse">…</span>
     </p>
   );
@@ -71,27 +71,27 @@ function RecommendationCard({
       href={href}
       className={`block no-underline transition-transform hover:scale-[1.01] ${
         isPrimary
-          ? "rounded-2xl border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.05)] p-4"
-          : "rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-3.5"
+          ? "rounded-2xl border border-[var(--tv-line)] bg-[var(--tv-sunk)] p-4"
+          : "rounded-xl border border-[var(--tv-line)] bg-[var(--tv-sunk)] p-3.5"
       }`}
     >
       <div className="flex gap-3">
         <span className={`shrink-0 ${isPrimary ? "text-4xl" : "text-2xl"}`}>{emoji}</span>
         <div className="min-w-0 flex-1">
           <h3
-            className={`m-0 font-bold text-white ${isPrimary ? "text-[17px]" : "text-[15px]"}`}
+            className={`m-0 font-bold text-[color:var(--tv-ink)] ${isPrimary ? "text-[17px]" : "text-[15px]"}`}
           >
             {title}
           </h3>
           <p
-            className={`mt-1.5 mb-0 leading-relaxed text-[#aaa] ${
+            className={`mt-1.5 mb-0 leading-relaxed text-[color:var(--tv-mute)] ${
               isPrimary ? "text-[14px]" : "text-[13px] line-clamp-2"
             }`}
           >
             {description}
           </p>
           {isPrimary ? (
-            <p className="mt-3 mb-0 flex items-center gap-1.5 text-[12px] text-[#666]">
+            <p className="mt-3 mb-0 flex items-center gap-1.5 text-[12px] text-[color:var(--tv-dim)]">
               <span aria-hidden>📄</span>
               {meta}
             </p>
@@ -135,7 +135,7 @@ function AskTurnBlock({
         <div ref={userMessageRef}>
           <UserChatBubble>{turn.query}</UserChatBubble>
         </div>
-        <p className="m-0 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p className="m-0 rounded-xl border border-[var(--tv-down)] bg-[rgba(239,75,75,0.10)] px-4 py-3 text-sm text-[color:var(--tv-down)]">
           {turn.error}
         </p>
       </div>
@@ -165,7 +165,7 @@ function AskTurnBlock({
         href={`/courses/${result.courseSlug}`}
       />
 
-      <p className="m-0 text-[13px] text-[#888]">You could also start with this:</p>
+      <p className="m-0 text-[13px] text-[color:var(--tv-mute)]">You could also start with this:</p>
       <RecommendationCard
         variant="secondary"
         emoji="📘"
@@ -181,9 +181,9 @@ function AskTurnBlock({
             key={q}
             type="button"
             onClick={() => onRelatedQuestion(q)}
-            className="flex w-full cursor-pointer items-start gap-2 rounded-lg border-0 bg-transparent px-0 py-1 text-left text-[13px] text-[#888] transition-colors hover:text-[#ccc]"
+            className="flex w-full cursor-pointer items-start gap-2 rounded-lg border-0 bg-transparent px-0 py-1 text-left text-[13px] text-[color:var(--tv-mute)] transition-colors hover:text-[color:var(--tv-ink)]"
           >
-            <span className="shrink-0 text-[#666]" aria-hidden>
+            <span className="shrink-0 text-[color:var(--tv-dim)]" aria-hidden>
               ↳
             </span>
             <span>{q}</span>
@@ -191,7 +191,7 @@ function AskTurnBlock({
         ))}
       </div>
 
-      <div className="space-y-3 border-t border-[rgba(255,255,255,0.08)] pt-4">
+      <div className="space-y-3 border-t border-[var(--tv-line)] pt-4">
         <AiChatText>{result.experienceQuestion}</AiChatText>
         {!turn.experienceChoice ? (
           <div className="flex flex-wrap gap-2">
@@ -200,7 +200,7 @@ function AskTurnBlock({
               onClick={() =>
                 onExperienceChoice(turn.id, "beginner", result.experienceOptions.beginner)
               }
-              className="cursor-pointer rounded-full border border-[rgba(255,255,255,0.2)] bg-transparent px-4 py-2 text-[13px] font-medium text-[#ccc] transition-colors hover:border-[rgba(255,255,255,0.35)] hover:text-white"
+              className="cursor-pointer rounded-full border border-[var(--tv-line-hi)] bg-transparent px-4 py-2 text-[13px] font-medium text-[color:var(--tv-ink)] transition-colors hover:border-[var(--tv-acc-line)] hover:text-[color:var(--tv-acc-chip)]"
             >
               {result.experienceOptions.beginner}
             </button>
@@ -209,7 +209,7 @@ function AskTurnBlock({
               onClick={() =>
                 onExperienceChoice(turn.id, "basic", result.experienceOptions.basic)
               }
-              className="cursor-pointer rounded-full border border-[rgba(255,255,255,0.2)] bg-transparent px-4 py-2 text-[13px] font-medium text-[#ccc] transition-colors hover:border-[rgba(255,255,255,0.35)] hover:text-white"
+              className="cursor-pointer rounded-full border border-[var(--tv-line-hi)] bg-transparent px-4 py-2 text-[13px] font-medium text-[color:var(--tv-ink)] transition-colors hover:border-[var(--tv-acc-line)] hover:text-[color:var(--tv-acc-chip)]"
             >
               {result.experienceOptions.basic}
             </button>
@@ -219,7 +219,7 @@ function AskTurnBlock({
       </div>
 
       {turn.experienceChoice && turn.experienceAnswerLabel ? (
-        <div className="animate-slide-up-fade space-y-4 border-t border-[rgba(255,255,255,0.08)] pt-4">
+        <div className="animate-slide-up-fade space-y-4 border-t border-[var(--tv-line)] pt-4">
           <div ref={experienceUserRef}>
             <UserChatBubble>{turn.experienceAnswerLabel}</UserChatBubble>
           </div>
@@ -438,17 +438,17 @@ export function LearningAskCard() {
     <button
       type="button"
       onClick={openCard}
-      className="flex w-full cursor-pointer items-center gap-2.5 rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.06)] px-4 py-2.5 text-left transition-all duration-300 hover:border-[rgba(255,255,255,0.18)] hover:bg-[rgba(255,255,255,0.08)]"
+      className="flex w-full cursor-pointer items-center gap-2.5 rounded-full border border-[var(--tv-line)] bg-[var(--tv-pane)] px-4 py-2.5 text-left transition-all duration-300 hover:border-[var(--tv-line-hi)]"
     >
-      <span className="text-[15px] text-[#666]">🔍</span>
+      <Search className="h-4 w-4 shrink-0 text-[color:var(--tv-mute)]" aria-hidden />
       <span
         className={`min-w-0 flex-1 truncate text-[15px] ${
-          lastQuery ? "text-[#ccc]" : "text-[#666]"
+          lastQuery ? "text-[color:var(--tv-ink)]" : "text-[color:var(--tv-mute)]"
         }`}
       >
         {collapsedLabel}
       </span>
-      <span className="rounded-full bg-[rgba(255,255,255,0.12)] px-3.5 py-1 text-[13px] font-semibold text-white">
+      <span className="rounded-full bg-[var(--tv-line-hi)] px-3.5 py-1 text-[13px] font-semibold text-[color:var(--tv-ink)]">
         Ask
       </span>
     </button>
@@ -459,35 +459,35 @@ export function LearningAskCard() {
       {!expanded ? collapsedTrigger : <div className="h-[42px]" aria-hidden />}
 
       {expanded ? (
-        <div className="animate-ask-card-expand absolute -left-1.5 -right-1.5 top-0 z-50 flex max-h-[min(560px,calc(100dvh-8rem))] flex-col overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.10)] bg-[#1E1E1E] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:-left-2 sm:-right-2">
+        <div className="animate-ask-card-expand absolute -left-1.5 -right-1.5 top-0 z-50 flex max-h-[min(560px,calc(100dvh-8rem))] flex-col overflow-hidden rounded-2xl border border-[var(--tv-line)] bg-[var(--tv-pane)] shadow-[0_24px_80px_var(--tv-card-shadow)] sm:-left-2 sm:-right-2">
           <div className="shrink-0 p-5 pb-0">
             <div className="mb-4 flex items-start justify-between gap-3">
-              <h2 className="m-0 text-[17px] font-bold text-white">What do you want to learn?</h2>
+              <h2 className="m-0 text-[17px] font-bold text-[color:var(--tv-ink)]">What do you want to learn?</h2>
               <button
                 type="button"
                 onClick={close}
                 aria-label="Close"
-                className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-[#888] transition-colors hover:bg-[rgba(255,255,255,0.08)] hover:text-white"
+                className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-[color:var(--tv-mute)] transition-colors hover:bg-[var(--tv-sunk)] hover:text-[color:var(--tv-ink)]"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             <form onSubmit={(e) => void handleSubmit(e)} className="pb-5">
-              <div className="flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(0,0,0,0.25)] px-3 py-2">
-                <span className="pl-1 text-[15px] text-[#666]">🔍</span>
+              <div className="flex items-center gap-2 rounded-full border border-[var(--tv-line)] bg-[var(--tv-sunk)] px-3 py-2">
+                <Search className="ml-1 h-4 w-4 shrink-0 text-[color:var(--tv-mute)]" aria-hidden />
                 <input
                   ref={inputRef}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleInputKeyDown}
                   placeholder="Reply here..."
-                  className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-white outline-none ring-0 placeholder:text-[#555] focus:outline-none focus:ring-0"
+                  className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-[color:var(--tv-ink)] outline-none ring-0 placeholder:text-[color:var(--tv-dim)] focus:outline-none focus:ring-0"
                 />
                 <button
                   type="submit"
                   disabled={asking || !query.trim()}
-                  className="cursor-pointer rounded-full border-0 bg-[rgba(255,255,255,0.14)] px-3.5 py-1.5 text-[13px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                  className="cursor-pointer rounded-full border-0 bg-[var(--tv-line-hi)] px-3.5 py-1.5 text-[13px] font-semibold text-[color:var(--tv-ink)] transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {asking ? "Thinking…" : "Ask"}
                 </button>
@@ -497,7 +497,7 @@ export function LearningAskCard() {
 
           <div
             ref={scrollRef}
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-5 [scrollbar-color:rgba(255,255,255,0.2)_transparent] [scrollbar-width:thin]"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-5 [scrollbar-color:var(--tv-line-hi)_transparent] [scrollbar-width:thin]"
           >
             <div className="space-y-8">
               {turns.map((turn) => (

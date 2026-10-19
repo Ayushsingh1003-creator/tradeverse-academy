@@ -24,6 +24,8 @@ function AppEvents() {
   const clearLevelUp = useUserStore((state) => state.clearLevelUp);
   const hydrated = useUserStore((state) => state.hydrated);
   const dailyChallengeDoneDate = useUserStore((state) => state.dailyChallengeDoneDate);
+  const pendingAchievements = useUserStore((state) => state.pendingAchievements);
+  const clearPendingAchievements = useUserStore((state) => state.clearPendingAchievements);
   const [levelUpOpen, setLevelUpOpen] = useState(false);
   const { push } = useToast();
 
@@ -36,11 +38,20 @@ function AppEvents() {
     if (pendingLevelUp != null) setLevelUpOpen(true);
   }, [pendingLevelUp]);
 
+  // One place announces every unlock, wherever it was earned.
+  useEffect(() => {
+    if (pendingAchievements.length === 0) return;
+    for (const achievement of pendingAchievements) {
+      push(`Achievement unlocked — ${achievement.title}`, "xp");
+    }
+    clearPendingAchievements();
+  }, [pendingAchievements, push, clearPendingAchievements]);
+
   useEffect(() => {
     if (!hydrated) return;
     const today = todayLocalISO();
     if (dailyChallengeDoneDate !== today) {
-      push("📅 Don't forget your daily challenge!", "info");
+      push("Don't forget your daily challenge!", "info");
     }
   }, [dailyChallengeDoneDate, hydrated, push]);
 

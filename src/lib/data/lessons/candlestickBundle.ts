@@ -85,7 +85,7 @@ export const CANDLESTICK_LESSONS: Lesson[] = [
     // src/components/lesson/timeframes), not LessonPlayer — keep this in
     // sync with that component's TIME_FRAMES_LESSON_XP constant.
     xpReward: TIME_FRAMES_LESSON_XP,
-    isFree: false,
+    isFree: true,
     pages: timeframesPages,
     practice: stubPractice("timeframes"),
   },
@@ -98,7 +98,7 @@ export const CANDLESTICK_LESSONS: Lesson[] = [
     // src/components/lesson/support-resistance), not LessonPlayer — keep this
     // in sync with that component's SUPPORT_RESISTANCE_LESSON_XP.
     xpReward: 330,
-    isFree: false,
+    isFree: true,
     pages: supportResistancePages,
     practice: supportResistancePractice,
   },
@@ -111,7 +111,7 @@ export const CANDLESTICK_LESSONS: Lesson[] = [
     // src/components/lesson/trend-lines), not LessonPlayer — keep this in
     // sync with that component's TREND_LINES_LESSON_XP.
     xpReward: TREND_LINES_LESSON_XP,
-    isFree: false,
+    isFree: true,
     pages: trendLinesPages,
     practice: trendLinesPractice,
   },
@@ -124,7 +124,7 @@ export const CANDLESTICK_LESSONS: Lesson[] = [
     // src/components/lesson/chart-patterns), not LessonPlayer — keep this
     // in sync with that component's CHART_PATTERNS_LESSON_XP.
     xpReward: CHART_PATTERNS_LESSON_XP,
-    isFree: false,
+    isFree: true,
     pages: chartPatternsPages,
     practice: stubPractice("chart-patterns"),
   },

@@ -1,0 +1,716 @@
+[
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "5",
+    "stage": "hint",
+    "question": "This is a green (bullish) candle. Tap the level where price CLOSED — where the period ended.",
+    "text": "Check the top edge of the candle’s body (the solid part), not the wicks, for where the price closed."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "9",
+    "stage": "hint",
+    "question": "Two candles below. Which one is bearish — the one where sellers won and price closed lower than it opened?",
+    "text": "Check the candle’s color and whether its close (the final price) is lower than its open (the starting price). If both match, that candle is bearish. Verify which candle meets both conditions."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "16",
+    "stage": "hint",
+    "question": "This candle has a small green body sitting up top and a long lower wick. What most likely happened during the period?",
+    "text": "Think about what a long lower wick tells you about the low price and how the market reacted before the close. Check if the wick shows buyers stepping in after a drop."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "2",
+    "stage": "hint",
+    "question": "You are watching a 5-minute chart. What makes the current candle finish and a brand-new candle appear?",
+    "text": "Think about what the “5‑minute” label tells you about when each candle stops and the next one starts."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "6",
+    "stage": "hint",
+    "question": "These twelve 5-minute candles merge into the 1-hour candle on the right. Tap the 5-minute candle that gave the 1-hour candle its HIGH.",
+    "text": "Check which 5‑minute candle reaches the highest price point before the hour ends; that candle sets the hour’s high."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "13",
+    "stage": "hint",
+    "question": "A swing trader holds positions for several days to a couple of weeks. Which timeframe should be their main chart?",
+    "text": "Think about how the timeframe of a chart should match the typical length you hold a trade."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "16",
+    "stage": "hint",
+    "question": "Your 5-minute chart is rallying and screaming buy. The daily chart shows a clear downtrend. Which one should carry more weight?",
+    "text": "Think about which chart shows the broader market context, not just the momentary move. Check which timeframe covers more price history."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "6",
+    "stage": "hint",
+    "question": "No lines drawn this time. Tap the area on the chart where buyers keep stepping in.",
+    "text": "Hint: Look for the spot where the price repeatedly bounces upward after falling, showing buyers entering the market. Check the chart for that recurring bounce point."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "20",
+    "stage": "hint",
+    "question": "Two levels on the same timeframe. Which one would you trust more?",
+    "text": "Focus on how recently and how often a level has been respected."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "4",
+    "stage": "hint",
+    "question": "This is an uptrend. Tap the two most recent higher lows — the rising valleys the uptrend is built on. Tap twice, one per valley (tap again to adjust).",
+    "text": "Check the chart for the two lowest points that each sit higher than the low before it; those are the rising valleys you need to tap."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "13",
+    "stage": "hint",
+    "question": "Two uptrend lines, same chart period. Which one would you trust more?",
+    "text": "Look at the line that has more touches and a slope that matches the market’s typical pace. Check which line follows the price moves without being overly steep."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "15",
+    "stage": "hint",
+    "question": "Price in this uptrend has dropped back to its rising trendline. Which next candle would signal the trend is BREAKING, not holding?",
+    "text": "Look at which candle’s close falls beneath the rising trendline, not just its wick. Check if the candle’s close is lower than the line."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "17",
+    "stage": "hint",
+    "question": "The rising trendline is drawn. Tap the most recent spot where price dipped to the line and got rejected back up — the continuation entry.",
+    "text": "Check the last candle that just touched the line and then closed (finished) above it; that candle shows the price being rejected back up."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "23",
+    "stage": "explain",
+    "question": "Nifty, last week. First job: this is an uptrend. Tap along the rising trendline the swing lows are riding — the diagonal floor you'd watch.",
+    "text": "To identify a rising trendline in an uptrend, you look for prices making higher swing lows, which are temporary dips that don't fall as low as the previous one. Connecting these rising swing lows creates a diagonal floor, a visible path indicating the upward direction of the trend. Practice connecting at least two such lows to draw your trendline."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "27",
+    "stage": "hint",
+    "question": "Price closes decisively above the neckline on strong volume, and the daily trend is already up. What is the disciplined action?",
+    "text": "Focus on where the pattern tells you to set a stop after the breakout."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "2",
+    "stage": "hint",
+    "question": "This candle is green — it closed higher than it opened. Before we define anything, who do you think was in control of price during this period?",
+    "text": "Think about which side of the candle’s body is longer – the part that shows the price move from open to close. That tells you which side was stronger during the period. Check the length of the green body."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "2",
+    "stage": "explain",
+    "question": "This candle is green — it closed higher than it opened. Before we define anything, who do you think was in control of price during this period?",
+    "text": "The candle closed higher than it opened, meaning buyers outbid sellers and lifted the price, so buyers controlled the period. Look at the candle’s body to confirm close > open."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "6",
+    "stage": "hint",
+    "question": "Same candle. Tap the LOW — the lowest price this candle ever traded.",
+    "text": "Re‑examine what the LOW means – it’s the very bottom of the candle’s wick. Identify the lowest point on the chart."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "6",
+    "stage": "explain",
+    "question": "Same candle. Tap the LOW — the lowest price this candle ever traded.",
+    "text": "The LOW marks the bottom of the candle, showing the smallest price reached during that time bar. It’s the extreme low point, not the open or close. Look at a chart and identify the low of a recent candle."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "9",
+    "stage": "explain",
+    "question": "Two candles below. Which one is bearish — the one where sellers won and price closed lower than it opened?",
+    "text": "Candle B is bearish because its close is below its open, so the body is red, showing sellers pushed the price lower. Check if the candle’s close is lower than its open."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "11",
+    "stage": "hint",
+    "question": "All four closed the period. Which single candle shows buyers in firm control with the most conviction?",
+    "text": "Look at the candle’s body size and color—buyers in control show a large green (up) body with little or no lower wick. Identify which option matches that description."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "11",
+    "stage": "explain",
+    "question": "All four closed the period. Which single candle shows buyers in firm control with the most conviction?",
+    "text": "A big green body means the close is far above the open, showing buyers pushed price up strongly. The large size shows strong conviction, unlike a wick or doji which indicate indecision. Check the candle’s color and body length on your chart."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "14",
+    "stage": "hint",
+    "question": "This candle has a long upper wick. Tap the area where price pushed up but got sold back down — where sellers rejected the highs.",
+    "text": "Focus on the thin line that sticks up from the top of the candle body—this is the upper wick where the price was pushed up then pulled back. Identify that upper wick."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "16",
+    "stage": "explain",
+    "question": "This candle has a small green body sitting up top and a long lower wick. What most likely happened during the period?",
+    "text": "The long lower wick shows price fell far below the opening price, then rose back up to close above the open, making the body green. That means sellers pushed price down, but buyers stepped in and drove it back up, ending higher. Look for similar candles on your chart."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "17",
+    "stage": "hint",
+    "question": "On an unseen chart you spot a period where buyers stepped in at lower prices and bought aggressively, driving price back up. Which candle shape matches that story?",
+    "text": "Look at the part of the candle that shows a long tail below the body, then a solid body moving upward. Check if the lower tail is longer than the body."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "17",
+    "stage": "explain",
+    "question": "On an unseen chart you spot a period where buyers stepped in at lower prices and bought aggressively, driving price back up. Which candle shape matches that story?",
+    "text": "A long lower wick shows the price fell to a low (the wick) then closed higher, meaning buyers pushed it up after the dip. That matches buyers stepping in at lower prices. Next step: notice the wick length to spot buying pressure."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "18",
+    "stage": "hint",
+    "question": "Last job. Here is a fresh candle. Tap the price where it CLOSED — where this period actually ended.",
+    "text": "Check the body of the candle—the solid rectangle—its top (for an up candle) or bottom (for a down candle) shows the closing price. Look there and tap that level."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "18",
+    "stage": "explain",
+    "question": "Last job. Here is a fresh candle. Tap the price where it CLOSED — where this period actually ended.",
+    "text": "The close is the final price of that time‑frame, shown as the flat line at the top of a green (up) candle or the bottom of a red (down) candle; it marks where the period actually ended. Check the candle’s body edge that is flat and opposite the open side."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "19",
+    "stage": "hint",
+    "question": "Your boss candle: a green body, closing near its high, with only tiny wicks. What is the cleanest read?",
+    "text": "Think about what a green candle that closes near its high and has only tiny wicks says about who was in control during that period. Check the definition of a strong bullish candle."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "19",
+    "stage": "explain",
+    "question": "Your boss candle: a green body, closing near its high, with only tiny wicks. What is the cleanest read?",
+    "text": "A green body means price rose, closing near the high shows buyers kept pushing up, tiny wicks mean little price moved back down (little rejection). So buyers dominated from open to close. Check the next candle for confirmation."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "2",
+    "stage": "explain",
+    "question": "You are watching a 5-minute chart. What makes the current candle finish and a brand-new candle appear?",
+    "text": "A 5‑minute chart creates a new candle each time the 5‑minute period ends, regardless of price movement or volume. The candle closes when the clock hits the next 5‑minute mark, then a fresh candle starts. Check the chart’s time axis to see when each candle begins."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "4",
+    "stage": "hint",
+    "question": "If each candle on your chart covers 5 minutes, how many of them fit inside one 1-hour candle?",
+    "text": "Think about how many 5‑minute periods make up 60 minutes—divide 60 by 5. Check that result."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "4",
+    "stage": "explain",
+    "question": "If each candle on your chart covers 5 minutes, how many of them fit inside one 1-hour candle?",
+    "text": "A 1‑hour candle represents 60 minutes, and each 5‑minute candle covers 5 minutes, so 60 divided by 5 equals 12 candles inside the hour. Check the minute length of each timeframe on your chart."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "6",
+    "stage": "explain",
+    "question": "These twelve 5-minute candles merge into the 1-hour candle on the right. Tap the 5-minute candle that gave the 1-hour candle its HIGH.",
+    "text": "The 1‑hour candle’s HIGH is simply the highest price reached among the twelve 5‑minute candles, so you must tap the 5‑minute candle whose high point is the topmost one. That candle supplies the 1‑hour high. Look at each 5‑minute candle and note which has the highest high."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "9",
+    "stage": "explain",
+    "question": "Tap through 5m, 15m and 1h. It is one dataset re-sliced each time. Then answer: which timeframe shows the overall trend most clearly?",
+    "text": "The 1‑hour timeframe bundles many minutes into each candle, so short‑term price spikes (noise) are smoothed out, revealing the main direction. With less detail, the overall trend stands out more clearly. Check a 1‑hour chart to spot the trend."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "13",
+    "stage": "explain",
+    "question": "A swing trader holds positions for several days to a couple of weeks. Which timeframe should be their main chart?",
+    "text": "Daily is correct because a swing trader keeps trades for days to weeks, so a daily candle shows each day's price action, matching the trade length. Next step: Look at the daily chart to spot entry and exit points."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "16",
+    "stage": "explain",
+    "question": "Your 5-minute chart is rallying and screaming buy. The daily chart shows a clear downtrend. Which one should carry more weight?",
+    "text": "Higher timeframes like the daily chart reveal the market’s main direction, so a clear downtrend there outweighs short‑term noise on a 5‑minute chart. Respecting the daily trend helps avoid trades that go against the larger bias. Check the daily trend before acting on a 5‑minute signal."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "2",
+    "stage": "explain",
+    "question": "Price bounced off this area twice. Now it's dropping toward it a third time. Before we explain anything — what's most likely to happen at the level?",
+    "text": "Because the price has already bounced off that area twice, it shows the level is acting as support—a floor where buyers tend to step in, so a third approach will likely cause another bounce. Watch for buying pressure as price reaches that level."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "6",
+    "stage": "explain",
+    "question": "No lines drawn this time. Tap the area on the chart where buyers keep stepping in.",
+    "text": "That area is a support zone because price has bounced up from it before, showing buyers consistently step in and defend that level."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "8",
+    "stage": "hint",
+    "question": "This chart has two swing lows. Tap each one — the two valleys where price bottomed out and turned back up. Tap twice, one per valley (tap again to adjust).",
+    "text": "Look for the two points that sit lower than the candles on both sides, forming a clear “valley” before the price rises again. Check each low’s surrounding candles."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "8",
+    "stage": "explain",
+    "question": "This chart has two swing lows. Tap each one — the two valleys where price bottomed out and turned back up. Tap twice, one per valley (tap again to adjust).",
+    "text": "The answer is correct because the two valleys are swing lows – points where price reached a low (support) and then turned back up, marking a reversal. Tapping each valley records those support levels on the chart. Next step: watch if price respects those taps as it moves forward."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "11",
+    "stage": "explain",
+    "question": "Drag the band and its edges to cover where price actually reacted — the cluster of lows and wicks. Make it a zone, not a razor line.",
+    "text": "The correct answer is a support zone because the instruction asks you to draw a band that covers the cluster of lows and wicks where price repeatedly bounced, which defines an area of support rather than a single line. A zone captures the range of price reactions, making it clearer for future trades. Check a chart and highlight the low‑cluster with a shaded band."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "13",
+    "stage": "hint",
+    "question": "Three traders drew a level on the same chart. Tap the card where the level is drawn incorrectly.",
+    "text": "Look at which level doesn’t have at least two separate touches at a clear high or low point. Check if the line meets the “two‑touch” rule for support or resistance."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "18",
+    "stage": "hint",
+    "question": "Resistance just broke. Tap the spot where a break-and-retest entry sets up — do not chase the breakout candle.",
+    "text": "Look for the first candle that comes back to the broken resistance line and then moves back above it. Check that candle’s low touches the old resistance."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "18",
+    "stage": "explain",
+    "question": "Resistance just broke. Tap the spot where a break-and-retest entry sets up — do not chase the breakout candle.",
+    "text": "The correct spot is the old resistance line now acting as support, where price pulls back after the breakout. That pull‑back confirms the breakout and gives a safer entry than chasing the candle. Check that the price bounces off that line before entering."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "20",
+    "stage": "explain",
+    "question": "Two levels on the same timeframe. Which one would you trust more?",
+    "text": "Level B is more trustworthy because it’s been tested four times this month and each time the price sharply bounced, confirming strong support/resistance. Now watch if price approaches that level again."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "23",
+    "stage": "explain",
+    "question": "Nifty, last Tuesday. First job: tap the key support level you would watch going into the session.",
+    "text": "That level is key support because price has reacted there before, bouncing upward each time it was tested, which is why it is worth watching."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "24",
+    "stage": "explain",
+    "question": "Price dropped into the level you marked and printed a long lower wick. Your move?",
+    "text": "A long lower wick shows price fell into support then quickly rose, meaning buyers stepped in at that level. That reaction signals defense of the support zone, so entering a long (buy) is appropriate, placing a stop just below the zone in case the support fails. Next step: set your stop a few pips below the support line."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "2",
+    "stage": "explain",
+    "question": "Price has bounced up off this rising line twice. Now it's dipping toward it a third time. Before we explain anything — what's the higher-probability outcome?",
+    "text": "Because a rising trendline is a support line that connects higher lows; when price touches it, buyers often step in to push price up again, so the most likely result is another bounce. The line itself shows that demand has been strong at those levels. Watch if the next candle closes above the line."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "4",
+    "stage": "explain",
+    "question": "This is an uptrend. Tap the two most recent higher lows — the rising valleys the uptrend is built on. Tap twice, one per valley (tap again to adjust).",
+    "text": "The answer is right because an uptrend is defined by higher lows – the low points that move upward. Drawing a line through the two most recent higher lows (the valleys) visualizes the upward path that price follows. Next step: see if the price stays above that line."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "7",
+    "stage": "explain",
+    "question": "Look at the structure below — lower highs and lower lows. Which trendline belongs on this chart?",
+    "text": "Because the highs are getting lower, the line that joins those falling peaks is the downtrend resistance line, showing where price meets resistance. Check if price touches that line again."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "9",
+    "stage": "hint",
+    "question": "Drag the two blue handles so the line sits under the swing lows — just touching the wicks. Get it right and it should line up with the 3rd touch too. Then Check.",
+    "text": "Check the lowest point of each swing low and align the line so it just touches the tip of each wick; then move the handles until it also grazes the third wick. Adjust until all three wicks are just touched."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "11",
+    "stage": "explain",
+    "question": "Three traders drew a trendline on the same uptrend. Tap the card where the line is drawn incorrectly.",
+    "text": "Trader C is wrong because a valid trendline needs at least two clean touches on the price lows without crossing through candle bodies, and C only touches once and cuts through bodies. Check that a trendline has two clean touches on lows."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "13",
+    "stage": "explain",
+    "question": "Two uptrend lines, same chart period. Which one would you trust more?",
+    "text": "Line B is more trustworthy because it has four touches, showing the price repeatedly respects that line, and its moderate slope indicates a sustainable, less aggressive trend. More confirmations and a gentler angle give a clearer picture of the ongoing uptrend. Next step: Count how many times price bounces off a line before relying on it."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "15",
+    "stage": "explain",
+    "question": "Price in this uptrend has dropped back to its rising trendline. Which next candle would signal the trend is BREAKING, not holding?",
+    "text": "A heavy red close means the candle closed well below its open, showing strong selling pressure that pushes price through the trendline, indicating a break. The other candles either close near the line or have green/neutral color, so they don’t break it. Check if the close is below the trendline."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "17",
+    "stage": "explain",
+    "question": "The rising trendline is drawn. Tap the most recent spot where price dipped to the line and got rejected back up — the continuation entry.",
+    "text": "The correct spot is where price touched the rising trendline and then closed above it, because the line acted as support and the bounce confirms the up‑trend will continue. That bounce signals a safe continuation entry. Check if the candle’s close is above the trendline."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "19",
+    "stage": "hint",
+    "question": "The lower trendline is fixed. Drag the parallel upper line up or down until it caps the swing highs — forming a clean channel around the uptrend. Then Check.",
+    "text": "Check that the upper line actually touches each swing high point, not just passes near them."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "19",
+    "stage": "explain",
+    "question": "The lower trendline is fixed. Drag the parallel upper line up or down until it caps the swing highs — forming a clean channel around the uptrend. Then Check.",
+    "text": "The lower trendline isn’t fixed—you need to move it to touch the swing lows while the upper line caps the swing highs, forming the channel. Identify the latest swing low and draw the lower line through that point."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "21",
+    "stage": "explain",
+    "question": "Your 5-minute trendline says sell, but the daily trendline is still rising and intact. Which line should carry more weight?",
+    "text": "The daily line matters more because it reflects price action over many days, so each touch (when price meets the line) confirms its strength over months. Short‑term 5‑minute lines can be noisy and change quickly. Look at the daily trendline first before trading the 5‑minute signal."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "23",
+    "stage": "hint",
+    "question": "Nifty, last week. First job: this is an uptrend. Tap along the rising trendline the swing lows are riding — the diagonal floor you'd watch.",
+    "text": "Look again at the low points that form the upward sloping line—does the line connect the lowest price of each swing? Check if those lows line up diagonally."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "24",
+    "stage": "hint",
+    "question": "Price dipped to the rising trendline you marked and printed a long lower wick. The daily trend is still up. Your move?",
+    "text": "Look at what a long lower wick at a rising trendline says about buyer strength. Check if the candle closed above the line after the wick."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "24",
+    "stage": "explain",
+    "question": "Price dipped to the rising trendline you marked and printed a long lower wick. The daily trend is still up. Your move?",
+    "text": "The long lower wick touching the rising trendline shows buyers stepping in, so the uptrend is still valid. That means you go long and place a stop just below the trendline to limit risk. Set the stop a little under the line."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "3",
+    "stage": "explain",
+    "question": "Price pushed up to the same ceiling twice and got knocked back both times. Before we name anything — what does that most likely tell you?",
+    "text": "When price reaches the same high twice and drops each time, it shows a resistance level where sellers step in and push the price down, meaning buyers cannot break through. That tells you sellers are defending that price and buyers are failing there. Next step: watch if the price moves lower after the second test."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "9",
+    "stage": "explain",
+    "question": "This is a double top. Tap the neckline — the level that has to break for the pattern to complete.",
+    "text": "In a double top the line drawn across the low point between the two peaks is the neckline, which functions as support (a price floor). The pattern is only confirmed when price breaks below that support level. Look for the lowest point between the two tops."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "13",
+    "stage": "hint",
+    "question": "Read the shape: a peak, then a higher peak, then a lower peak, with two lows forming a neckline. What is it?",
+    "text": "Focus on the middle peak and the line that connects the two lows (the neckline). Which pattern uses a central peak with a neckline? Check that shape."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "18",
+    "stage": "explain",
+    "question": "Price is making higher lows into a flat ceiling, squeezing tighter with each attempt. What is it?",
+    "text": "An ascending triangle has higher lows (price makes higher lows) and a flat top (the ceiling) where the highs stay at the same level, so each swing up squeezes tighter. This matches the description. Next step: watch for a close above the flat top to confirm a breakout."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "21",
+    "stage": "explain",
+    "question": "You spot a bullish flag. In which situation does it carry the best odds?",
+    "text": "A bullish flag works best when the price is already moving up strongly, because the flag is a continuation pattern; the higher‑timeframe support gives extra strength. Being mid‑trend means the up move is still active, so the breakout is more likely to keep the rally going. Check that the flag forms after a strong upward move."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "23",
+    "stage": "hint",
+    "question": "Price has just poked below the neckline of a double top. Which candle confirms the breakdown rather than trapping you?",
+    "text": "Look at the candle that has a firm close below the neckline, not just a wick that recovers. Identify the candle whose closing price stays beneath the neckline."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "23",
+    "stage": "explain",
+    "question": "Price has just poked below the neckline of a double top. Which candle confirms the breakdown rather than trapping you?",
+    "text": "A heavy red close below means the candle’s final price is well under the neckline, showing sellers stayed in control after the break, so the breakdown is genuine and not a trap. Watch the next candle for continuation."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "26",
+    "stage": "explain",
+    "question": "Nifty, last week. This is an inverse head & shoulders. Tap the neckline — the level that must break for the pattern to complete.",
+    "text": "In an inverse head‑and‑shoulders the neckline is the resistance line connecting the lows of the two shoulders, and the pattern only finishes when price breaks (closes) above that line, signalling a bullish reversal. Check if today’s close is above the neckline."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "27",
+    "stage": "explain",
+    "question": "Price closes decisively above the neckline on strong volume, and the daily trend is already up. What is the disciplined action?",
+    "text": "The price closing above the neckline on strong volume confirms the head‑and‑shoulders pattern, so a buy is justified. Placing a stop just below the right‑shoulder limits loss if the pattern fails, and sizing the risk ensures you only risk a small percentage of your account. Mark the stop level on your chart."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "5",
+    "stage": "explain",
+    "question": "This is a green (bullish) candle. Tap the level where price CLOSED — where the period ended.",
+    "text": "For a bullish, green candle, the close sits at the top of the solid body — that's the price where the period ended, higher than where it opened."
+  },
+  {
+    "lessonSlug": "what-is-a-candlestick",
+    "questionKey": "14",
+    "stage": "explain",
+    "question": "This candle has a long upper wick. Tap the area where price pushed up but got sold back down — where sellers rejected the highs.",
+    "text": "The upper wick is the thin line above the body — it shows price pushed higher during the period but sellers pushed it back down before the close."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "7",
+    "stage": "hint",
+    "question": "Same group. Tap the 5-minute candle whose close becomes the CLOSE of the 1-hour candle.",
+    "text": "Think about which candle in the group is the very last one — its close becomes the final price for the whole hour."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "7",
+    "stage": "explain",
+    "question": "Same group. Tap the 5-minute candle whose close becomes the CLOSE of the 1-hour candle.",
+    "text": "The last 5-minute candle in the group sets the close, because a 1-hour candle's close is simply the final traded price at the end of that 60-minute period."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "9",
+    "stage": "hint",
+    "question": "Tap through 5m, 15m and 1h. It is one dataset re-sliced each time. Then answer: which timeframe shows the overall trend most clearly?",
+    "text": "Think about which timeframe smooths out the small back-and-forth moves so the bigger direction stands out clearly."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "11",
+    "stage": "hint",
+    "question": "On the 15-minute chart (left) price is falling hard and looks like a breakdown. The 1-hour chart (right) covers the very same period. What is actually happening?",
+    "text": "Zoom out — check what the bigger 1-hour trend was doing before this dip even started."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "11",
+    "stage": "explain",
+    "question": "On the 15-minute chart (left) price is falling hard and looks like a breakdown. The 1-hour chart (right) covers the very same period. What is actually happening?",
+    "text": "It's a normal pullback inside a bigger uptrend. The 1-hour chart shows the overall direction is still up, so the 15-minute drop is just a short dip within that larger move, not a new downtrend."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "18",
+    "stage": "hint",
+    "question": "Below is the 1-hour chart of a session. That sharp 12-candle selloff you saw on the 5-minute chart happened entirely inside ONE of these hourly candles. Tap it.",
+    "text": "Count how many 5-minute candles fit inside one hour, then look for the hourly candle that covers that whole stretch."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "18",
+    "stage": "explain",
+    "question": "Below is the 1-hour chart of a session. That sharp 12-candle selloff you saw on the 5-minute chart happened entirely inside ONE of these hourly candles. Tap it.",
+    "text": "One 1-hour candle covers 60 minutes, exactly twelve 5-minute candles. So that sharp selloff on the 5-minute chart is entirely contained inside that single hourly candle."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "19",
+    "stage": "hint",
+    "question": "You were about to short that 5-minute breakdown. Then you checked the 1-hour and saw the selloff was one red candle inside a strong uptrend. Your move?",
+    "text": "Compare what the fast 5-minute chart is showing against what the bigger 1-hour trend is actually doing."
+  },
+  {
+    "lessonSlug": "timeframes-explained",
+    "questionKey": "19",
+    "stage": "explain",
+    "question": "You were about to short that 5-minute breakdown. Then you checked the 1-hour and saw the selloff was one red candle inside a strong uptrend. Your move?",
+    "text": "Stand down, because the 1-hour chart shows a strong uptrend. That 5-minute selloff is just one red candle inside a bigger move up, not a real reversal."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "2",
+    "stage": "hint",
+    "question": "Price bounced off this area twice. Now it's dropping toward it a third time. Before we explain anything — what's most likely to happen at the level?",
+    "text": "Think about what happened the last two times price reached this exact level."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "11",
+    "stage": "hint",
+    "question": "Drag the band and its edges to cover where price actually reacted — the cluster of lows and wicks. Make it a zone, not a razor line.",
+    "text": "Look for where several lows and their wicks cluster together, not just one single low point."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "13",
+    "stage": "explain",
+    "question": "Three traders drew a level on the same chart. Tap the card where the level is drawn incorrectly.",
+    "text": "Trader C's level is wrong because it only has one touch and cuts through candle bodies. A real support or resistance line needs at least two clean touches at the wicks, not through the middle of candles."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "15",
+    "stage": "hint",
+    "question": "Price has dropped into the support zone on a strong buying history. Which next candle signals buyers are defending the level?",
+    "text": "Think about which candle shape shows price dipping down and then getting pushed back up before the close."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "15",
+    "stage": "explain",
+    "question": "Price has dropped into the support zone on a strong buying history. Which next candle signals buyers are defending the level?",
+    "text": "A long lower wick means price fell into the support zone but buyers pushed it back up before the close — that rejection shows buyers are actively defending the level."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "22",
+    "stage": "hint",
+    "question": "This is a long-position tool. Drag the whole box to move it, or drag the ENTRY, STOP and TARGET lines one at a time. Put entry near support, stop just below the zone, target up at resistance — aim for at least 1.5× reward-to-risk. Then Check to reveal how the trade played out.",
+    "text": "Place your entry near the support zone, your stop just below it, and your target up near resistance."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "22",
+    "stage": "explain",
+    "question": "This is a long-position tool. Drag the whole box to move it, or drag the ENTRY, STOP and TARGET lines one at a time. Put entry near support, stop just below the zone, target up at resistance — aim for at least 1.5× reward-to-risk. Then Check to reveal how the trade played out.",
+    "text": "Entry near support, a stop just below the zone, and a target at resistance gives you a favorable setup — aim for at least 1.5 times your risk in potential reward."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "23",
+    "stage": "hint",
+    "question": "Nifty, last Tuesday. First job: tap the key support level you would watch going into the session.",
+    "text": "Look for the price level where the chart has bounced upward from before."
+  },
+  {
+    "lessonSlug": "support-resistance",
+    "questionKey": "24",
+    "stage": "hint",
+    "question": "Price dropped into the level you marked and printed a long lower wick. Your move?",
+    "text": "Think about what a long lower wick at a support level tells you about who is in control right now."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "2",
+    "stage": "hint",
+    "question": "Price has bounced up off this rising line twice. Now it's dipping toward it a third time. Before we explain anything — what's the higher-probability outcome?",
+    "text": "Think about what happened the last two times price touched this rising line."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "7",
+    "stage": "hint",
+    "question": "Look at the structure below — lower highs and lower lows. Which trendline belongs on this chart?",
+    "text": "Look at whether the highs or the lows are the ones stepping down together."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "9",
+    "stage": "explain",
+    "question": "Drag the two blue handles so the line sits under the swing lows — just touching the wicks. Get it right and it should line up with the 3rd touch too. Then Check.",
+    "text": "The trendline should sit right under the swing lows, touching the wicks. Placed correctly, it also lines up with that third touch, which confirms the line is valid."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "11",
+    "stage": "hint",
+    "question": "Three traders drew a trendline on the same uptrend. Tap the card where the line is drawn incorrectly.",
+    "text": "Check which trader's line only touches the chart once and cuts through candle bodies instead of the wicks."
+  },
+  {
+    "lessonSlug": "trend-lines",
+    "questionKey": "21",
+    "stage": "hint",
+    "question": "Your 5-minute trendline says sell, but the daily trendline is still rising and intact. Which line should carry more weight?",
+    "text": "Think about which trendline has been tested and respected for the longer stretch of time."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "3",
+    "stage": "hint",
+    "question": "Price pushed up to the same ceiling twice and got knocked back both times. Before we name anything — what does that most likely tell you?",
+    "text": "Think about who is winning each time price gets pushed back down from that ceiling."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "9",
+    "stage": "hint",
+    "question": "This is a double top. Tap the neckline — the level that has to break for the pattern to complete.",
+    "text": "Look for the low point between the two peaks — that's the level price needs to break."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "13",
+    "stage": "explain",
+    "question": "Read the shape: a peak, then a higher peak, then a lower peak, with two lows forming a neckline. What is it?",
+    "text": "This is a head and shoulders pattern — a peak, a higher peak, then a lower peak, with two lows forming the neckline underneath, signaling the uptrend may be reversing."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "18",
+    "stage": "hint",
+    "question": "Price is making higher lows into a flat ceiling, squeezing tighter with each attempt. What is it?",
+    "text": "Notice how the lows keep rising while the top stays flat — think about what that squeeze usually leads to."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "21",
+    "stage": "hint",
+    "question": "You spot a bullish flag. In which situation does it carry the best odds?",
+    "text": "Think about where a continuation pattern like this works best — during a trend, or against one."
+  },
+  {
+    "lessonSlug": "chart-patterns",
+    "questionKey": "26",
+    "stage": "hint",
+    "question": "Nifty, last week. This is an inverse head & shoulders. Tap the neckline — the level that must break for the pattern to complete.",
+    "text": "Look for the line connecting the two lows of the shoulders — that's the level price must break above."
+  }
+]

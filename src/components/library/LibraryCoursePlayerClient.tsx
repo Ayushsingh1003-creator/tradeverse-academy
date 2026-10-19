@@ -7,7 +7,7 @@ import {
   isLibraryLearnItem,
 } from "@/lib/libraryItemType";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AppNav } from "@/components/layout/AppNav";
+import { AppShell, ThemeScope } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
 import { LibraryVideoLanguageBar } from "@/components/library/LibraryVideoLanguageBar";
 import { isAuthConfigured } from "@/lib/auth/enabled";
@@ -229,28 +229,27 @@ export function LibraryCoursePlayerClient({
       : null;
 
   return (
-    <main className="min-h-screen bg-[#141414]">
-      <AppNav />
-      <div className="mx-auto max-w-7xl px-4 py-6">
+    <ThemeScope>
+      <AppShell>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/library"
-            className="text-sm font-medium text-[#88C9F7] transition hover:text-white"
+            className="text-sm font-medium text-[color:var(--tv-acc-chip)] transition hover:text-[color:var(--tv-ink)]"
           >
             Back to Library
           </Link>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted">
-            <span className="rounded-full border border-border px-2 py-0.5">{course.level}</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-[color:var(--tv-mute)]">
+            <span className="rounded-full border border-[var(--tv-line)] px-2 py-0.5">{course.level}</span>
             <span>{course.videos.length} lessons</span>
             <span>· {course.estimatedDurationMin} min total</span>
           </div>
         </div>
 
-        <h1 className="mb-2 text-2xl font-extrabold text-white md:text-3xl">{course.title}</h1>
-        <p className="mb-8 max-w-3xl text-sm text-text-muted">{course.description}</p>
+        <h1 className="mb-2 text-2xl font-extrabold text-[color:var(--tv-ink)] md:text-3xl">{course.title}</h1>
+        <p className="mb-8 max-w-3xl text-sm text-[color:var(--tv-mute)]">{course.description}</p>
 
         {!course.videos.length ? (
-          <p className="rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text-muted">
+          <p className="rounded-xl border border-[var(--tv-line)] bg-[var(--tv-pane)] px-4 py-3 text-sm text-[color:var(--tv-mute)]">
             This course has no lessons yet.
           </p>
         ) : (
@@ -263,17 +262,17 @@ export function LibraryCoursePlayerClient({
                   hindiAvailable={hasLibraryVideoHindi(activeVideo)}
                 />
               ) : null}
-              <div className="relative w-full overflow-hidden rounded-xl border border-border bg-black pb-[56.25%] shadow-lg">
+              <div className="relative w-full overflow-hidden rounded-xl border border-[var(--tv-line)] bg-black pb-[56.25%] shadow-lg">
                 {activeIsLearn && activeLearnHref ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-[#1a2a4a] to-[#141414] p-6 text-center">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-[#88C9F7]">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--tv-acc-chip)]">
                       Interactive lesson
                     </p>
-                    <p className="max-w-md text-lg font-bold text-white">{activeVideo?.title}</p>
-                    <p className="max-w-md text-sm text-text-muted">{activeVideo?.description}</p>
+                    <p className="max-w-md text-lg font-bold text-[color:var(--tv-ink)]">{activeVideo?.title}</p>
+                    <p className="max-w-md text-sm text-[color:var(--tv-mute)]">{activeVideo?.description}</p>
                     <Link
                       href={activeLearnHref}
-                      className="rounded-xl bg-[#456DFF] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#5a7dff]"
+                      className="rounded-xl bg-[var(--tv-up)] px-6 py-2.5 text-sm font-semibold text-[color:var(--tv-ink)] transition hover:bg-[#5a7dff]"
                     >
                       {shouldResumeLessonToCompletionSplash(
                         activeLearnProgress,
@@ -295,7 +294,7 @@ export function LibraryCoursePlayerClient({
                     loading="lazy"
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-sm text-text-muted">
+                  <div className="absolute inset-0 flex items-center justify-center text-sm text-[color:var(--tv-mute)]">
                     Invalid YouTube video id.
                   </div>
                 )}
@@ -311,12 +310,12 @@ export function LibraryCoursePlayerClient({
               </div>
 
               {activeVideo ? (
-                <div className="rounded-xl border border-border bg-surface2/40 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                <div className="rounded-xl border border-[var(--tv-line)] bg-[var(--tv-sunk)]/40 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--tv-mute)]">
                     Lesson {activeIndex + 1} of {course.videos.length}
                   </p>
-                  <h2 className="mt-1 text-xl font-bold text-white">{activeVideo.title}</h2>
-                  <p className="mt-1 text-xs text-text-muted">
+                  <h2 className="mt-1 text-xl font-bold text-[color:var(--tv-ink)]">{activeVideo.title}</h2>
+                  <p className="mt-1 text-xs text-[color:var(--tv-mute)]">
                     {activeVideo.duration} · Published {activeVideo.publishedAt}
                   </p>
                   <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-[#ccc]">
@@ -327,8 +326,8 @@ export function LibraryCoursePlayerClient({
             </div>
 
             <aside className="min-w-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
-              <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-text-muted">Course content</h3>
-              <ol className="space-y-2 border border-border rounded-xl bg-[#1a1a1a] p-2">
+              <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-[color:var(--tv-mute)]">Course content</h3>
+              <ol className="space-y-2 border border-[var(--tv-line)] rounded-xl bg-[var(--tv-pane)] p-2">
                 {course.videos.map((video, index) => {
                   const isActive = video.id === activeVideoId;
                   const isLearn = isLibraryLearnItem(video);
@@ -338,7 +337,7 @@ export function LibraryCoursePlayerClient({
                     <li
                       key={video.id}
                       className={`relative rounded-lg transition ${
-                        isActive ? "bg-[#456DFF]/10" : "hover:bg-white/[0.03]"
+                        isActive ? "bg-[var(--tv-acc-wash)]" : "hover:bg-[var(--tv-sunk)]"
                       }`}
                     >
                       <button
@@ -346,21 +345,21 @@ export function LibraryCoursePlayerClient({
                         aria-current={isActive ? "true" : undefined}
                         onClick={() => selectLesson(video.id)}
                         className={`w-full flex-col gap-1 rounded-lg px-2 py-2 text-left ${
-                          isActive ? "border border-[#456DFF]/50 bg-[#456DFF]/15" : "border border-transparent"
+                          isActive ? "border border-[var(--tv-acc-line)]/50 bg-[var(--tv-up)]/15" : "border border-transparent"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <span className="text-xs font-semibold text-white">
+                          <span className="text-xs font-semibold text-[color:var(--tv-ink)]">
                             {index + 1}. {video.title}
                           </span>
                           {!isLearn ? (
-                            <span className="shrink-0 text-[10px] text-text-muted">{video.duration}</span>
+                            <span className="shrink-0 text-[10px] text-[color:var(--tv-mute)]">{video.duration}</span>
                           ) : null}
                         </div>
                         {isLearn ? (
-                          <span className="text-[10px] font-medium text-[#88C9F7]">Interactive lesson</span>
+                          <span className="text-[10px] font-medium text-[color:var(--tv-acc-chip)]">Interactive lesson</span>
                         ) : (
-                          <span className="text-[10px] text-text-muted">{video.publishedAt}</span>
+                          <span className="text-[10px] text-[color:var(--tv-mute)]">{video.publishedAt}</span>
                         )}
                         <p className="line-clamp-2 text-[11px] leading-snug text-[#aaa]">{video.description}</p>
                       </button>
@@ -380,7 +379,7 @@ export function LibraryCoursePlayerClient({
             </aside>
           </div>
         )}
-      </div>
-    </main>
+      </AppShell>
+    </ThemeScope>
   );
 }

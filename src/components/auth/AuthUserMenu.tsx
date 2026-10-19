@@ -51,7 +51,7 @@ export function AuthUserMenu() {
       <>
         <Link
           href="/sign-in"
-          className="rounded-full border border-[rgba(255,255,255,0.12)] px-4 py-2 text-sm md:inline-block"
+          className="rounded-full border border-[var(--tv-line)] px-4 py-2 text-sm md:inline-block"
         >
           Sign In
         </Link>
@@ -84,12 +84,12 @@ export function AuthUserMenu() {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+8px)] z-[200] w-64 overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.12)] bg-[#1E1E1E] shadow-xl"
+          className="absolute right-0 top-[calc(100%+8px)] z-[200] w-64 overflow-hidden rounded-2xl border border-[var(--tv-line)] bg-[var(--tv-pane)] shadow-[0_12px_32px_var(--tv-card-shadow)]"
         >
-          <div className="border-b border-[rgba(255,255,255,0.08)] px-4 py-3">
-            <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+          <div className="border-b border-[var(--tv-line)] px-4 py-3">
+            <p className="truncate text-sm font-semibold text-[color:var(--tv-ink)]">{displayName}</p>
             {user.email ? (
-              <p className="mt-0.5 truncate text-xs text-[#999]">{user.email}</p>
+              <p className="mt-0.5 truncate text-xs text-[color:var(--tv-mute)]">{user.email}</p>
             ) : null}
           </div>
           <div className="py-1">
@@ -97,7 +97,7 @@ export function AuthUserMenu() {
               href="/profile"
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="block px-4 py-2.5 text-sm text-[#ccc] no-underline transition hover:bg-white/[0.06] hover:text-white"
+              className="block px-4 py-2.5 text-sm text-[color:var(--tv-mute)] no-underline transition hover:bg-[var(--tv-sunk)] hover:text-[color:var(--tv-ink)]"
             >
               Profile
             </Link>
@@ -105,7 +105,7 @@ export function AuthUserMenu() {
               href="/settings"
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="block px-4 py-2.5 text-sm text-[#ccc] no-underline transition hover:bg-white/[0.06] hover:text-white"
+              className="block px-4 py-2.5 text-sm text-[color:var(--tv-mute)] no-underline transition hover:bg-[var(--tv-sunk)] hover:text-[color:var(--tv-ink)]"
             >
               Settings
             </Link>
@@ -114,17 +114,17 @@ export function AuthUserMenu() {
                 href="/admin"
                 role="menuitem"
                 onClick={() => setOpen(false)}
-                className="block px-4 py-2.5 text-sm font-semibold text-[#F7C325] no-underline transition hover:bg-white/[0.06] hover:text-[#ffd45c]"
+                className="block px-4 py-2.5 text-sm font-semibold text-[color:var(--tv-gold-chip)] no-underline transition hover:bg-[var(--tv-sunk)]"
               >
                 Admin
               </Link>
             ) : null}
           </div>
-          <div className="border-t border-[rgba(255,255,255,0.08)] p-2">
+          <div className="border-t border-[var(--tv-line)] p-2">
             <button
               type="button"
               role="menuitem"
-              className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
+              className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-[color:var(--tv-down)] transition hover:bg-[rgba(239,75,75,0.10)]"
               onClick={() => {
                 setOpen(false);
                 void (async () => {

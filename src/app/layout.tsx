@@ -7,6 +7,7 @@ import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider"
 import { AppBackground } from "@/components/layout/AppBackground";
 import { LiquidGlassFilter } from "@/components/ui/LiquidGlassFilter";
 import "./globals.css";
+import "@/styles/tv-theme.css";
 
 export const dynamic = "force-dynamic";
 

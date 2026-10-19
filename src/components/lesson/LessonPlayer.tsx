@@ -27,7 +27,8 @@ import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { Confetti } from "@/components/ui/Confetti";
 import { useToast } from "@/components/ui/Toast";
 import { useXPFloat } from "@/components/ui/XPFloatManager";
-import { getCoachReply } from "@/lib/aiCoach";
+import { streamCoachReply } from "@/lib/aiCoach";
+import { buildAnswerFeedback, type AnswerStage, type QuestionVoiceMap, type VoicePrefixMap } from "@/lib/answerVoiceFeedback";
 import { isSoundEnabled, persistSoundPreference, resumeAudioContext, sound } from "@/lib/sounds";
 import type { Lesson } from "@/lib/data/lessons";
 import { COURSES } from "@/lib/data/courses";
@@ -64,8 +65,8 @@ import type {
   VisualChoicePage,
 } from "@/types/lessonPage";
 import { LessonCoachAside, LessonCoachMobile } from "@/components/lesson/LessonCoachPanel";
-import { prepareCoachTts, speakCoachText, stopVoiceCoach } from "@/lib/voiceCoach";
-import { textForSpeech } from "@/lib/speechText";
+import { startStreamingCoachSession, playStaticCoachAudio, stopVoiceCoach } from "@/lib/voiceCoach";
+import { CoachTiming } from "@/lib/coachTiming";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { RichText } from "@/components/ui/RichText";
 
@@ -233,6 +234,8 @@ export function LessonPlayer({
   imageConfigByPageId = {},
   muxPlaybackId,
   libraryCourseSlug,
+  voiceConfigByQuestion = {},
+  voicePrefixes = {},
 }: {
   lesson: Lesson;
   /** Admin-configured image URL, width, and alignment keyed by page / question id. */
@@ -240,12 +243,16 @@ export function LessonPlayer({
   muxPlaybackId?: string | null;
   /** Library course slug from `?library=` when opened from `/library/[slug]`. */
   libraryCourseSlug?: string;
+  /** Pre-generated hint/explain text+audio per question, keyed by page/practice-question id. Empty outside Candlestick Essentials. */
+  voiceConfigByQuestion?: QuestionVoiceMap;
+  /** The 3 shared "Wrong, try again" / "Wrong answer" / "Correct" clips. */
+  voicePrefixes?: VoicePrefixMap;
 }) {
   const router = useRouter();
   const { push } = useToast();
   const { trigger } = useXPFloat();
   const completeLesson = useUserStore((s) => s.completeLesson);
-  const unlockAchievement = useUserStore((s) => s.unlockAchievement);
+  const syncAchievements = useUserStore((s) => s.syncAchievements);
   const lessonsCompleted = useUserStore((s) => s.lessonsCompleted);
   const resolvedLesson = useMemo(
     () => applyLessonImageConfigMap(lesson, imageConfigByPageId),
@@ -488,37 +495,63 @@ export function LessonPlayer({
         ? `practice-${resolvedLesson.practice?.[practiceIx]?.type ?? "question"}`
         : String(currentLessonTopic);
 
-    const result = await getCoachReply({
-      prompt,
-      lessonTitle: lesson.title,
-      lessonTopic,
-      history: historyForRequest,
-      isWrongAttempt,
-    });
-    const coachText = result.text;
+    // Placeholder bubble filled in as text streams.
+    setAiHistory((prev) => [...prev, { role: "coach", text: "" }]);
+    const setCoachBubbleText = (bubbleText: string) => {
+      setAiHistory((prev) => {
+        const next = [...prev];
+        next[next.length - 1] = { ...next[next.length - 1], text: bubbleText };
+        return next;
+      });
+    };
 
-    if (voiceOn && textForSpeech(coachText)) {
-      setAiLoadingPhase("voice");
-      await prepareCoachTts(coachText);
-    }
+    const timing = new CoachTiming();
+    timing.mark("requestStart");
+    const session = voiceOn ? startStreamingCoachSession(() => setCoachSpeaking(false), timing) : null;
+    if (session) setCoachSpeaking(true);
 
-    setAiHistory((prev) => [...prev, { role: "coach", text: coachText }]);
+    let streamedText = "";
+    let firstChunk = true;
+    const result = await streamCoachReply(
+      { prompt, lessonTitle: lesson.title, lessonTopic, history: historyForRequest, isWrongAttempt },
+      (delta) => {
+        if (firstChunk) {
+          firstChunk = false;
+          setAiLoading(false);
+          setAiLoadingPhase(null);
+        }
+        session?.feedText(delta);
+        streamedText += delta;
+        setCoachBubbleText(streamedText);
+      },
+      { timing },
+    );
+
+    // Nothing ever streamed (e.g. the request failed outright) — speak the local fallback reply instead.
+    if (firstChunk && result.text) session?.feedText(result.text);
+    session?.finish();
+    setCoachBubbleText(result.text);
     setAiLoading(false);
     setAiLoadingPhase(null);
+  };
 
-    if (voiceOn && textForSpeech(coachText)) {
-      setCoachSpeaking(true);
-      void speakCoachText(coachText, true, () => setCoachSpeaking(false));
+  /**
+   * Shows/plays the pre-generated feedback for a lesson question's outcome.
+   * These questions are fixed content, so feedback is generated once offline
+   * (scripts/voice-responses/generate.ts) rather than called live — if none
+   * exists yet for this question, falls back to the shared prefix clip alone
+   * ("Wrong, try again" / "Wrong answer" / "Correct").
+   */
+  const notifyAnswerFeedback = (stage: AnswerStage, questionKey?: string) => {
+    const feedback = buildAnswerFeedback(stage, questionKey, voicePrefixes, voiceConfigByQuestion);
+    // "Correct" is audio-only — no chat bubble, so a stream of right answers doesn't clutter the panel.
+    if (stage !== "correct") {
+      setAiHistory((prev) => [...prev, { role: "coach", text: feedback.text }]);
     }
+    if (voiceOn) playStaticCoachAudio({ prefixUrl: feedback.prefixUrl, responseUrl: feedback.responseUrl });
   };
-
-  const handleWrongAttemptCoach = () => {
-    void submitCoachPrompt({
-      text: "I got this wrong. Give me a short hint so I can retry.",
-      isWrongAttempt: true,
-      appendUser: false,
-    });
-  };
+  const notifyWrongAnswer = (questionKey?: string) => notifyAnswerFeedback("explain", questionKey);
+  const notifyCorrectAnswer = (questionKey?: string) => notifyAnswerFeedback("correct", questionKey);
 
   const saveLibraryLearnProgress = (opts: {
     practiceCorrect?: number;
@@ -571,8 +604,7 @@ export function LessonPlayer({
     if (result.freezeEarned) {
       push("🛡️ Streak freeze earned! (max 2)", "success");
     }
-    const u = unlockAchievement("a4");
-    if (u) push(`🏆 ${u.title}`, "success");
+    syncAchievements();
   };
 
   const restartLesson = () => {
@@ -877,9 +909,10 @@ export function LessonPlayer({
               if (ok) {
                 sound.correct();
                 awardXp(30);
+                notifyCorrectAnswer(pp.id);
               } else {
                 sound.wrong();
-                handleWrongAttemptCoach();
+                notifyWrongAnswer(pp.id);
               }
             }}
           />
@@ -910,9 +943,10 @@ export function LessonPlayer({
               if (ok) {
                 sound.correct();
                 awardXp(35);
+                notifyCorrectAnswer(pp.id);
               } else {
                 sound.wrong();
-                handleWrongAttemptCoach();
+                notifyWrongAnswer(pp.id);
               }
             }}
             onTryAgain={() => {
@@ -953,9 +987,10 @@ export function LessonPlayer({
               if (ok) {
                 sound.correct();
                 awardXp(35);
+                notifyCorrectAnswer(pp.id);
               } else {
                 sound.wrong();
-                handleWrongAttemptCoach();
+                notifyWrongAnswer(pp.id);
               }
             }}
           />
@@ -1256,9 +1291,10 @@ export function LessonPlayer({
                     if (v === pp.correct) {
                       sound.correct();
                       awardXp(15);
+                      notifyCorrectAnswer(pp.id);
                     } else {
                       sound.wrong();
-                      handleWrongAttemptCoach();
+                      notifyWrongAnswer(pp.id);
                     }
                   }}
                   className={`flex min-h-[72px] flex-col items-center justify-center rounded-2xl border-2 px-4 py-6 text-lg font-bold transition-all ${
@@ -1376,9 +1412,10 @@ export function LessonPlayer({
                 sound.correct();
                 awardXp(30);
                 push("💪 Nice work! Labels placed perfectly.", "success");
+                notifyCorrectAnswer(pp.id);
               } else {
                 sound.wrong();
-                handleWrongAttemptCoach();
+                notifyWrongAnswer(pp.id);
               }
             }}
             onTryAgain={() => {
@@ -1419,9 +1456,10 @@ export function LessonPlayer({
               if (ok) {
                 sound.correct();
                 awardXp(35);
+                notifyCorrectAnswer(pp.id);
               } else {
                 sound.wrong();
-                handleWrongAttemptCoach();
+                notifyWrongAnswer(pp.id);
               }
             }}
             onTryAgain={() => {
@@ -1470,9 +1508,10 @@ export function LessonPlayer({
               if (ok) {
                 sound.correct();
                 awardXp(30);
+                notifyCorrectAnswer(pp.id);
               } else {
                 sound.wrong();
-                handleWrongAttemptCoach();
+                notifyWrongAnswer(pp.id);
               }
             }}
             onTryAgain={() => {
@@ -1612,9 +1651,10 @@ export function LessonPlayer({
               sound.correct();
               setPracticeCorrect((c) => c + 1);
               awardXp(12);
+              notifyCorrectAnswer(q.id);
             } else {
               sound.wrong();
-              handleWrongAttemptCoach();
+              notifyWrongAnswer(q.id);
             }
           }}
         >
@@ -1661,9 +1701,10 @@ export function LessonPlayer({
               sound.correct();
               setPracticeCorrect((c) => c + 1);
               awardXp(15);
+              notifyCorrectAnswer(q.id);
             } else {
               sound.wrong();
-              handleWrongAttemptCoach();
+              notifyWrongAnswer(q.id);
             }
           }}
         />
@@ -1702,9 +1743,10 @@ export function LessonPlayer({
               sound.correct();
               setPracticeCorrect((c) => c + 1);
               awardXp(12);
+              notifyCorrectAnswer(q.id);
             } else {
               sound.wrong();
-              handleWrongAttemptCoach();
+              notifyWrongAnswer(q.id);
             }
           }}
         >
@@ -1737,9 +1779,10 @@ export function LessonPlayer({
               sound.correct();
               setPracticeCorrect((c) => c + 1);
               awardXp(15);
+              notifyCorrectAnswer(q.id);
             } else {
               sound.wrong();
-              handleWrongAttemptCoach();
+              notifyWrongAnswer(q.id);
             }
           }}
         />
@@ -1770,9 +1813,10 @@ export function LessonPlayer({
               sound.correct();
               setPracticeCorrect((c) => c + 1);
               awardXp(15);
+              notifyCorrectAnswer(q.id);
             } else {
               sound.wrong();
-              handleWrongAttemptCoach();
+              notifyWrongAnswer(q.id);
             }
           }}
         />
@@ -1816,9 +1860,10 @@ export function LessonPlayer({
               sound.correct();
               setPracticeCorrect((c) => c + 1);
               awardXp(12);
+              notifyCorrectAnswer(q.id);
             } else {
               sound.wrong();
-              handleWrongAttemptCoach();
+              notifyWrongAnswer(q.id);
             }
           }}
         >
@@ -1863,9 +1908,10 @@ export function LessonPlayer({
               sound.correct();
               setPracticeCorrect((c) => c + 1);
               awardXp(15);
+              notifyCorrectAnswer(q.id);
             } else {
               sound.wrong();
-              handleWrongAttemptCoach();
+              notifyWrongAnswer(q.id);
             }
           }}
         />
@@ -1910,9 +1956,10 @@ export function LessonPlayer({
               sound.correct();
               setPracticeCorrect((c) => c + 1);
               awardXp(15);
+              notifyCorrectAnswer(q.id);
             } else {
               sound.wrong();
-              handleWrongAttemptCoach();
+              notifyWrongAnswer(q.id);
             }
           }}
         />
@@ -1968,9 +2015,10 @@ export function LessonPlayer({
               sound.correct();
               setPracticeCorrect((c) => c + 1);
               awardXp(12);
+              notifyCorrectAnswer(q.id);
             } else {
               sound.wrong();
-              handleWrongAttemptCoach();
+              notifyWrongAnswer(q.id);
             }
           }}
         >
@@ -2046,9 +2094,10 @@ export function LessonPlayer({
               sound.correct();
               setPracticeCorrect((c) => c + 1);
               awardXp(12);
+              notifyCorrectAnswer(q.id);
             } else {
               sound.wrong();
-              handleWrongAttemptCoach();
+              notifyWrongAnswer(q.id);
             }
           }}
         >
@@ -2111,9 +2160,10 @@ export function LessonPlayer({
               sound.correct();
               setPracticeCorrect((c) => c + 1);
               awardXp(10);
+              notifyCorrectAnswer(q.id);
             } else {
               sound.wrong();
-              handleWrongAttemptCoach();
+              notifyWrongAnswer(q.id);
             }
           }}
         >
@@ -2163,9 +2213,10 @@ export function LessonPlayer({
                   sound.correct();
                   setPracticeCorrect((c) => c + 1);
                   awardXp(8);
+                  notifyCorrectAnswer(q.id);
                 } else {
                   sound.wrong();
-                  handleWrongAttemptCoach();
+                  notifyWrongAnswer(q.id);
                 }
               }}
               className={`rounded-2xl border-2 py-6 text-lg font-bold ${v ? "border-[#456DFF]/40 text-[#456DFF]" : "border-red-500/40 text-red-400"}`}
@@ -2230,9 +2281,10 @@ export function LessonPlayer({
                   sound.correct();
                   setPracticeCorrect((c) => c + 1);
                   awardXp(10);
+                  notifyCorrectAnswer(q.id);
                 } else {
                   sound.wrong();
-                  handleWrongAttemptCoach();
+                  notifyWrongAnswer(q.id);
                 }
               }}
             >
@@ -2295,9 +2347,10 @@ export function LessonPlayer({
                   sound.correct();
                   setPracticeCorrect((c) => c + 1);
                   awardXp(10);
+                  notifyCorrectAnswer(q.id);
                 } else {
                   sound.wrong();
-                  handleWrongAttemptCoach();
+                  notifyWrongAnswer(q.id);
                 }
               }}
             >
@@ -2336,9 +2389,10 @@ export function LessonPlayer({
               sound.correct();
               setPracticeCorrect((c) => c + 1);
               awardXp(12);
+              notifyCorrectAnswer(q.id);
             } else {
               sound.wrong();
-              handleWrongAttemptCoach();
+              notifyWrongAnswer(q.id);
             }
           }}
         >
@@ -2385,9 +2439,10 @@ export function LessonPlayer({
               sound.correct();
               setPracticeCorrect((c) => c + 1);
               awardXp(12);
+              notifyCorrectAnswer(q.id);
             } else {
               sound.wrong();
-              handleWrongAttemptCoach();
+              notifyWrongAnswer(q.id);
             }
           }}
           onTryAgain={() => setPrDragOk(false)}
@@ -2423,9 +2478,10 @@ export function LessonPlayer({
                 sound.correct();
                 setPracticeCorrect((c) => c + 1);
                 awardXp(12);
+                notifyCorrectAnswer(q.id);
               } else {
                 sound.wrong();
-                handleWrongAttemptCoach();
+                notifyWrongAnswer(q.id);
               }
             }}
             onTryAgain={() => setPrDragOk(false)}
@@ -2738,9 +2794,10 @@ export function LessonPlayer({
                         awardXp(25);
                         setLessonConfetti(true);
                         window.setTimeout(() => setLessonConfetti(false), 1500);
+                        notifyCorrectAnswer(pp.id);
                       } else {
                         sound.wrong();
-                        handleWrongAttemptCoach();
+                        notifyWrongAnswer(pp.id);
                       }
                     }}
                   >
@@ -2790,9 +2847,10 @@ export function LessonPlayer({
                         sound.correct();
                         awardXp(20);
                         push("✓ Exactly right!", "success");
+                        notifyCorrectAnswer(page.id);
                       } else {
                         sound.wrong();
-                        handleWrongAttemptCoach();
+                        notifyWrongAnswer(page.id);
                       }
                     }}
                   >
@@ -2833,9 +2891,10 @@ export function LessonPlayer({
                       if (tapPick === correctIdx) {
                         sound.correct();
                         awardXp(25);
+                        notifyCorrectAnswer(page.id);
                       } else {
                         sound.wrong();
-                        handleWrongAttemptCoach();
+                        notifyWrongAnswer(page.id);
                       }
                     }}
                   >

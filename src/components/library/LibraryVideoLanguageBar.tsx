@@ -14,13 +14,13 @@ export function LibraryVideoLanguageBar({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs font-medium text-text-muted">Language</span>
-      <div className="inline-flex overflow-hidden rounded-lg border border-border">
+      <span className="text-xs font-medium text-[color:var(--tv-mute)]">Language</span>
+      <div className="inline-flex overflow-hidden rounded-lg border border-[var(--tv-line)]">
         <button
           type="button"
           onClick={() => onLangChange("en")}
           className={`px-3 py-1.5 text-xs font-semibold transition ${
-            lang === "en" ? "bg-[#456DFF] text-white" : "bg-surface2 text-text-muted hover:text-white"
+            lang === "en" ? "bg-[var(--tv-up)] text-[color:var(--tv-ink)]" : "bg-[var(--tv-sunk)] text-[color:var(--tv-mute)] hover:text-[color:var(--tv-ink)]"
           }`}
         >
           English
@@ -31,8 +31,8 @@ export function LibraryVideoLanguageBar({
           disabled={!hindiAvailable}
           className={`px-3 py-1.5 text-xs font-semibold transition ${
             lang === "hi" && hindiAvailable
-              ? "bg-[#456DFF] text-white"
-              : "bg-surface2 text-text-muted hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              ? "bg-[var(--tv-up)] text-[color:var(--tv-ink)]"
+              : "bg-[var(--tv-sunk)] text-[color:var(--tv-mute)] hover:text-[color:var(--tv-ink)] disabled:cursor-not-allowed disabled:opacity-50"
           }`}
         >
           Hindi
@@ -40,7 +40,7 @@ export function LibraryVideoLanguageBar({
       </div>
       {!hindiAvailable ? (
         <span
-          className="inline-flex items-center gap-1 text-xs text-text-muted"
+          className="inline-flex items-center gap-1 text-xs text-[color:var(--tv-mute)]"
           title="Hindi version is not available for this video"
         >
           <Info className="h-3.5 w-3.5 shrink-0" aria-hidden />

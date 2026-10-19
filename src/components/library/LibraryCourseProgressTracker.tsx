@@ -24,16 +24,16 @@ export function LibraryCourseProgressTracker({
 
   return (
     <div className="mt-3">
-      <span className="block text-left text-sm font-semibold text-white">Progress</span>
-      <div className="mt-1.5 h-[5px] w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
+      <span className="block text-left text-sm font-semibold text-[color:var(--tv-ink)]">Progress</span>
+      <div className="tv-progress mt-1.5 h-[5px] w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
         <span
           className="block h-full rounded-full transition-[width] duration-500 ease-out"
           style={{ width: `${progress.percent}%`, backgroundColor: FILL_COLORS[variant] }}
         />
       </div>
       <div className="mt-1.5 flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold text-text-muted">{progress.statusLabel}</p>
-        <span className="text-sm font-semibold text-white">{progress.percent}%</span>
+        <p className="text-xs font-semibold text-[color:var(--tv-mute)]">{progress.statusLabel}</p>
+        <span className="text-sm font-semibold text-[color:var(--tv-ink)]">{progress.percent}%</span>
       </div>
     </div>
   );

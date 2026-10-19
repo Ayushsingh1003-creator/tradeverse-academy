@@ -1,55 +1,27 @@
-export const LEVEL_TITLES = [
-  "Novice Trader",
-  "Market Explorer",
-  "Chart Reader",
-  "Pattern Spotter",
-  "Momentum Learner",
-  "Price Action Scout",
-  "Trend Tracker",
-  "Entry Planner",
-  "Risk Aware Trader",
-  "Disciplined Starter",
-  "Structure Student",
-  "Signal Interpreter",
-  "Breakout Hunter",
-  "Pullback Player",
-  "Candle Specialist",
-  "Volatility Navigator",
-  "Session Strategist",
-  "Setup Builder",
-  "Probability Thinker",
-  "Execution Builder",
-  "Technical Analyst",
-  "Level Mapper",
-  "Swing Architect",
-  "Confluence Seeker",
-  "Bias Controller",
-  "Playbook Crafter",
-  "Market Technician",
-  "Risk Manager",
-  "Stoploss Engineer",
-  "Capital Defender",
-  "Strategy Operator",
-  "Discipline Captain",
-  "Flow Reader",
-  "Macro Aware Trader",
-  "Advanced Executor",
-  "Performance Optimizer",
-  "Edge Refiner",
-  "Adaptive Strategist",
-  "Consistency Builder",
-  "System Commander",
-  "Market Strategist",
-  "Elite Analyst",
-  "Precision Trader",
-  "Portfolio Guardian",
-  "Tactical Master",
-  "Quant Minded Trader",
-  "Execution Virtuoso",
-  "Alpha Chaser",
-  "Grand Strategist",
-  "Legendary Trader",
+/**
+ * Ten ranks across the fifty levels — a ladder you climb rather than fifty
+ * unrelated job titles. Each rank spans five levels, Rookie through Legendary.
+ */
+export const LEVEL_RANKS = [
+  "Rookie",
+  "Apprentice",
+  "Trader",
+  "Analyst",
+  "Strategist",
+  "Specialist",
+  "Veteran",
+  "Expert",
+  "Master",
+  "Legendary",
 ] as const;
+
+/** Levels per rank — 10 ranks x 5 = the 50 levels the XP curve covers. */
+const LEVELS_PER_RANK = 5;
+
+export const LEVEL_TITLES = Array.from(
+  { length: LEVEL_RANKS.length * LEVELS_PER_RANK },
+  (_, idx) => LEVEL_RANKS[Math.floor(idx / LEVELS_PER_RANK)],
+) as readonly string[];
 
 export type LeagueTier = {
   id: string;

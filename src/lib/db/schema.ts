@@ -571,6 +571,33 @@ export const siteBannerConfigs = pgTable("SiteBannerConfig", {
   updatedAt: timestamp("updatedAt", { mode: "date" }).notNull().defaultNow(),
 });
 
+/** Pre-generated hint/explanation text + S3 audio link for a fixed lesson question, keyed per (lessonSlug, questionKey, stage). */
+export const questionVoiceResponses = pgTable(
+  "QuestionVoiceResponse",
+  {
+    id: text("id").primaryKey(),
+    courseSlug: text("courseSlug").notNull(),
+    lessonSlug: text("lessonSlug").notNull(),
+    questionKey: text("questionKey").notNull(),
+    stage: text("stage").notNull(), // "hint" | "explain"
+    text: text("text").notNull(),
+    audioUrl: text("audioUrl").notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("QuestionVoiceResponse_lessonSlug_questionKey_stage_key").on(t.lessonSlug, t.questionKey, t.stage),
+    index("QuestionVoiceResponse_courseSlug_idx").on(t.courseSlug),
+  ],
+);
+
+/** The 3 shared "Wrong, try again" / "Wrong answer" / "Correct" clips, reused by every question everywhere. */
+export const voicePrefixes = pgTable("VoicePrefix", {
+  kind: text("kind").primaryKey(), // "hint" | "wrong" | "correct"
+  text: text("text").notNull(),
+  audioUrl: text("audioUrl").notNull(),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).notNull().defaultNow(),
+});
+
 export type User = typeof users.$inferSelect;
 export type XpLedger = typeof xpLedger.$inferSelect;
 export type LibraryCourse = typeof libraryCourses.$inferSelect;
@@ -581,3 +608,5 @@ export type LessonComment = typeof lessonComments.$inferSelect;
 export type SRSCard = typeof srsCards.$inferSelect;
 export type LiveCohort = typeof liveCohorts.$inferSelect;
 export type LiveCohortEnrollment = typeof liveCohortEnrollments.$inferSelect;
+export type QuestionVoiceResponse = typeof questionVoiceResponses.$inferSelect;
+export type VoicePrefix = typeof voicePrefixes.$inferSelect;

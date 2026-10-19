@@ -67,13 +67,13 @@ export function YouTubePlayerModal({
       aria-label="Library video player"
     >
       <div
-        className="w-full max-w-5xl rounded-2xl border border-border bg-[#121212] p-4"
+        className="w-full max-w-5xl rounded-2xl border border-[var(--tv-line)] bg-[var(--tv-pane)] p-4"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-3 flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1 space-y-2">
-            <p className="text-lg font-semibold text-white">{video.title}</p>
-            <p className="text-xs text-text-muted">{video.duration} · {video.publishedAt}</p>
+            <p className="text-lg font-semibold text-[color:var(--tv-ink)]">{video.title}</p>
+            <p className="text-xs text-[color:var(--tv-mute)]">{video.duration} · {video.publishedAt}</p>
             <LibraryVideoLanguageBar
               lang={lang}
               onLangChange={setLang}
@@ -85,7 +85,7 @@ export function YouTubePlayerModal({
           </Button>
         </div>
 
-        <div className="relative w-full overflow-hidden rounded-xl border border-border bg-black pb-[56.25%]">
+        <div className="relative w-full overflow-hidden rounded-xl border border-[var(--tv-line)] bg-black pb-[56.25%]">
           {embedUrl ? (
             <iframe
               key={`${video.id}-${lang}`}
@@ -97,7 +97,7 @@ export function YouTubePlayerModal({
               loading="lazy"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-sm text-text-muted">
+            <div className="absolute inset-0 flex items-center justify-center text-sm text-[color:var(--tv-mute)]">
               Invalid YouTube video id.
             </div>
           )}
