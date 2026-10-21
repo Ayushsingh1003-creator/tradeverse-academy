@@ -13,6 +13,7 @@ export interface TradeverseIdSessionUser {
   id: string;
   email: string;
   role: string;
+  hasPhone: boolean | null;
 }
 
 const ISSUER = process.env.TRADEVERSE_ID_HOSTNAME || "https://auth.tradeversejournal.com";
@@ -45,6 +46,8 @@ export async function verifyTradeverseIdAccessToken(
       id: payload.sub,
       email: payload.email,
       role: typeof payload.role === "string" ? payload.role : "user",
+      // null = token minted before the claim existed (treated as "not confirmed")
+      hasPhone: typeof payload.hasPhone === "boolean" ? payload.hasPhone : null,
     };
   } catch {
     return null;

@@ -1,26 +1,26 @@
 import { redirect } from "next/navigation";
-import { AuthPageShell } from "@/components/auth/AuthPageShell";
-import { SignUpForm } from "@/components/auth/SignUpForm";
-import { isAuthConfigured } from "@/lib/auth/enabled";
 import { getAuthUserId, getAuthUserEmail } from "@/lib/auth/session";
 import { resolvePostAuthUrl } from "@/lib/onboarding/resolvePostAuthUrl";
+import { centralAuthUrl } from "@/lib/auth/urls";
+import {
+  buildSsoReturnUrl,
+  resolveReturnPath,
+  type AuthSearchParams,
+} from "@/lib/auth/central-redirect";
 
 type PageProps = {
-  searchParams: { email?: string };
+  searchParams: AuthSearchParams;
 };
 
+// Registration (and its email verification + phone step) happens on W1; this route
+// only exists so existing /sign-up links keep working.
 export default async function SignUpPage({ searchParams }: PageProps) {
+  const returnPath = resolveReturnPath(searchParams);
+
   const authUserId = await getAuthUserId();
   if (authUserId) {
-    redirect(await resolvePostAuthUrl(authUserId, await getAuthUserEmail()));
+    redirect(returnPath ?? (await resolvePostAuthUrl(authUserId, await getAuthUserEmail())));
   }
 
-  const authEnabled = isAuthConfigured();
-  const email = searchParams.email?.trim();
-
-  return (
-    <AuthPageShell variant="sign-up" authEnabled={authEnabled}>
-      {authEnabled ? <SignUpForm defaultEmail={email} /> : null}
-    </AuthPageShell>
-  );
+  redirect(centralAuthUrl("sign-up", buildSsoReturnUrl(returnPath)));
 }

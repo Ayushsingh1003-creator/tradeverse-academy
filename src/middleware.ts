@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { resolveIsAdmin } from "@/lib/admin/checkAdmin";
 import { isAuthConfigured } from "@/lib/auth/enabled";
 import { verifyTradeverseIdAccessToken, type TradeverseIdSessionUser } from "@/lib/auth/tradeverseId";
-import { AUTH_HOME_URL, AUTH_SIGN_IN_URL } from "@/lib/auth/urls";
+import { AUTH_HOME_URL, AUTH_SIGN_IN_URL, MAIN_SITE_URL } from "@/lib/auth/urls";
+import { getPublicAppUrl } from "@/lib/auth/app-url";
 import { ONBOARDING_BYPASS_PREFIXES, ONBOARDING_URL } from "@/lib/onboarding/constants";
 import { needsOnboardingForAuthUser } from "@/lib/onboarding/needsAssessment";
 
@@ -76,6 +77,32 @@ async function requireAuthForOnboarding(
   return null;
 }
 
+/** Marks the hop back from W1's phone page, so a token that somehow still lacks the
+ * claim can't bounce the user between the two sites in a tight loop. */
+const PHONE_RETURN_PARAM = "tv_phone";
+
+/** The phone step lives on W1 (part of its login flow) — a signed-in user without a
+ * phone number is sent there first, before onboarding or any other page. */
+async function phoneRedirectIfNeeded(
+  request: NextRequest,
+  pathname: string,
+): Promise<NextResponse | null> {
+  if (pathname.startsWith("/api/") || pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up")) {
+    return null;
+  }
+  if (request.nextUrl.searchParams.get(PHONE_RETURN_PARAM) === "1") return null;
+
+  const session = await getMiddlewareSession(request);
+  if (!session?.user?.id || session.user.hasPhone === true) return null;
+
+  // Public URL, not request.url — behind proxies/dev hosts that can be an internal host.
+  const returnTo = new URL(`${getPublicAppUrl()}${pathname}${request.nextUrl.search}`);
+  returnTo.searchParams.set(PHONE_RETURN_PARAM, "1");
+  const phoneUrl = new URL(`${MAIN_SITE_URL}/auth/phone`);
+  phoneUrl.searchParams.set("redirect", returnTo.toString());
+  return NextResponse.redirect(phoneUrl);
+}
+
 async function onboardingRedirectIfNeeded(
   request: NextRequest,
   pathname: string,
@@ -110,6 +137,9 @@ export async function middleware(request: NextRequest) {
 
   const onboardingAuthRedirect = await requireAuthForOnboarding(request, pathname);
   if (onboardingAuthRedirect) return onboardingAuthRedirect;
+
+  const phoneRedirect = await phoneRedirectIfNeeded(request, pathname);
+  if (phoneRedirect) return phoneRedirect;
 
   const onboardingRedirect = await onboardingRedirectIfNeeded(request, pathname);
   if (onboardingRedirect) return onboardingRedirect;
