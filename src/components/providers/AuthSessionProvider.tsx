@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { fetchSession } from "@/lib/auth/tradeverseIdClient";
+import { fetchSession, isSharedSessionGone } from "@/lib/auth/tradeverseIdClient";
 
 export type AuthSessionUser = {
   id: string;
@@ -44,6 +44,31 @@ export function AuthSessionProvider({
     // shared cookie is already there; this just confirms it and hydrates state).
     void refetch();
   }, [refetch]);
+
+  // A logout on W1 clears the shared cookies, but this tab's state (and the server
+  // components it already rendered) would still look signed-in. Re-check when the
+  // tab regains focus; if the session is gone, reload so middleware and server
+  // components re-render as signed-out.
+  const wasSignedIn = Boolean(user);
+  useEffect(() => {
+    if (!wasSignedIn) return;
+    let checking = false;
+    const recheck = async () => {
+      if (document.visibilityState !== "visible" || checking) return;
+      checking = true;
+      try {
+        if (await isSharedSessionGone()) window.location.reload();
+      } finally {
+        checking = false;
+      }
+    };
+    document.addEventListener("visibilitychange", recheck);
+    window.addEventListener("focus", recheck);
+    return () => {
+      document.removeEventListener("visibilitychange", recheck);
+      window.removeEventListener("focus", recheck);
+    };
+  }, [wasSignedIn]);
 
   return (
     <AuthSessionContext.Provider value={{ user, isLoading, refetch }}>

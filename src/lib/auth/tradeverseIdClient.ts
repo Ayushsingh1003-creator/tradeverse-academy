@@ -120,11 +120,38 @@ export function signOut() {
   return request<{ message: string }>("/auth/logout", { method: "POST", body: {} });
 }
 
+/** The signed-in user, or null once the shared session is gone (e.g. logged out on
+ * W1). If only the short-lived tv_session cookie expired, rotates it via tv_refresh
+ * so this app's server-side checks see a fresh cookie on the next request. */
 export async function fetchSession(): Promise<TradeverseIdUser | null> {
   try {
     const data = await request<{ user: TradeverseIdUser }>("/auth/session", { method: "GET" });
     return data.user ?? null;
+  } catch (error) {
+    if (!(error instanceof TradeverseIdError) || error.status !== 401) return null;
+  }
+  try {
+    const data = await request<{ user: TradeverseIdUser }>("/auth/session/refresh", { body: {} });
+    return data.user ?? null;
   } catch {
     return null;
+  }
+}
+
+/** True only when the shared session is definitely gone (401 on both the session
+ * check and the refresh) — a network blip or auth outage never counts as logout. */
+export async function isSharedSessionGone(): Promise<boolean> {
+  const is401 = (error: unknown) => error instanceof TradeverseIdError && error.status === 401;
+  try {
+    await request("/auth/session", { method: "GET" });
+    return false;
+  } catch (error) {
+    if (!is401(error)) return false;
+  }
+  try {
+    await request("/auth/session/refresh", { body: {} });
+    return false;
+  } catch (error) {
+    return is401(error);
   }
 }
